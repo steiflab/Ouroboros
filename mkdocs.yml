@@ -1,0 +1,7 @@
+site_name: My Docs
+site_name: Ouroboros
+nav:
+  - Home: index.md
+  - CLI Usage: usage.md
+  - API Reference: api.md
+docs_dir: docs

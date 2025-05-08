@@ -9,6 +9,15 @@ VAE latent space:
 
 ## Installation 
 
+#### For those in the Steif lab:
+
+Just clone my environment:
+
+```bash
+mamba create --name ouroboros_env --clone /projects/steiflab/research/hmacdonald/applications/python/miniconda3/envs/old_sphere3.6
+```
+
+The rest of installation instructions is a work in progress...
 #### Option 1: from github with pip
 ```bash 
 conda create -n ouroboros_env python=3.6
@@ -36,14 +45,10 @@ Ouroboros is a specific implementation of scPhere from the Klarman cell observat
 ```bash
 git clone https://github.com/klarman-cell-observatory/scPhere
 
+cd path/to/scphere/installation
+
 python setup.py install
 ```
-
-
-
-
-
-
 
 
 
@@ -85,12 +90,15 @@ To build an env from it:
 
 *finish this*
 
+
+
 ## Running Ouroboros 
+For a full tutorial see the Wiki (though note this is geared towards python users): *add wiki*
 
 Ouroboros is a command line tool designed to take either a saved .h5ad object or if you are an R user a saved csv with a cell/gene count matrix. 
 
-### To run Ouroboros on an h5ad
-Yay this is originally how I wrote Ouroboros so it should be smooth. 
+
+### To run Ouroboros on an h5ad/ Scanpy object
 
 It's important to note that Ouroboros only works on **raw** counts, so make sure your raw counts are saved under adata.layers['raw_counts'] where Ouroboros can find them, and then save your scanpy object as an h5ad:
 
@@ -100,8 +108,22 @@ anndata.write_h5ad(adata.h5ad)
 
 Then you can run Ouroboros on the command line like so: 
 ```bash 
-
+ouroboros \
+    --data /path/to/h5ad  \
+    --data_type h5ad \
+    --species human \
+    --outdir /path/to/output/directory
 ```
+
+Arguments: 
+| Argument      | Description                                                                   |
+| ------------- | ----------------------------------------------------------------------------- |
+| `--data`      | **Required.** Path to your input data file. Must be a `.h5ad` or `.csv` file. |
+| `--data_type` | **Required.** Format of the input data. Must be `h5ad` or `csv`.              |
+| `--species`   | Species of origin for the dataset. Must be `human` or `mouse`.                |
+| `--outdir`    | Output directory where results (embeddings, figures, logs) will be saved.     |
+
+
 
 
 
@@ -129,8 +151,14 @@ df <- df[, c("cell_id", setdiff(names(df), "cell_id"))]
 write.csv(df, file = "test_df.csv", row.names = FALSE)
 ```
 
-
 Once your h5ad or csv is saved, you can call Ouroboros on the command line:
+
+
+
+
+
+
+
 
 
 ## Performance

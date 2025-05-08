@@ -1,21 +1,44 @@
 [project]
 name = "ouroboros"
 version = "0.1.0"
-description = "A toolkit for invesitgating cell cycling dynamics in scRNA-seq"
+description = "A toolkit for investigating cell cycling dynamics in scRNA-seq"
 readme = "README.md"
-requires-python = "==3.6.*"
+requires-python = ">=3.6,<3.7"
 license = {text = "MIT"}
 authors = [
   {name = "Haley MacDonald", email = "hmacdonald@bcgsc.ca"}
 ]
 dependencies = [
-  "scphere @ git+https://github.com/klarman-cell-observatory/scPhere.git"
+  "numpy>=1.16.4",
+  "scipy>=1.3.0",
+  "pandas>=0.21.0",
+  "anndata==0.7.5",
+  "matplotlib>=3.1.0",
+  "seaborn>=0.11.2",
+  "plotly>=5.24.1",
+  "tensorflow==1.14",
+  "tensorflow-probability==0.7.0",
+  "scikit-learn>=0.24.2",
+  "cartopy",
 ]
 
+[project.optional-dependencies]
+extra = [
+  "git+https://github.com/klarman-cell-observatory/scPhere.git"
+]
+
+
 [project.urls]
-Homepage = "https://github.com/haleymac/Ouroboros_pypi"
+Homepage = "https://github.com/haleymac/Ouroboros"
 
 [build-system]
-requires = ["setuptools>=42"]
+requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
+
+
+[project.scripts]
+ouroboros = "Ouroboros.main:main"
+
+[tool.setuptools.package-data]
+"ouroboros" = ["data/*.h5ad"]
 
