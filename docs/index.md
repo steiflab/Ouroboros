@@ -16,11 +16,183 @@ It projects cells into a spherical latent space based on a learned reference emb
 
 **ouroboros_embeddings_pseudotimes.csv:** Dataframe with cell id as index, containing discrete KNN phases, cell cycle pseudotime and dormancy depth values for each cell in your dataset. 
 
+**ouroboros_knn_sphere.html:** 3D visualization of your dataset embedded in VAE latent space, coloured by KNN phases 
+
+**ouroboros_cell_cycle_pseudotime.html:** 3D visualization of your dataset embedded in VAE latent space, coloured by cell cycle pseudotimes
+- note that any cells that fall in the 'dormancy' range will be given a cell cycle pseudotime value of NA, and will be coloured grey 
+
+**ouroboros_dormancy_depth.html:** 3D visualization of your dataset embedded in VAE latent space, coloured by dormancy depth
+- note that any cells that fall in the 'cell cycling' range will be given a dormancy depth value of NA, and will be coloured grey 
 
 
 ---
 
-## 🔧 Installation
+## Installation 
 
+**Dependencies:**
+- python=3.6
+- numpy>=1.16.4
+- scipy>=1.3.0
+- pandas>=0.21.0
+- anndata=0.7.5
+- matplotlib>=3.1.0
+- seaborn>=0.11.2
+- plotly>=5.24.1
+- tensorflow=1.14
+- tensorflow-probability=0.7.0
+- scPhere
+- scikit-learn>=0.24.2
+
+
+To install manually follow these commands: 
+*Note I prefer mamba to conda because it's far faster, but you can just replace any instance of 'mamba' with 'conda' if you wish*
+```bash 
+conda create -n ouroboros_env python=3.6
+conda activate ouroboros_env
+
+mamba install "numpy>=1.16.4" "scipy>=1.3.0" "pandas>=0.21.0" "anndata=0.7.5" "matplotlib>=3.1.0" "seaborn>=0.11.2" "plotly>=5.24.1" "scikit-learn>=0.24.2" "scanpy" "cartopy"
+
+pip install tensorflow==1.14
+pip install -U tensorflow-probability==0.7.0
+
+pip install "setuptools_scm<6.4"
+
+git clone https://github.com/klarman-cell-observatory/scPhere
+cd scPhere
+python setup.py install
+
+
+git clone https://github.com/haleymac/Ouroboros.git
+cd Ouroboros/
+pip install .
+```
+
+These commands have been included in install.sh as well, so to avoid calling them manually just run: 
 ```bash
-pip install ouroboros
+# Grab the installation script
+wget https://raw.githubusercontent.com/haleymac/Ouroboros/main/install.sh
+# execute it
+bash install.sh
+```
+This will only work if you already have conda and mamba installed. Also note that 2 github repos (scPhere and Ouroboros) will be dumped in the working directory. 
+
+
+
+---
+
+## To run Ouroboros on an h5ad/ Scanpy object
+
+### A note on feature genes
+
+A specific feature set was used to originally train Ouroboros and create the VAE latent space. If your count matrix is missing any of these genes (maybe you used a different reference or filtered them out) Ouroboros will take the features that do exist in your count matrix and **retrain** the VAE, resulting in a slightly different latent space. This could result in lower accuracy than if the full feature set is used. 
+
+I made functions (R and Python) to test if you're missing any genes before deploying Ouroboros - see wiki tutorials [add links] for more information. 
+
+Note also that feature genes are named by their HUGO gene names( ex. CCNE1, CCNE2), and not by their ensembl IDs (ENS...) so ensure your adata.var_names or R gene names are in this format before running Ouroboros. 
+
+
+
+
+### To run Ouroboros on an h5ad/ Scanpy object
+
+It's important to note that Ouroboros only works on **raw** counts, so make sure your raw counts are saved under adata.layers['raw_counts'] where Ouroboros can find them, and then save your scanpy object as an h5ad:
+
+```python 
+anndata.write_h5ad(adata.h5ad)
+```
+
+Then you can run Ouroboros on the command line like so: 
+```bash 
+ouroboros \
+    --data /path/to/h5ad  \
+    --data_type h5ad \
+    --species human \
+    --outdir /path/to/output/directory
+```
+
+Arguments: 
+| Argument      | Description                                                                   |
+| ------------- | ----------------------------------------------------------------------------- |
+| `--data`      | **Required.** Path to your input data file. Must be a `.h5ad` or `.csv` file. |
+| `--data_type` | **Required.** Format of the input data. Must be `h5ad` or `csv`.              |
+| `--species`   | Species of origin for the dataset. Must be `human` or `mouse`.  Default is human |
+| `--outdir`    | Output directory where results (embeddings, figures, logs) will be saved. Default is '.'|
+
+
+
+
+
+
+### To run Ouroboros on an R/Seurat object
+Apologies, I'm mostly a python user so Ouroboros is largely tailered to those who use scanpy and h5ad objects. Given this, running Ouroboros for an R user requires a little bit of fussing, but is possible! Here are the instructions for doing so:
+
+It's important to note that Ouroboros only works on **raw** counts. If you are using R (and therefore probably Seurat?) you will need to save your counts as a csv, with genes as your column names and cell ids under the columns 'cell_id' like so: 
+
+** MAKE SURE YOU SAVE YOUR RAW COUNTS, NOT YOUR NORMALIZED COUNTS!!!!**
+```
+# Extract RAW counts matrix from Seurat object
+counts <- GetAssayData(seurat_obj, slot = "counts")
+
+# Transpose and convert to data frame
+df <- as.data.frame(Matrix::t(counts))
+
+# Add cell IDs as a column named "cell_id"
+df$cell_id <- rownames(df)
+
+# Move 'cell_id' to the first column
+df <- df[, c("cell_id", setdiff(names(df), "cell_id"))]
+
+# Write to CSV
+write.csv(df, file = "test_df.csv", row.names = FALSE)
+```
+
+Once your h5ad or csv is saved, you can call Ouroboros on the command line:
+
+
+```bash 
+ouroboros \
+    --data /path/to/csv  \
+    --data_type csv \
+    --species human \
+    --outdir /path/to/output/directory
+```
+
+
+
+## Performance
+
+### Embedding cells in latent space without retraining: 
+- Run time: ~1 minute 55 seconds (CPU)
+- CPU utilization: ~48%
+- Memory usage: ~3.16 GB RAM
+- Disk I/O:
+    - Read: ~4.0 GB
+    - Written: ~60 MB
+- Context switches:
+    - Voluntary: 53,484
+    - Involuntary: 123,998
+- Hardware used:
+    - CPU: Intel(R) Xeon(R) E7-8867 v4 @ 2.40GHz
+    - RAM: 1.5 TB
+
+### When retraining the model: 
+Our training dataset includes 5698 cells and 226 genes. When training (or retraining with missing genes):
+
+- Training time: ~2 minutes (CPU)
+- Memory usage: ~821.64 MB RAM
+- Hardware used: 
+    - **CPU**: Intel(R) Xeon(R) E7-8867 v4 @ 2.40GHz
+    - **RAM**: 1.5 TB
+
+The model is always retrained on the same number of cells, but will likely run faster if fewer features genes are included. Note this will likely make the model less accurate however. 
+
+
+
+
+## Plotting Ouroboros output
+
+We have included several python functions to help you explore the Ouroboros output sphere. 
+
+plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, velocity = None, marker_size = 2, cycle_pole = reference_CC_pole_point, savefig = None, show = False)
+
+

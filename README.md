@@ -1,6 +1,6 @@
 # Ouroboros
 
-![Ouroboros](docs/media/sphere_snake.png)
+<img src="docs/media/sphere_snake.png" alt="Ouroboros" width="200">
 
 Ouroboros is designed to find cell cycle phase, cell cycle pseudotime and dormancy depth in scRNAseq datasets. It uses transfer learning within the latent space of a variational autoencoder to infer these features on new datasets. 
 
@@ -123,27 +123,10 @@ Once your h5ad or csv is saved, you can call Ouroboros on the command line:
 
 
 
-
-
-
-## Performance
-Our training dataset includes 5698 cells and 226 genes. When training (or retraining with missing genes):
-
-- Training time: ~2 minutes (CPU)
-- Memory usage: ~821.64 MB RAM
-- Hardware used: 
-    - **CPU**: Intel(R) Xeon(R) E7-8867 v4 @ 2.40GHz
-    - **RAM**: 1.5 TB
-
-The model is always retrained on the same number of cells, but will likely run faster if fewer features genes are included. Note this will likely make the model less accurate however. 
-
-
-
-
 ## Plotting Ouroboros output
 
 We have included several python functions to help you explore the Ouroboros output sphere. 
 
-plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, velocity = None, marker_size = 2, cycle_pole = reference_CC_pole_point, savefig = None, show = False)
+See Wiki tutorials for more information [*add link*]
 
 
