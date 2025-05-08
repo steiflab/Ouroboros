@@ -1,0 +1,21 @@
+[project]
+name = "ouroboros"
+version = "0.1.0"
+description = "A toolkit for invesitgating cell cycling dynamics in scRNA-seq"
+readme = "README.md"
+requires-python = "==3.6.*"
+license = {text = "MIT"}
+authors = [
+  {name = "Haley MacDonald", email = "hmacdonald@bcgsc.ca"}
+]
+dependencies = [
+  "scphere @ git+https://github.com/klarman-cell-observatory/scPhere.git"
+]
+
+[project.urls]
+Homepage = "https://github.com/haleymac/Ouroboros_pypi"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+

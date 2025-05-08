@@ -1,0 +1,21 @@
+name: ouroboros_env
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.6
+  - numpy
+  - scipy
+  - pandas
+  - matplotlib
+  - ca-certificates
+  - certifi
+  - openssl
+  - anaconda::jupyter
+  - plotly
+  - anndata=0.7.5
+  - cartopy
+  - anaconda::scikit-learn
+  - seaborn
+  - scikit-posthocs
