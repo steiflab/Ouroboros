@@ -1,6 +1,6 @@
-<h1 style="display: flex; align-items: center; justify-content: space-between;">
-  <span>Ouroboros</span>
-  <img src="docs/media/sphere_snake.png" alt="Ouroboros" width="120">
+<h1>
+  Ouroboros
+  <img src="docs/media/sphere_snake.png" alt="Ouroboros logo" style="float: right; width: 120px; margin-left: 20px;">
 </h1>
 
 
