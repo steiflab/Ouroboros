@@ -9,15 +9,20 @@ VAE latent space:
 
 ## Installation 
 
-Ouroboros is a specific implementation of scPhere: [https://github.com/klarman-cell-observatory/scPhere]. Therefore the first thing to do is to download scPhere and get it all set up and working:
+#### Option 1: from github with pip
+```bash 
+conda create -n ouroboros_env python=3.6
+
+conda activate ouroboros_env
+```
 
 
-#### Option 1: yaml build
+#### Option 2: yaml build
 If you are running on linux you can likely just use my environment yaml to build your own environment:
 
 
 
-#### Option 2: manual installation 
+#### Option 3: manual installation 
 **Step 1: Make a conda env:**
 ```bash 
 conda create -n ouroboros_env python=3.6
@@ -26,6 +31,23 @@ conda activate ouroboros_env
 ```
 
 **Step 2: install dependencies**
+Ouroboros is a specific implementation of scPhere from the Klarman cell observatory: [https://github.com/klarman-cell-observatory/scPhere]. Therefore the first thing to do is to download scPhere and get it all set up and working:
+
+```bash
+git clone https://github.com/klarman-cell-observatory/scPhere
+
+python setup.py install
+```
+
+
+
+
+
+
+
+
+
+
 **Dependencies:**
 With conda (or better yet mamba)
 
