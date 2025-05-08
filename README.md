@@ -26,22 +26,21 @@ For more information see the Wiki: *add wiki*
 To install manually follow these commands: 
 *Note I prefer mamba to conda because it's far faster, but you can just replace any instance of 'mamba' with 'conda' if you wish*
 ```bash 
-conda create -n manual_test python=3.6
+conda create -n ouroboros_env python=3.6
+conda activate ouroboros_env
 
-mamba install "numpy>=1.16.4" "scipy>=1.3.0" "pandas>=0.21.0" "anndata=0.7.5" "matplotlib>=3.1.0" "seaborn>=0.11.2" "plotly>=5.24.1"
+mamba install "numpy>=1.16.4" "scipy>=1.3.0" "pandas>=0.21.0" "anndata=0.7.5" "matplotlib>=3.1.0" "seaborn>=0.11.2" "plotly>=5.24.1" "scikit-learn>=0.24.2" "scanpy" "cartopy"
 
 pip install tensorflow==1.14
 pip install -U tensorflow-probability==0.7.0
 
-cd /projects/steiflab/research/hmacdonald/applications/
+pip install "setuptools_scm<6.4"
+
 
 git clone https://github.com/klarman-cell-observatory/scPhere
 cd scPhere
 python setup.py install
 
-mamba install "scikit-learn>=0.24.2"
-
-mamba install cartopy
 
 git clone https://github.com/haleymac/Ouroboros.git
 cd Ouroboros/
@@ -52,7 +51,7 @@ These commands have been included in install.sh as well, so to avoid calling the
 ```bash
 # Grab the installation script
 wget https://raw.githubusercontent.com/haleymac/Ouroboros/main/install.sh
-#execute it
+# execute it
 bash install.sh
 ```
 This will only work if you already have conda and mamba installed. Also note that 2 github repos (scPhere and Ouroboros) will be dumped in the working directory. 

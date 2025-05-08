@@ -14,7 +14,9 @@
 
 It projects cells into a spherical latent space based on a learned reference embeddings, enabling interpretable visualization of cell cycle and dormancy states. Output includes:
 
-ouroboros_embeddings_pseudotimes.csv()
+**ouroboros_embeddings_pseudotimes.csv:** Dataframe with cell id as index, containing discrete KNN phases, cell cycle pseudotime and dormancy depth values for each cell in your dataset. 
+
+
 
 ---
 
