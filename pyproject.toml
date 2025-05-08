@@ -35,10 +35,10 @@ Homepage = "https://github.com/haleymac/Ouroboros"
 requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
-
 [project.scripts]
 ouroboros = "Ouroboros.main:main"
 
 [tool.setuptools.package-data]
-"ouroboros" = ["data/*.h5ad"]
+"ouroboros" = ["data/*"]
+
 

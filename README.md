@@ -1,99 +1,66 @@
 # Ouroboros
 
+![Ouroboros](docs/media/sphere_snake.png)
+
 Ouroboros is designed to find cell cycle phase, cell cycle pseudotime and dormancy depth in scRNAseq datasets. It uses transfer learning within the latent space of a variational autoencoder to infer these features on new datasets. 
 
-VAE latent space: 
-
-*add spinning png*
-
+For more information see the Wiki: *add wiki*
 
 ## Installation 
 
-#### For those in the Steif lab:
-
-Just clone my environment:
-
-```bash
-mamba create --name ouroboros_env --clone /projects/steiflab/research/hmacdonald/applications/python/miniconda3/envs/old_sphere3.6
-```
-
-The rest of installation instructions is a work in progress...
-#### Option 1: from github with pip
-```bash 
-conda create -n ouroboros_env python=3.6
-
-conda activate ouroboros_env
-```
-
-
-#### Option 2: yaml build
-If you are running on linux you can likely just use my environment yaml to build your own environment:
-
-
-
-#### Option 3: manual installation 
-**Step 1: Make a conda env:**
-```bash 
-conda create -n ouroboros_env python=3.6
-
-conda activate ouroboros_env
-```
-
-**Step 2: install dependencies**
-Ouroboros is a specific implementation of scPhere from the Klarman cell observatory: [https://github.com/klarman-cell-observatory/scPhere]. Therefore the first thing to do is to download scPhere and get it all set up and working:
-
-```bash
-git clone https://github.com/klarman-cell-observatory/scPhere
-
-cd path/to/scphere/installation
-
-python setup.py install
-```
-
-
-
-
 **Dependencies:**
-With conda (or better yet mamba)
+- python=3.6
+- numpy>=1.16.4
+- scipy>=1.3.0
+- pandas>=0.21.0
+- anndata=0.7.5
+- matplotlib>=3.1.0
+- seaborn>=0.11.2
+- plotly>=5.24.1
+- tensorflow=1.14
+- tensorflow-probability=0.7.0
+- scPhere
+- scikit-learn>=0.24.2
 
-numpy >= 1.16.4
-scipy >= 1.3.0
-pandas >= 0.21.0
-anndata = 0.7.5
-matplotlib >= 3.1.0
-seaborn >= 0.11.2
-plotly >= 5.24.1
 
-Install with conda: 
-```bash
-conda install numpy=1.16.4 scipy=1.3.0 pandas=0.21.0 anndata=0.7.5 matplotlib=3.1.0 seaborn=0.11.2 plotly=5.24.1
-```
+To install manually follow these commands: 
+*Note I prefer mamba to conda because it's far faster, but you can just replace any instance of 'mamba' with 'conda' if you wish*
+```bash 
+conda create -n manual_test python=3.6
 
-Tensorflow v1.14.0 
-tensorflow-probability v0.7.0 
-We can use pip (in terminal) to install these packages, e.g.,
-```bash
+mamba install "numpy>=1.16.4" "scipy>=1.3.0" "pandas>=0.21.0" "anndata=0.7.5" "matplotlib>=3.1.0" "seaborn>=0.11.2" "plotly>=5.24.1"
+
 pip install tensorflow==1.14
 pip install -U tensorflow-probability==0.7.0
+
+cd /projects/steiflab/research/hmacdonald/applications/
+
+git clone https://github.com/klarman-cell-observatory/scPhere
+cd scPhere
+python setup.py install
+
+mamba install "scikit-learn>=0.24.2"
+
+mamba install cartopy
+
+git clone https://github.com/haleymac/Ouroboros.git
+cd Ouroboros/
+pip install .
 ```
 
-If you want to make fancy flattened Robinson projections you should also include cartopy, though it isn't necessary to just run Ouroboros on the command line:
+These commands have been included in install.sh as well, so to avoid calling them manually just run: 
 ```bash
-conda install cartopy=0.19.0.post1
+# Grab the installation script
+wget https://raw.githubusercontent.com/haleymac/Ouroboros/main/install.sh
+#execute it
+bash install.sh
 ```
-
-#### Velocity environment 
-Unfourtunately scvelo is very fussy with what packages it will play nice with, so  I ended up making a seperate environment to plot it's velocity vectors on my sphere:
-
-the yaml for this env is called 'velocity_environment.yaml'
-To build an env from it: 
-
-*finish this*
+This will only work if you already have conda and mamba installed. Also note that 2 github repos (scPhere and Ouroboros) will be dumped in the working directory. 
 
 
 
 ## Running Ouroboros 
-For a full tutorial see the Wiki (though note this is geared towards python users): *add wiki*
+For a full tutorial see the Wiki: *add wiki*
 
 Ouroboros is a command line tool designed to take either a saved .h5ad object or if you are an R user a saved csv with a cell/gene count matrix. 
 
@@ -120,8 +87,8 @@ Arguments:
 | ------------- | ----------------------------------------------------------------------------- |
 | `--data`      | **Required.** Path to your input data file. Must be a `.h5ad` or `.csv` file. |
 | `--data_type` | **Required.** Format of the input data. Must be `h5ad` or `csv`.              |
-| `--species`   | Species of origin for the dataset. Must be `human` or `mouse`.                |
-| `--outdir`    | Output directory where results (embeddings, figures, logs) will be saved.     |
+| `--species`   | Species of origin for the dataset. Must be `human` or `mouse`.  Default is human |
+| `--outdir`    | Output directory where results (embeddings, figures, logs) will be saved. Default is '.'|
 
 
 
