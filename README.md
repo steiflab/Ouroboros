@@ -36,7 +36,6 @@ pip install -U tensorflow-probability==0.7.0
 
 pip install "setuptools_scm<6.4"
 
-
 git clone https://github.com/klarman-cell-observatory/scPhere
 cd scPhere
 python setup.py install
