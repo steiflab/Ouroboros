@@ -22,6 +22,7 @@ For more information see the Wiki: *add wiki*
 - tensorflow-probability=0.7.0
 - scPhere
 - scikit-learn>=0.24.2
+- nbformat
 
 
 To install manually follow these commands: 
@@ -37,14 +38,21 @@ pip install -U tensorflow-probability==0.7.0
 
 pip install "setuptools_scm<6.4"
 
+pip install importlib_resources
+
 git clone https://github.com/klarman-cell-observatory/scPhere
 cd scPhere
 python setup.py install
-
+cd ../
 
 git clone https://github.com/haleymac/Ouroboros.git
 cd Ouroboros/
 pip install .
+
+pip install --upgrade nbformat
+
+# necessary for subsequent plotting only, not running Ouroboros main
+pip install -U kaleido
 ```
 
 These commands have been included in install.sh as well, so to avoid calling them manually just run: 
@@ -57,6 +65,11 @@ bash install.sh
 This will only work if you already have conda and mamba installed. Also note that 2 github repos (scPhere and Ouroboros) will be dumped in the working directory. 
 
 
+
+Also if you want to plot in a jupyter notebook like in the tutorial you will need an older version of ipykernal:
+```bash 
+mamba install ipykernel=5.5 jupyter_client=6.1.12 jupyter_core=4.7.1
+```
 
 ## Running Ouroboros 
 For a full tutorial see the Wiki: *add wiki*
@@ -129,5 +142,6 @@ Once your h5ad or csv is saved, you can call Ouroboros on the command line:
 We have included several python functions to help you explore the Ouroboros output sphere. 
 
 See Wiki tutorials for more information [*add link*]
+
 
 

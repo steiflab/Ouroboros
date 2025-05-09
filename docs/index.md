@@ -44,6 +44,7 @@ It projects cells into a spherical latent space based on a learned reference emb
 - scikit-learn>=0.24.2
 
 
+
 To install manually follow these commands: 
 *Note I prefer mamba to conda because it's far faster, but you can just replace any instance of 'mamba' with 'conda' if you wish*
 ```bash 
@@ -57,14 +58,22 @@ pip install -U tensorflow-probability==0.7.0
 
 pip install "setuptools_scm<6.4"
 
+pip install importlib_resources
+
 git clone https://github.com/klarman-cell-observatory/scPhere
 cd scPhere
 python setup.py install
+cd ../
 
 
 git clone https://github.com/haleymac/Ouroboros.git
 cd Ouroboros/
 pip install .
+
+pip install --upgrade nbformat
+
+# necessary for subsequent plotting only, not running Ouroboros main
+pip install -U kaleido
 ```
 
 These commands have been included in install.sh as well, so to avoid calling them manually just run: 

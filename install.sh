@@ -27,6 +27,7 @@ cd /projects/steiflab/research/hmacdonald/applications/
 git clone https://github.com/klarman-cell-observatory/scPhere || true
 cd scPhere
 python setup.py install
+cd ../
 
 # Clone and install Ouroboros
 echo "Cloning and installing Ouroboros..."
@@ -34,6 +35,11 @@ cd /projects/steiflab/research/hmacdonald/applications/
 git clone https://github.com/haleymac/Ouroboros.git || true
 cd Ouroboros
 pip install .
+
+pip install --upgrade nbformat
+
+# necessary for subsequent plotting only, not running Ouroboros main
+pip install -U kaleido
 
 echo "✅ Environment setup complete. Activate it with:"
 echo "   conda activate ouroboros_env"

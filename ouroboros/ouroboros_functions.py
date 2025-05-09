@@ -21,6 +21,9 @@ from matplotlib.colors import Normalize
 from matplotlib.cm import get_cmap
 from plotly.io import write_image
 import seaborn as sns
+from scipy.sparse import issparse
+from scipy.spatial.transform import Rotation as R
+
 
 
 reference_CC_pole_point = [0.86202236, 0.24824865, 0.44191636]
@@ -86,6 +89,34 @@ def check_features(data):
         else:
             raise TypeError("Unsupported data type. Expected AnnData or DataFrame.")
     return missing
+
+
+def check_genes(data):
+    missing = []
+    #csv_path = files("ouroboros.data").joinpath("SHAP_feature_set.csv")
+    #feature_set = pd.read_csv(csv_path)
+    feature_set = pd.read_csv(DATA_DIR / 'SHAP_feature_set.csv')
+    feature_set = feature_set.feature_set.tolist()
+    for feature in feature_set:
+        if isinstance(data, ad.AnnData):
+            if feature not in data.var_names.tolist():
+                missing.append(feature)
+        elif isinstance(data, pd.DataFrame):
+            if feature not in list(data.columns):
+                missing.append(feature)
+        else:
+            raise TypeError("Unsupported data type. Expected AnnData or DataFrame.")
+    if len(missing) > 0:
+        print('Some feature genes are missing from your anndata')
+    else:
+        print('No feature genes are missing from your anndata')
+    return missing
+
+
+def read_in_features():
+    feature_set = pd.read_csv(DATA_DIR / 'SHAP_feature_set.csv')
+    feature_set = feature_set.feature_set.tolist()
+    return feature_set
 
 
 def ouroboros_preprocess(data, data_type, species = 'human'):
@@ -303,6 +334,35 @@ def find_cyc_center(z_df, ref_embed, phase_category = 'phase'):
         top_center = -top_center
     return great_circle, top_center
 
+
+def find_cycle_pole(z_df, ref_embed, phase_category = 'KNN_phase'):
+    """ Find a point on the sphere's surface that represents the centre of the cycling cells
+    z_df: embedded points including cycling cells to find the centre of
+    ref_embed: reference embedded points 
+    phase_category: name of the columns with phase labels to parse (needs to have G1/S/G2M)"""
+    cyc = z_df[z_df[phase_category].isin(['G2M', 'S', 'G1'])]
+    points = cyc[['dim1', 'dim2', 'dim3']].values
+    # Fit the great circle
+    great_circle, normal_vector = fit_great_circle(points)
+    top_center = normal_vector / np.linalg.norm(normal_vector)
+
+    # Little test to make sure top point is in the middle of cycling cells and not G0 cells
+    cyc = ref_embed[ref_embed['phase'].isin(['G2M', 'S', 'G1'])]
+    points = cyc[['dim1', 'dim2', 'dim3']].values
+
+    ## Get centroid of G1, S, G2M cells
+    cyc_centroid = np.mean(points, axis=0)
+    ## Get centroid of G0 cells
+    g0 = ref_embed[ref_embed['phase'] == 'G0']
+    g0_points = g0[['dim1', 'dim2', 'dim3']].values
+    g0_centroid = np.mean(g0_points, axis=0)
+    ## Compute dot products
+    dot_cyc = np.dot(top_center, cyc_centroid)
+    dot_g0 = np.dot(top_center, g0_centroid)
+    ## If top_center aligns more with G0, flip it
+    if dot_g0 > dot_cyc:
+        top_center = -top_center
+    return top_center
 
 
 
@@ -1215,7 +1275,7 @@ def normalize_colormap(cmap_name='mako', vmin=-1, vmax=0, n_colors=256):
 
 
 
-def plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, velocity = None, marker_size = 2, cycle_pole = reference_CC_pole_point, savefig = None, show = False):
+def plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, velocity = None, marker_size = 2, cycle_pole = reference_CC_pole_point, savefig = None, show = False, camera_position = None, snap_png = None):
     fig_data = []
 
     # Sphere properties
@@ -1305,8 +1365,212 @@ def plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, veloc
                 )
             )
         )
+    if camera_position:
+        fig.update_layout(scene_camera=camera_position)
+    if snap_png:
+        write_image(fig, snap_png, format="png", width=800, height=800, scale = 2)
     if savefig is not None: 
         fig.write_html(savefig)
     if show == True:
         fig.show()
+    
 
+
+def plot_gene_sphere(
+    z_df,
+    adata,
+    gene_name,
+    layer=None,
+    ref=None,
+    velocity=None,
+    show=False,
+    outpath=None,
+    cycle_pole=reference_CC_pole_point
+):
+    """
+    Plot gene expression projected on the Ouroboros VAE sphere.
+    """
+
+    if gene_name not in adata.var_names:
+        raise ValueError(f"The gene {gene_name} is not in the AnnData object.")
+
+    if layer:
+        adata.X = adata.layers[layer].copy()
+
+    expr = adata[:, gene_name].X
+    gene_expression = expr.toarray().flatten() if issparse(expr) else expr.flatten()
+    z_df["gene_expression"] = gene_expression
+
+    # Geometry
+    coords = z_df[['dim1', 'dim2', 'dim3']].values
+    radius = np.mean(np.linalg.norm(coords, axis=1)) - 0.01
+    offset = 0.01 * radius
+
+    fig_data = []
+
+    # Sphere surface
+    fig_data.append(make_sphere_surface(radius))
+
+    # Pole
+    fig_data.append(make_pole_trace(cycle_pole, 'Poles', color='grey', width=5, radius=radius, extension=1.3))
+
+    # Reference traces
+    if ref is not None and not ref.empty:
+        fig_data += make_reference_traces(ref, radius, offset, marker_size=5, alpha=0.05)
+
+    # Gene expression points
+    x, y, z = z_df['dim1'].values, z_df['dim2'].values, z_df['dim3'].values
+    x, y, z = project_above_sphere(x, y, z, radius, offset)
+    gene_scatter = go.Scatter3d(
+        x=x, y=y, z=z, mode='markers',
+        marker=dict(
+            size=2,
+            color=z_df["gene_expression"],
+            colorscale="Viridis",
+            colorbar=dict(
+                title=f"{gene_name}",
+                len=0.5,
+                thickness=20,
+                x=1.5,
+            ),
+            opacity=1
+        ),
+        name=f"{gene_name}",
+        showlegend=False
+    )
+    fig_data.append(gene_scatter)
+
+    # Velocity
+    if velocity is not None and not velocity.empty:
+        arrows, cone = make_velocity_vectors(z_df, velocity)
+        fig_data += arrows + [cone]
+
+    # Assemble figure
+    fig = go.Figure(data=fig_data)
+    fig.update_layout(
+        title=f"{gene_name}",
+        scene=dict(
+            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False, visible=False),
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False, visible=False),
+            zaxis=dict(showgrid=False, zeroline=False, showticklabels=False, visible=False)
+        ),
+        showlegend=True,
+        legend=dict(
+            x=0.9, 
+            y=0.3, 
+            font=dict(size=14),
+            itemsizing='constant',  
+        ),
+        coloraxis=dict(
+                colorbar=dict(
+                    title=dict(
+                        side="top",
+                        font=dict(size=22)
+                    ),
+                    len=0.4,
+                    thickness=20,
+                    x=0.9,
+                    y=0.65,
+                    yanchor="middle"
+                ))
+            )   
+
+    if outpath:
+        fig.write_html(outpath)
+    if show:
+        fig.show()
+
+
+
+def rotate_north(z_df, reference_CC_pole_point = [0.86202236, 0.24824865, 0.44191636]):
+    """Rotate the cell cycle pole to be north pole
+    Note: will replace dim1, dim2, dim3 in z_df"""
+    new_df = z_df.copy()
+    # Reference point
+    reference_CC_pole_point = np.array(reference_CC_pole_point)
+    target_vector = reference_CC_pole_point / np.linalg.norm(reference_CC_pole_point)
+    # Default North Pole
+    north_pole = np.array([0, 0, 1])
+
+    # Compute rotation axis and angle
+    rotation_axis = np.cross(target_vector, north_pole)
+    if np.linalg.norm(rotation_axis) > 1e-8:  # Avoid division by zero for near-parallel vectors
+        rotation_axis = rotation_axis / np.linalg.norm(rotation_axis)
+    rotation_angle = np.arccos(np.clip(np.dot(target_vector, north_pole), -1.0, 1.0))
+
+    # Create the rotation
+    rotation = R.from_rotvec(rotation_axis * rotation_angle)
+
+    # Extract coordinates
+    coordinates = new_df[['dim1', 'dim2', 'dim3']].values
+
+    # Apply the rotation
+    rotated_coordinates = rotation.apply(coordinates)
+
+    # Update z_df with the rotated coordinates
+    new_df[['dim1', 'dim2', 'dim3']] = rotated_coordinates
+    return new_df
+
+
+
+def camera_position_on_sphere(radius, latitude, longitude, center=(0, 0, 0)):
+    """
+    Calculate the camera position and configuration based on spherical coordinates.
+
+    Parameters:
+    - radius: Distance from the sphere center to the camera.
+    - latitude: Latitude angle in degrees (-90 to 90).
+    - longitude: Longitude angle in degrees (0 to 360).
+    - center: Tuple (x, y, z) representing the center of the sphere (default is (0, 0, 0)).
+
+    Returns:
+    - camera: Dictionary with eye, center, and up vectors for the camera position.
+    """
+    # Convert latitude and longitude to radians
+    lat_rad = np.radians(latitude)
+    lon_rad = np.radians(longitude)
+
+    # Calculate camera position in Cartesian coordinates
+    x = radius * np.cos(lat_rad) * np.cos(lon_rad)
+    y = radius * np.cos(lat_rad) * np.sin(lon_rad)
+    z = radius * np.sin(lat_rad)
+
+    # Camera focus (center of the sphere)
+    focus = dict(x=center[0], y=center[1], z=center[2])
+
+    # "Up" vector remains fixed (z-axis)
+    up = dict(x=0, y=0, z=1)
+
+    # Camera position (eye)
+    eye = dict(x=x + center[0], y=y + center[1], z=z + center[2])
+
+    # Return the camera configuration
+    return dict(eye=eye, center=focus, up=up)
+
+
+
+
+def sphere_snapshot(lat, lon,  z_df, colour_by='KNN_phase', palette=None, radius = 1.2, ref_embed = None, vel_df = None, save_as_png=True, cycle_pole = [0, 0, 1]):
+    radius = radius  # Camera distance from the sphere
+    center = (0, 0, 0)  # Sphere center
+
+    # Example latitude and longitude
+    latitude = lat  # Degrees (e.g., 30° north) Must be (-90 to 90)
+    longitude = lon  # Degrees (e.g., 60° east) Must be (0 to 360)
+
+    # Get camera configuration
+    camera = camera_position_on_sphere(radius, latitude, longitude, center)
+
+
+    # Use the camera configuration in your Plotly plot
+    plot_sphere(
+        z_df=z_df,
+        colour_by=colour_by,
+        palette=palette,
+        ref=ref_embed,
+        cycle_pole=cycle_pole,
+        velocity=vel_df,
+        marker_size = 5,
+        camera_position=camera,
+        snap_png=save_as_png,
+    )
