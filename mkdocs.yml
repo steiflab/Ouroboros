@@ -2,7 +2,8 @@ site_name: Ouroboros
 nav:
   - Home: index.md
   - CLI Usage: usage.md
-  - API Reference: api.md
+  - API Reference (importable functions and descriptions): api.md
+  - Python tutorial: python_tutorial.ipynb
 docs_dir: docs
 plugins:
   - search

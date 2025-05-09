@@ -113,6 +113,13 @@ def check_genes(data):
     return missing
 
 
+def read_in_refembed():
+    ref_embed = pd.read_csv(DATA_DIR / 'reference_embeddings.csv')
+    # set cell id to be index
+    ref_embed = ref_embed.set_index('cell_id')
+    return ref_embed
+
+
 def read_in_features():
     feature_set = pd.read_csv(DATA_DIR / 'SHAP_feature_set.csv')
     feature_set = feature_set.feature_set.tolist()

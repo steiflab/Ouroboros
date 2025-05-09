@@ -14,7 +14,8 @@ from .ouroboros_functions import (
     plot_gene_sphere,
     find_cycle_pole,
     sphere_snapshot,
-    rotate_north
+    rotate_north,
+    convert_to_human_genes
 )
 
 __version__ = "0.1.0"
