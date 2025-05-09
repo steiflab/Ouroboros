@@ -1380,6 +1380,7 @@ def plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, veloc
         fig.write_html(savefig)
     if show == True:
         fig.show()
+    return fig
     
 
 

@@ -30,3 +30,5 @@ tf.py_func is deprecated in TF V2. Instead, there are two
 Instructions for updating:
 Use standard file APIs to check for files with this prefix.
 2025-05-09 14:45:20,361 - INFO - Restoring parameters from /projects/steiflab/research/hmacdonald/applications/Ouroboros/ouroboros/data/model/model
+2025-05-09 16:20:59,243 - INFO - All training genes present, embedding your cells in VAE latent space...
+2025-05-09 16:21:01,590 - INFO - Restoring parameters from /projects/steiflab/research/hmacdonald/applications/Ouroboros/ouroboros/data/model/model
