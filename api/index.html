@@ -160,6 +160,26 @@ Runs the full Ouroboros pipeline on either <code>.h5ad</code> or <code>.csv</cod
 <p><strong>Returns:</strong><br />
 <code>pandas.DataFrame</code> — DataFrame containing 3D coordinates and predicted states for each cell.</p>
 <hr />
+<h2 id="check_genesadata"><code>check_genes(adata)</code></h2>
+<p><strong>Description:</strong> Checks if any feature genes are missing from a test anndata object. Returns a list of missing genes </p>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>adata</code></td>
+<td><code>AnnData</code></td>
+<td>Test anndata object with adata.var_names in HUGO formatting (e.x. <code>CCNE1</code>)</td>
+</tr>
+</tbody>
+</table>
+<hr />
 <h2 id="plot_spherez_df-colour_by-knn_phase-palette-none-ref-none-velocity-none-marker_size-2-cycle_pole-086202236-024824865-044191636-savefig-none-show-false"><code>plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, velocity = None, marker_size = 2, cycle_pole = [0.86202236, 0.24824865, 0.44191636], savefig = None, show = False)</code></h2>
 <p><strong>Description:</strong><br />
 Generates an interactive 3D spherical projection of the Ouroboros latent space.</p>
