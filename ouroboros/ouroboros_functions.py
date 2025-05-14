@@ -288,10 +288,6 @@ def embed_in_retrained_sphere(adata, model, in_order_feature_set):
     
 
 
-
-
-
-
 def fit_great_circle(points):
     """ Fit a great circle around the sphere capturing variation along a set of points
     points = set of points"""
@@ -909,7 +905,7 @@ def make_ref_bin_df_from_g0_tip(projected_df):
         direction = 'positive_direction'
 
         # Normalize the angle to the range [0, 1] for pseudotime
-    bin_df['g0_pseudotime'] = bin_df['adjusted_angle'] / (2 * np.pi)
+    bin_df['dormancy_depth'] = bin_df['adjusted_angle'] / (2 * np.pi)
     return bin_df, switch_angle, switched 
 
 
@@ -929,7 +925,7 @@ def make_z_bin_df(z_projected_df, switch_angle, switched):
     if switched == True:
         bin_df['adjusted_angle'] = bin_df['adjusted_angle']*-1
             # Normalize the angle to the range [0, 1] for pseudotime
-    bin_df['g0_pseudotime'] = bin_df['adjusted_angle'] / (2 * np.pi)
+    bin_df['dormancy_depth'] = bin_df['adjusted_angle'] / (2 * np.pi)
     return bin_df
 
 
@@ -941,16 +937,16 @@ def find_g0_tip(bin_df):
     # Calculate the distance from the center (0, 0)
     outer_df['distance'] = np.sqrt(outer_df['x']**2 + outer_df['y']**2)
     # Classify points within the inner radius as 'NaN' or a label
-    outer_df['g0_pseudotime'] = np.where(
+    outer_df['dormancy_depth'] = np.where(
         outer_df['distance'] <= inner_radius,
         np.nan,  # Assign NaN to inner points
-        outer_df['g0_pseudotime']  # Keep original classification for outer points
+        outer_df['dormancy_depth']  # Keep original classification for outer points
     )
     # Now use the new adjusted angle to find the center of the points around the G0 tip in spherical space
-    if outer_df['g0_pseudotime'].min() < 0:
-        high_g0 = outer_df[outer_df['g0_pseudotime'] > -0.1]
+    if outer_df['dormancy_depth'].min() < 0:
+        high_g0 = outer_df[outer_df['dormancy_depth'] > -0.1]
     else:
-        high_g0 = outer_df[outer_df['g0_pseudotime'] > 0.9]
+        high_g0 = outer_df[outer_df['dormancy_depth'] > 0.9]
     ## Extract the points
     points = high_g0[['dim1', 'dim2', 'dim3']].values
     ## Compute the Cartesian median
@@ -963,10 +959,10 @@ def find_g0_tip(bin_df):
 
 def find_g0_transition_point(bin_df, reference_df, phase_category = 'KNN_phase'):
     #Bin cells along angles so we can find gap between G0 and cell cycle
-    min_angle = bin_df['g0_pseudotime'].min()
-    max_angle = bin_df['g0_pseudotime'].max()
+    min_angle = bin_df['dormancy_depth'].min()
+    max_angle = bin_df['dormancy_depth'].max()
     bin_edges = np.linspace(min_angle, max_angle, 40 + 1)
-    bin_df['bin'] = pd.cut(bin_df['g0_pseudotime'], bins=bin_edges, labels=False, include_lowest=True)
+    bin_df['bin'] = pd.cut(bin_df['dormancy_depth'], bins=bin_edges, labels=False, include_lowest=True)
 
     binned_data = bin_df.groupby('bin')[phase_category].value_counts().unstack(fill_value=0)
 
@@ -1020,16 +1016,16 @@ def assign_new_retrained_g0_pseudotime(bin_df, g0_tip, transition_cell):
     bin_df['g0_latitude'] = latitude
 
     trans_latitude = bin_df[bin_df.index == transition_cell]['g0_latitude'][0]
-    bin_df['g0_pseudotime'] = np.where(bin_df['g0_latitude'] > trans_latitude, np.nan, bin_df['g0_latitude'])
+    bin_df['dormancy_depth'] = np.where(bin_df['g0_latitude'] > trans_latitude, np.nan, bin_df['g0_latitude'])
     # Find min and max g0_pseudotime values (excluding NaNs)
-    min_pseudotime = bin_df['g0_pseudotime'].min()
+    min_pseudotime = bin_df['dormancy_depth'].min()
     max_pseudotime = trans_latitude  # Transition latitude (upper bound)
 
     # Normalize g0_pseudotime to [-1, 0]
-    bin_df['g0_pseudotime'] = -1 + (bin_df['g0_pseudotime'] - min_pseudotime) / (max_pseudotime - min_pseudotime)
+    bin_df['dormancy_depth'] = -1 + (bin_df['dormancy_depth'] - min_pseudotime) / (max_pseudotime - min_pseudotime)
 
     # Ensure NaN values stay NaN
-    bin_df['g0_pseudotime'] = np.where(bin_df['g0_latitude'] > trans_latitude, np.nan, bin_df['g0_pseudotime'])
+    bin_df['dormancy_depth'] = np.where(bin_df['g0_latitude'] > trans_latitude, np.nan, bin_df['dormancy_depth'])
 
     return bin_df, trans_latitude
 
@@ -1051,13 +1047,13 @@ def assign_dormancy_depth_in_reference(ref_embed, g0_tip):
     #embed['south'] = np.where(embed.index.isin(south_df.index.tolist()), False, True)
     embed['south'] = embed.index.isin(south_df.index.tolist())  # True if in south_df
 
-    embed['g0_pseudotime'] = np.where(embed['south'], embed['g0_latitude'], np.nan)
+    embed['dormancy_depth'] = np.where(embed['south'], embed['g0_latitude'], np.nan)
     # Find min and max g0_pseudotime values (excluding NaNs)
-    min_pseudotime = embed['g0_pseudotime'].min()
-    max_pseudotime = embed['g0_pseudotime'].max()  # Transition latitude (upper bound)
+    min_pseudotime = embed['dormancy_depth'].min()
+    max_pseudotime = embed['dormancy_depth'].max()  # Transition latitude (upper bound)
 
     # Normalize g0_pseudotime to [-1, 0]
-    embed['g0_pseudotime'] = -1 + (embed['g0_pseudotime'] - min_pseudotime) / (max_pseudotime - min_pseudotime)
+    embed['dormancy_depth'] = -1 + (embed['dormancy_depth'] - min_pseudotime) / (max_pseudotime - min_pseudotime)
     return embed
 
 
@@ -1071,15 +1067,15 @@ def assign_g0_pseud_to_all_cells(z_bin_df, g0_tip):
     z_bin_df['g0_latitude'] = latitude
     
     trans_latitude = z_bin_df['g0_latitude'].max()
-    z_bin_df['g0_pseudotime'] = np.where(z_bin_df['g0_latitude'] > trans_latitude, np.nan, z_bin_df['g0_latitude'])
+    z_bin_df['dormancy_depth'] = np.where(z_bin_df['g0_latitude'] > trans_latitude, np.nan, z_bin_df['g0_latitude'])
     # Find min and max g0_pseudotime values (excluding NaNs)
-    min_pseudotime = z_bin_df['g0_pseudotime'].min()
+    min_pseudotime = z_bin_df['dormancy_depth'].min()
     max_pseudotime = trans_latitude  # Transition latitude (upper bound)
 
     # Normalize g0_pseudotime to [-1, 0]
-    z_bin_df['g0_pseudotime'] = -1 + (z_bin_df['g0_pseudotime'] - min_pseudotime) / (max_pseudotime - min_pseudotime)
+    z_bin_df['dormancy_depth'] = -1 + (z_bin_df['dormancy_depth'] - min_pseudotime) / (max_pseudotime - min_pseudotime)
     # Ensure NaN values stay NaN
-    z_bin_df['g0_pseudotime'] = np.where(z_bin_df['g0_latitude'] > trans_latitude, np.nan, z_bin_df['g0_pseudotime'])
+    z_bin_df['dormancy_depth'] = np.where(z_bin_df['g0_latitude'] > trans_latitude, np.nan, z_bin_df['dormancy_depth'])
     return z_bin_df, trans_latitude
 
 
@@ -1148,14 +1144,13 @@ def dormancy_depth(z_df, ref_embed, retrained = False):
         # Compute latitude of points from G0 tip
         latitude = np.arccos(dot_products / np.linalg.norm(points, axis=1))
         south_df['g0_latitude'] = latitude
-        south_df['g0_pseudotime'] = np.where(south_df['g0_latitude'] >= ref_trans_latitude, np.nan, south_df['g0_latitude'])
+        south_df['dormancy_depth'] = np.where(south_df['g0_latitude'] >= ref_trans_latitude, np.nan, south_df['g0_latitude'])
         min_pseudotime = -1
         max_pseudotime = ref_trans_latitude  # Transition latitude (upper bound)
         # Normalize g0_pseudotime to [-1, 0]
-        south_df['g0_pseudotime'] = -1 + (south_df['g0_pseudotime'] - min_pseudotime) / (max_pseudotime - min_pseudotime)
-        pseud = south_df[['g0_pseudotime']]
-        pseud = pseud.rename(columns = {'g0_pseudotime': 'dormancy_depth'})
-        'G0 pseudotime calculated :D'
+        south_df['dormancy_depth'] = -1 + (south_df['dormancy_depth'] - min_pseudotime) / (max_pseudotime - min_pseudotime)
+        pseud = south_df[['dormancy_depth']]
+        'Dormancy depth calculated :D'
         z_df = z_df.merge(pseud, how = 'left', left_index = True, right_index = True)
         return z_df
     
