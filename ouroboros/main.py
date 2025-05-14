@@ -210,8 +210,8 @@ def run_ouroboros(data, data_type, species = 'human', outdir = '.'):
         pseud, ref_pseud = dormancy_depth(z_df, ref_embed, retrained = True)
         z_df = z_df.merge(pseud, how = 'left', left_index = True, right_index = True)
         z_df.to_csv(f'{outdir}/ouroboros_embeddings_pseudotimes.csv')
-        plot_sphere(z_df, colour_by = 'cell_cycle_pseudotime', palette = None, ref = ref_embed, velocity = None, marker_size = 2, cycle_pole = reference_CC_pole_point, savefig = f'{outdir}/ouroboros_cell_cycle_pseudotime.html', show = True)
-        plot_sphere(z_df, colour_by = 'dormancy_depth', palette = None, ref = ref_embed, velocity = None, marker_size = 2, cycle_pole = reference_CC_pole_point, savefig = f'{outdir}/ouroboros_dormancy_depth.html', show = True)
+        plot_sphere(z_df, colour_by = 'cell_cycle_pseudotime', palette = None, ref = ref_embed, velocity = None, marker_size = 2, cycle_pole = reference_CC_pole_point, savefig = f'{outdir}/ouroboros_cell_cycle_pseudotime.html', show = False)
+        plot_sphere(z_df, colour_by = 'dormancy_depth', palette = None, ref = ref_embed, velocity = None, marker_size = 2, cycle_pole = reference_CC_pole_point, savefig = f'{outdir}/ouroboros_dormancy_depth.html', show = False)
         show_progress(3)
         return z_df
         

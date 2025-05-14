@@ -1,20 +1,20 @@
-2025-05-14 10:00:59,425 - INFO - Note: detected 144 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
-2025-05-14 10:00:59,426 - INFO - Note: NumExpr detected 144 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 8.
-2025-05-14 10:00:59,426 - INFO - NumExpr defaulting to 8 threads.
-2025-05-14 10:00:59,984 - INFO - dirname: Trying to get version from dirname /projects/steiflab/research/hmacdonald/applications/python/miniconda3/envs/ouroboros_env/lib/python3.6/site-packages
-2025-05-14 10:00:59,987 - INFO - dirname: Failed; Directory name 'site-packages' does not contain a valid version
-2025-05-14 10:00:59,988 - INFO - git: Trying to get version from VCS in directory /projects/steiflab/research/hmacdonald/applications/python/miniconda3/envs/ouroboros_env/lib/python3.6/site-packages
-2025-05-14 10:01:13,374 - INFO - VCS: Succeeded
-2025-05-14 10:01:13,375 - INFO - dirname: Trying to get version from dirname /projects/steiflab/research/hmacdonald/applications/python/miniconda3/envs/ouroboros_env/lib/python3.6/site-packages
-2025-05-14 10:01:13,376 - INFO - dirname: Failed; Directory name 'site-packages' does not contain a valid version
-2025-05-14 10:01:13,376 - INFO - git: Trying to get version from VCS in directory /projects/steiflab/research/hmacdonald/applications/python/miniconda3/envs/ouroboros_env/lib/python3.6/site-packages
-2025-05-14 10:01:25,330 - INFO - VCS: Succeeded
-2025-05-14 10:12:02,795 - WARNING - Key training genes seem to be missing from your dataset
+2025-05-14 11:33:01,925 - INFO - Note: detected 144 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+2025-05-14 11:33:01,926 - INFO - Note: NumExpr detected 144 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 8.
+2025-05-14 11:33:01,926 - INFO - NumExpr defaulting to 8 threads.
+2025-05-14 11:33:02,550 - INFO - dirname: Trying to get version from dirname /projects/steiflab/research/hmacdonald/applications/python/miniconda3/envs/ouroboros_env/lib/python3.6/site-packages
+2025-05-14 11:33:02,552 - INFO - dirname: Failed; Directory name 'site-packages' does not contain a valid version
+2025-05-14 11:33:02,553 - INFO - git: Trying to get version from VCS in directory /projects/steiflab/research/hmacdonald/applications/python/miniconda3/envs/ouroboros_env/lib/python3.6/site-packages
+2025-05-14 11:33:14,278 - INFO - VCS: Succeeded
+2025-05-14 11:33:14,280 - INFO - dirname: Trying to get version from dirname /projects/steiflab/research/hmacdonald/applications/python/miniconda3/envs/ouroboros_env/lib/python3.6/site-packages
+2025-05-14 11:33:14,280 - INFO - dirname: Failed; Directory name 'site-packages' does not contain a valid version
+2025-05-14 11:33:14,281 - INFO - git: Trying to get version from VCS in directory /projects/steiflab/research/hmacdonald/applications/python/miniconda3/envs/ouroboros_env/lib/python3.6/site-packages
+2025-05-14 11:33:21,948 - INFO - VCS: Succeeded
+2025-05-14 11:43:39,068 - WARNING - Key training genes seem to be missing from your dataset
 
               Missing genes include: ['H1-3', 'H4C8', 'CLTRN', 'H1-5', 'H1-1', 'H2AC20', 'H1-4', 'H2BC11', 'IRAG1']
               For higher accuracy consider including these genes in the matrix and running Ouroboros again.
               Retraining model without them......
-2025-05-14 10:12:30,613 - WARNING - 
+2025-05-14 11:44:19,398 - WARNING - 
 The TensorFlow contrib module will not be included in TensorFlow 2.0.
 For more information, please see:
   * https://github.com/tensorflow/community/blob/master/rfcs/20180907-contrib-sunset.md
@@ -22,13 +22,13 @@ For more information, please see:
   * https://github.com/tensorflow/io (for I/O related ops)
 If you depend on functionality not listed there, please file an issue.
 
-2025-05-14 10:12:30,636 - WARNING - From /projects/steiflab/research/hmacdonald/applications/python/miniconda3/envs/ouroboros_env/lib/python3.6/site-packages/tensorflow/python/ops/init_ops.py:1251: calling VarianceScaling.__init__ (from tensorflow.python.ops.init_ops) with dtype is deprecated and will be removed in a future version.
+2025-05-14 11:44:19,424 - WARNING - From /projects/steiflab/research/hmacdonald/applications/python/miniconda3/envs/ouroboros_env/lib/python3.6/site-packages/tensorflow/python/ops/init_ops.py:1251: calling VarianceScaling.__init__ (from tensorflow.python.ops.init_ops) with dtype is deprecated and will be removed in a future version.
 Instructions for updating:
 Call initializer instance with the dtype argument instead of passing it to the constructor
-2025-05-14 10:12:31,080 - WARNING - From /projects/steiflab/research/hmacdonald/applications/python/miniconda3/envs/ouroboros_env/lib/python3.6/site-packages/tensorflow/python/ops/math_ops.py:2403: add_dispatch_support.<locals>.wrapper (from tensorflow.python.ops.array_ops) is deprecated and will be removed in a future version.
+2025-05-14 11:44:19,907 - WARNING - From /projects/steiflab/research/hmacdonald/applications/python/miniconda3/envs/ouroboros_env/lib/python3.6/site-packages/tensorflow/python/ops/math_ops.py:2403: add_dispatch_support.<locals>.wrapper (from tensorflow.python.ops.array_ops) is deprecated and will be removed in a future version.
 Instructions for updating:
 Use tf.where in 2.0, which has the same broadcast rule as np.where
-2025-05-14 10:12:33,353 - WARNING - From /projects/steiflab/research/hmacdonald/applications/python/miniconda3/envs/ouroboros_env/lib/python3.6/site-packages/scPhere-0.1.0-py3.6.egg/scphere/ops/ive.py:23: py_func (from tensorflow.python.ops.script_ops) is deprecated and will be removed in a future version.
+2025-05-14 11:44:21,935 - WARNING - From /projects/steiflab/research/hmacdonald/applications/python/miniconda3/envs/ouroboros_env/lib/python3.6/site-packages/scPhere-0.1.0-py3.6.egg/scphere/ops/ive.py:23: py_func (from tensorflow.python.ops.script_ops) is deprecated and will be removed in a future version.
 Instructions for updating:
 tf.py_func is deprecated in TF V2. Instead, there are two
     options available in V2.
