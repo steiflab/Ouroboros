@@ -42,6 +42,8 @@ def convert_to_human_genes(data):
     
     if isinstance(data, ad.AnnData):
         adata = data[:, data.var_names.isin(list(orth.mouse_genes.astype(str)))]
+        if adata.shape[1] == 0:
+            raise ValueError("No genes in the input match known mouse genes with human orthologs.")
         mouse_orth = orth.set_index('mouse_genes')
         # Change mouse genes names to human orthologs
         adata.var = adata.var.merge(mouse_orth, how='left', left_index=True, right_index=True)
@@ -62,11 +64,15 @@ def convert_to_human_genes(data):
     elif isinstance(data, pd.DataFrame):
         # Subset to mouse genes that have human orthologs
         df = data.loc[:, data.columns.isin(orth['mouse_genes'])]
+        if df.shape[1] == 0:
+            raise ValueError("No genes in the input match known mouse genes with human orthologs.")
         # Map mouse genes to human orthologs
         mouse_to_human = orth.set_index('mouse_genes')['human_genes'].to_dict()
         df.columns = df.columns.map(mouse_to_human)
         # Collapse duplicated human gene symbols by summing across columns
         new_data = df.groupby(axis=1, level=0).sum()
+    else:
+        raise TypeError("Data must be pandas or adata")
         
     return new_data
 
@@ -126,7 +132,7 @@ def read_in_features():
     return feature_set
 
 
-def ouroboros_preprocess(data, data_type, species = 'human'):
+def ouroboros_preprocess(data, data_type):
         # Load SHAP feature set
     feature_set = pd.read_csv(DATA_DIR / "SHAP_feature_set.csv").feature_set.tolist()
     gene_order = pd.read_csv(DATA_DIR / "gene_order.csv")
@@ -272,6 +278,9 @@ def embed_in_retrained_sphere(adata, model, in_order_feature_set):
 
     bdata = bdata[:, bdata.var_names.isin(in_order_feature_set)].copy()
     matrix = bdata.X.copy()
+
+    if scipy.sparse.issparse(matrix):
+        matrix = matrix.toarray()
 
     # Need to make sure the new matrix has genes in the right order as the training matrix was 
     new_data_df = pd.DataFrame(matrix, columns=bdata.var_names)
