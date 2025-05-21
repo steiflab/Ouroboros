@@ -187,7 +187,8 @@ def ouroboros_embed(matrix, data, data_type, outdir = '.'):
     
     z_mean_df = calculate_cell_cycle_pseudotime(z_mean_df, ref_embed,  phase_category = 'KNN_phase')
 
-    z_mean_df = dormancy_depth(z_mean_df, ref_embed, retrained = False)
+    pseud = dormancy_depth(z_mean_df, ref_embed, retrained = False)
+    z_mean_df = z_mean_df.merge(pseud, how = 'left', left_index = True, right_index = True)
     
     plot_sphere(z_mean_df, colour_by = 'KNN_phase', ref = ref_embed, marker_size = 2, cycle_pole = reference_CC_pole_point, savefig = f'{outdir}/ouroboros_KNN_sphere.html')
     return z_mean_df
@@ -1030,31 +1031,49 @@ def assign_new_retrained_g0_pseudotime(bin_df, g0_tip, transition_cell):
     return bin_df, trans_latitude
 
 
-
-def assign_dormancy_depth_in_reference(ref_embed, g0_tip):
+def assign_dormancy_depth_in_reference(z_df, ref_embed, g0_tip):
     embed = ref_embed.copy()
-    great_circle, surface_point = find_cyc_center(z_df = ref_embed, ref_embed = ref_embed, phase_category = 'phase')
+    center = [0, 0, 0]
+    great_circle, surface_point = find_cyc_center(z_df=z_df, ref_embed=ref_embed, phase_category='KNN_phase')
     axis_vector = surface_point / np.linalg.norm(surface_point)
-    center = [0,0,0]
+    north_df, south_df = chop_sphere(ref_embed, center, axis_vector, dim_cols=['dim1', 'dim2', 'dim3'])
+
+    points = embed[['dim1', 'dim2', 'dim3']].values
+    dot_products = np.dot(points, g0_tip)
+    latitude = np.arccos(dot_products / np.linalg.norm(points, axis=1))
+    embed['g0_latitude'] = latitude
+    embed['south'] = embed.index.isin(south_df.index.tolist())
+
+    embed['dormancy_depth'] = np.where(embed['south'], embed['g0_latitude'], np.nan)
+
+    min_lat = embed['dormancy_depth'].min()
+    max_lat = embed['dormancy_depth'].max()
+
+    embed['dormancy_depth'] = -1 + (embed['dormancy_depth'] - min_lat) / (max_lat - min_lat)
+
+    return embed, min_lat, max_lat
+
+""""def assign_dormancy_depth_in_reference(ref_embed, g0_tip):
+    embed = ref_embed.copy()
+    center = [0, 0, 0]
+    great_circle, surface_point = find_cyc_center(z_df=ref_embed, ref_embed=ref_embed, phase_category='phase')
+    axis_vector = surface_point / np.linalg.norm(surface_point)
     north_df, south_df = chop_sphere(embed, center, axis_vector, dim_cols=['dim1', 'dim2', 'dim3'])
 
     points = embed[['dim1', 'dim2', 'dim3']].values
-
     dot_products = np.dot(points, g0_tip)
-    # Compute latitude of points from G0 tip
     latitude = np.arccos(dot_products / np.linalg.norm(points, axis=1))
     embed['g0_latitude'] = latitude
-    #embed['south'] = np.where(embed.index.isin(south_df.index.tolist()), False, True)
-    embed['south'] = embed.index.isin(south_df.index.tolist())  # True if in south_df
+    embed['south'] = embed.index.isin(south_df.index.tolist())
 
     embed['dormancy_depth'] = np.where(embed['south'], embed['g0_latitude'], np.nan)
-    # Find min and max g0_pseudotime values (excluding NaNs)
-    min_pseudotime = embed['dormancy_depth'].min()
-    max_pseudotime = embed['dormancy_depth'].max()  # Transition latitude (upper bound)
 
-    # Normalize g0_pseudotime to [-1, 0]
-    embed['dormancy_depth'] = -1 + (embed['dormancy_depth'] - min_pseudotime) / (max_pseudotime - min_pseudotime)
-    return embed
+    min_lat = embed['dormancy_depth'].min()
+    max_lat = embed['dormancy_depth'].max()
+
+    embed['dormancy_depth'] = -1 + (embed['dormancy_depth'] - min_lat) / (max_lat - min_lat)
+
+    return embed, min_lat, max_lat"""
 
 
 
@@ -1081,38 +1100,35 @@ def assign_g0_pseud_to_all_cells(z_bin_df, g0_tip):
 
 
 
+
+
 def dormancy_depth(z_df, ref_embed, retrained = False):
     center = np.array([0, 0, 0])
     if retrained == True:
-        # Flatten the points to the great circle calculated with find_g0_center -> represents the prime meridian through the G0 trajectory
-        ## We start by obtaining our reference points for the calculation of G0 pseudotime from our retrained reference embedding
-        # We include Wechtner for KNN classification, but it breaks my pseudotime calculation so we remove it for this part
-        ref_embed_no_wechtner = ref_embed[ref_embed['library'] != 'Wechter']
-        # Find the point that puts G0 cells around the outside edge of a flattened circle
-        great_circle, surface_point = find_g0_center(ref_embed_no_wechtner, phase_category = 'phase')
-        # Make a vector through the sphere based on that point we can use for flattening it out 
+        # Need to find the reference G0 tip to set the deepest point of G0 pseudotime 
+        ## Find the point that puts G0 cells around the outside edge of a flattened circle
+        great_circle, surface_point = find_g0_center(ref_embed, phase_category = 'phase')
+        ## Make a vector through the sphere based on that point we can use for flattening it out 
         axis_vector = surface_point / np.linalg.norm(surface_point)
-        # Calculate the 'equator' as it related to that center point (if that point was the north pole) and project the cells down onto the equatorial plane in 2D
-        ref_projected_df = project_to_equator(ref_embed_no_wechtner, center, axis_vector, dim_cols=['dim1', 'dim2', 'dim3'], radius=1)
+        center = np.array([0, 0, 0])
+        ref_projected_df = project_to_equator(ref_embed, center, axis_vector, dim_cols=['dim1', 'dim2', 'dim3'], radius=1)
         # This function finds the point around the flattened circle that the tip of G0 begins, and creates bins and an angle along it starting in the cycling part of the circle
         ref_bin_df, switch_angle, switched  = make_ref_bin_df_from_g0_tip(ref_projected_df)
         # This function find the center of the tip of G0 so it can be used as the deepest part of G0 pseudotime 
         g0_tip = find_g0_tip(ref_bin_df)
-
-        # Flatten the new dataset in the same way we did the reference, so we can create the same bins and angles to assign original pseudotime 
-        z_projected_df = project_to_equator(z_df, center, axis_vector, dim_cols=['dim1', 'dim2', 'dim3'], radius=1)
-        z_bin_df = make_z_bin_df(z_projected_df, switch_angle, switched)
-
-        # Okay now we determine where the boundaries of G0 pseudotime should lie - in cycling pseudotime we calculate the northern and southern hemispheres and only assign to northern - we do the opposite here
-        # Find the center of the cycling cells in the retrained reference embedding 
-        great_circle, surface_point = find_cyc_center(z_df = ref_embed, ref_embed = ref_embed, phase_category = 'phase')
+        
+        # Assign dormancy depth in new reference embedding, and find min/max latitude values to normalize G0 pseudotime by 
+        embed, min_lat, max_lat = assign_dormancy_depth_in_reference(z_df, ref_embed, g0_tip)
+        
+        # Southern half of sphere without cell cycle pseudotime needs to be assigned dormancy pseudotime 
+        great_circle, surface_point = find_cyc_center(z_df, ref_embed, phase_category = 'KNN_phase')
+        center = np.array([0, 0, 0])
         axis_vector = surface_point / np.linalg.norm(surface_point)
-        # Use that center to take the southern hemisphere with G0 cells 
         north_df, south_df = chop_sphere(z_df, center, axis_vector, dim_cols=['dim1', 'dim2', 'dim3'])
         #Assign which cells are in that southern hemisphere in my flattened bin df so we know which cells to assign a G0 pseudotime to 
-        z_bin_df['south'] = np.where(z_bin_df.index.isin(south_df.index.tolist()), False, True)
+        z_df['south'] = z_df.index.isin(south_df.index)
 
-        bin_df = z_bin_df.copy()
+        bin_df = z_df.copy()
         # To find pseudotime, calculate the latitude distance from the tip of G0 that we have decided will be the deepest point of G0 
         points = bin_df[['dim1', 'dim2', 'dim3']].values
         # Compute dot product between points and the tip of G0
@@ -1121,40 +1137,52 @@ def dormancy_depth(z_df, ref_embed, retrained = False):
         latitude = np.arccos(dot_products / np.linalg.norm(points, axis=1))
         #Use that latitude distance as dormancy_depth 
         bin_df['g0_latitude'] = latitude
-        # Any cells in the northern (cycling) hemisphere get a dormancy_depth of NA
-        bin_df['dormancy_depth'] = np.where(bin_df['south'] == True, np.nan, bin_df['g0_latitude'])
-        # Normalize dormancy_depth to [-1, 0]
-        min_pseudotime = -1
-        max_pseudotime = bin_df['dormancy_depth'].max()  # Transition latitude (upper bound)
-        bin_df['dormancy_depth'] = -1 + (bin_df['dormancy_depth'] - min_pseudotime) / (max_pseudotime - min_pseudotime)
+
+        # Normalize those cells to fall within -1 - 0 as dormancy depth 
+        bin_df['dormancy_depth'] = np.where(
+            bin_df['south'],
+            -1 + (bin_df['g0_latitude'] - min_lat) / (max_lat - min_lat),
+            np.nan
+        )
         pseud = bin_df[['dormancy_depth']]
-        ref_pseud = assign_dormancy_depth_in_reference(ref_embed, g0_tip)
-        ref_pseud = ref_pseud[['dormancy_depth']]
+        ref_pseud = embed[['dormancy_depth']]
+        #pseud = bin_df[['dormancy_depth']]
         'Yay! We found some pseudotime - dont forget to double check that the reference G0 pseudotime makes sense too as we are still debugging this feature :D'
         return pseud, ref_pseud
     else:
         ref_g0_tip = [-0.35114564, -0.73546242, -0.57947542]
-        ref_trans_latitude = 2.287943848336752
-        great_circle, surface_point = find_cyc_center(z_df = ref_embed, ref_embed = ref_embed, phase_category = 'phase')
+        ref_min_lat = 0.015271065556053379
+        ref_max_lat = 2.322424776189219
+        
+         # Southern half of sphere without cell cycle pseudotime needs to be assigned dormancy pseudotime 
+        great_circle, surface_point = find_cyc_center(z_df, ref_embed, phase_category = 'KNN_phase')
+        center = np.array([0, 0, 0])
         axis_vector = surface_point / np.linalg.norm(surface_point)
         north_df, south_df = chop_sphere(z_df, center, axis_vector, dim_cols=['dim1', 'dim2', 'dim3'])
-        points = south_df[['dim1', 'dim2', 'dim3']].values
+        #Assign which cells are in that southern hemisphere in my flattened bin df so we know which cells to assign a G0 pseudotime to 
+        z_df['south'] = z_df.index.isin(south_df.index)
+
+        bin_df = z_df.copy()
+        # To find pseudotime, calculate the latitude distance from the tip of G0 that we have decided will be the deepest point of G0 
+        points = bin_df[['dim1', 'dim2', 'dim3']].values
         # Compute dot product between points and the tip of G0
         dot_products = np.dot(points, ref_g0_tip)
         # Compute latitude of points from G0 tip
         latitude = np.arccos(dot_products / np.linalg.norm(points, axis=1))
-        south_df['g0_latitude'] = latitude
-        south_df['dormancy_depth'] = np.where(south_df['g0_latitude'] >= ref_trans_latitude, np.nan, south_df['g0_latitude'])
-        min_pseudotime = -1
-        max_pseudotime = ref_trans_latitude  # Transition latitude (upper bound)
-        # Normalize g0_pseudotime to [-1, 0]
-        south_df['dormancy_depth'] = -1 + (south_df['dormancy_depth'] - min_pseudotime) / (max_pseudotime - min_pseudotime)
-        pseud = south_df[['dormancy_depth']]
-        'Dormancy depth calculated :D'
-        z_df = z_df.merge(pseud, how = 'left', left_index = True, right_index = True)
-        return z_df
+        #Use that latitude distance as dormancy_depth 
+        bin_df['g0_latitude'] = latitude
+
+        # Normalize those cells to fall within -1 - 0 as dormancy depth 
+        bin_df['dormancy_depth'] = np.where(
+            bin_df['south'],
+            -1 + (bin_df['g0_latitude'] - ref_min_lat) / (ref_max_lat - ref_min_lat),
+            np.nan
+        )
+        pseud = bin_df[['dormancy_depth']]
+        return pseud 
     
    
+
 
 
 reference_CC_pole_point = [0.86202236, 0.24824865, 0.44191636]
@@ -1348,11 +1376,13 @@ def plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, veloc
         ),
         showlegend=True,
     )
-    
+        
     if is_cont:
         fig.update_layout(
             coloraxis=dict(
                 colorscale=palette,
+                cmin=-1 if colour_by == 'dormancy_depth' else None,
+                cmax=0 if colour_by == 'dormancy_depth' else None,
                 colorbar=dict(
                     title=dict(
                         text=colour_by.replace('_', ' ').capitalize(),
@@ -1367,6 +1397,7 @@ def plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, veloc
                 )
             )
         )
+
     if camera_position:
         fig.update_layout(scene_camera=camera_position)
     if snap_png:
