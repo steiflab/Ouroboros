@@ -213,7 +213,7 @@ def run_ouroboros(data, data_type, species = 'human', outdir = '.'):
         
     else:
         logger.info('All training genes present, embedding your cells in VAE latent space...')
-        matrix = ouroboros_preprocess(data, data_type, species = 'human')
+        matrix = ouroboros_preprocess(data, data_type)
         show_progress(1)
         z_df = ouroboros_embed(matrix, data, data_type, outdir = outdir)
         show_progress(2)
