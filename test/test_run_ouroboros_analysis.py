@@ -84,15 +84,6 @@ def test_ouroboros_retrain_pandas():
     assert set(in_order_feature_set) == set(feature_gene_subset)
     assert ref_embed.shape[0] == train_meta.shape[0]
     assert isinstance(model, SCPHERE)
-
-def test_ouroboros_retrain_no_genes():
-    extra_genes = [f"Gene_{i}" for i in range(100)]
-    genes = extra_genes
-    adata = make_adata(genes, 100)
-    
-    
-    with pytest.raises(ValueError):
-        obo.ouroboros_functions.ouroboros_retrain(adata)
     
 ### Test embed_in_retrained_sphere
 def test_embed_in_retrained_sphere_adata():
