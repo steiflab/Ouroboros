@@ -66,7 +66,7 @@ def test_run_ouroboros_missing_all_gene_pandas():
 
     with tempfile.TemporaryDirectory() as tmp_output_dir:
         df_path = os.path.join(tmp_output_dir, "empty.csv")
-        df.write_csv(df_path)
+        df.to_csv(df_path)
         with pytest.raises(ValueError):  
             obo.run_ouroboros(df_path, "csv")
 
