@@ -12,7 +12,7 @@ from sklearn.neighbors import KNeighborsClassifier
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 from sklearn.decomposition import PCA
-
+import tensorflow as tf
 
 import anndata as ad
 import cartopy.crs as ccrs
@@ -174,7 +174,7 @@ def ouroboros_embed(matrix, data, data_type, outdir = '.'):
         latent_dist='vmf',
         observation_dist='nb'
     )
-
+    tf.reset_default_graph()
     model.load_sess(str(DATA_DIR / "model" / "model"))
     new_batch = np.full(matrix.shape[0], 2)
 
