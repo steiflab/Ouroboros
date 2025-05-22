@@ -206,6 +206,7 @@ def KNN_predict(ref_embed, z_df):
     X_train_knn = ref_embed[["dim1", "dim2", "dim3"]].values
     y_train_knn = ref_embed["phase"].values
 
+    z_df = z_df.copy()
     X_test_knn = z_df[["dim1", "dim2", "dim3"]].values
 
     # Step 2: Train the KNN classifier
