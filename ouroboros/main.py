@@ -174,7 +174,8 @@ def run_ouroboros(data, data_type, species = 'human', outdir = '.'):
         
     elif data_type == 'csv':
         data = pd.read_csv(data)
-        data = data.set_index('cell_id')
+        if "cell_id" in data.columns:
+            data = data.set_index('cell_id')
     else: 
         raise TypeError("Unsupported data type. Expected --h5ad or --csv for data_type.")
 
