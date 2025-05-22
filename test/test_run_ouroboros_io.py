@@ -17,6 +17,15 @@ def make_adata(genes, num_cells = 5):
     adata.layers['raw_counts'] = adata.X.copy()
     return adata
 
+def make_pandas(genes, num_cells = 5):
+    data = pd.DataFrame(
+        np.random.rand(num_cells, len(genes)),  # random values
+        index=[f"Cell{i}" for i in range(num_cells)],  # row index = cell names
+        columns=genes  # column index = gene names
+    )
+    return data
+
+
 ### Test for invalid inputs
 def test_run_ouroboros_invalid_data_type():
     data_type = "tsv"
@@ -44,14 +53,22 @@ def test_run_ouroboros_missing_all_gene_h5ad():
     genes = ['Test_gene_1','Test_gene_2','Test_gene_3','Test_gene_4','Test_gene_5']
     adata = make_adata(genes, num_cells)
 
-    with tempfile.NamedTemporaryFile(suffix=".h5ad", delete=False) as tmp:
-        tmp_path = tmp.name
-    try:
-        adata.write(tmp_path)
+    with tempfile.TemporaryDirectory() as tmp_output_dir:
+        adata_path = os.path.join(tmp_output_dir, "empty.h5ad")
+        adata.write_h5ad(adata_path)
         with pytest.raises(ValueError):  
-            obo.run_ouroboros(tmp_path, "h5ad")
-    finally:
-        os.remove(tmp_path)
+            obo.run_ouroboros(adata_path, "h5ad")
+
+def test_run_ouroboros_missing_all_gene_pandas():
+    num_cells = 100
+    genes = ['Test_gene_1','Test_gene_2','Test_gene_3','Test_gene_4','Test_gene_5']
+    df = make_pandas(genes, num_cells)
+
+    with tempfile.TemporaryDirectory() as tmp_output_dir:
+        df_path = os.path.join(tmp_output_dir, "empty.csv")
+        df.write_csv(df_path)
+        with pytest.raises(ValueError):  
+            obo.run_ouroboros(df_path, "csv")
 
 
 ### Test for expected output
