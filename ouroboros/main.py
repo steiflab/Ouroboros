@@ -169,7 +169,7 @@ def run_ouroboros(data, data_type, species = 'human', outdir = '.'):
 
     if data_type == 'h5ad':
         data = ad.read_h5ad(data)
-        if "raw_counts" in data.layer: 
+        if "raw_counts" in data.layers: 
             data.X = data.layers['raw_counts'].copy()
         
     elif data_type == 'csv':
@@ -204,9 +204,7 @@ def run_ouroboros(data, data_type, species = 'human', outdir = '.'):
         show_progress(2)
         z_df = KNN_predict(ref_embed, z_df)
     
-        cc_df = calculate_cell_cycle_pseudotime(z_df, ref_embed,  phase_category = 'KNN_phase')
-        cc_df = cc_df[['cell_cycle_pseudotime']]
-        z_df = z_df.merge(cc_df, how = 'left', left_index = True, right_index = True)
+        z_df = calculate_cell_cycle_pseudotime(z_df, ref_embed,  phase_category = 'KNN_phase')
         pseud, ref_pseud = dormancy_depth(z_df, ref_embed, retrained = True)
         z_df = z_df.merge(pseud, how = 'left', left_index = True, right_index = True)
         z_df.to_csv(f'{outdir}/ouroboros_embeddings_pseudotimes.csv')
