@@ -94,7 +94,7 @@ def check_features(data):
                 missing.append(feature)
         else:
             raise TypeError("Unsupported data type. Expected AnnData or DataFrame.")
-    if len(missing) == len(feature_sets):
+    if len(missing) == len(feature_set):
         raise ValueError("None of the training genes found in data. Check that gene names (var_names) are Hugo symbol format")
     return missing
 
