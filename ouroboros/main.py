@@ -128,7 +128,7 @@ def run_ouroboros(data, data_type, species = 'human', outdir = '.'):
     ----------
     data : str 
         Path to input file (needs to be either a 'h5ad' or a 'csv')
-        - For 'h5ad': Anndata object - Ouroboros expects raw counts in .layers['raw_counts']
+        - For 'h5ad': Anndata object
         - For 'csv' : expects a CSV with cells as rows and genes as columns, with a 'cell_id' index column - must be RAW COUNTS
 
     data_type : str
@@ -169,7 +169,8 @@ def run_ouroboros(data, data_type, species = 'human', outdir = '.'):
 
     if data_type == 'h5ad':
         data = ad.read_h5ad(data)
-        data.X = data.layers['raw_counts'].copy()
+        if "raw_counts" in data.layer: 
+            data.X = data.layers['raw_counts'].copy()
         
     elif data_type == 'csv':
         data = pd.read_csv(data)
@@ -182,8 +183,6 @@ def run_ouroboros(data, data_type, species = 'human', outdir = '.'):
     if species == 'mouse':
         logger.info('Converting mouse genes to human orthologs...')
         data = convert_to_human_genes(data)
-        if isinstance(data, ad.AnnData):
-            data.layers['raw_counts'] = data.X.copy()
         logger.info('Genes successfully converted to human orthologs')
     elif species == 'human':
         pass

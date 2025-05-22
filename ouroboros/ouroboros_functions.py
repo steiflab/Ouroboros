@@ -140,7 +140,6 @@ def ouroboros_preprocess(data, data_type):
     
     if data_type == 'h5ad':
         bdata = data.copy()
-        bdata.X = bdata.layers['raw_counts'].copy()
         bdata = bdata[:, bdata.var_names.isin(feature_set)].copy()
 
         matrix = bdata.X.copy()
