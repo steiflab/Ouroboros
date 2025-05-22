@@ -1275,6 +1275,9 @@ def make_new_traces(z_df, radius, offset, color_by='KNN_phase', palette=None, ma
     else:
         if palette is None:
             palette = {}
+        if not set(z_df[color_by].unique()).issubset(set(palette.keys())):
+            missing = set(z_df[color_by].unique()) - set(palette.keys())
+            raise ValueError(f"The palette is missing colors for the following categories: {', '.join(missing)}")
         for phase, color in palette.items():
             phase_df = z_df[z_df[color_by] == phase]
             x, y, z = phase_df['dim1'].values, phase_df['dim2'].values, phase_df['dim3'].values
@@ -1319,6 +1322,11 @@ def normalize_colormap(cmap_name='mako', vmin=-1, vmax=0, n_colors=256):
 def plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, velocity = None, marker_size = 2, cycle_pole = reference_CC_pole_point, savefig = None, show = False, camera_position = None, snap_png = None):
     fig_data = []
 
+    if {'dim1', 'dim2', 'dim3'} - set(z_df.columns):
+        raise ValueError("Require dim1, dim2 and dim3 columns in z_df")
+    if colour_by not in z_df.columns:
+        raise ValueError(f"{colour_by} column not found in z_df")
+
     # Sphere properties
     mtx = z_df[['dim1', 'dim2', 'dim3']].values
     radius = np.mean(np.linalg.norm(mtx, axis=1)) - 0.01
@@ -1346,7 +1354,7 @@ def plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, veloc
             palette = seaborn_to_plotly('viridis')
         
     else: 
-        if colour_by == 'KNN_phase':
+        if colour_by == 'KNN_phase' and palette is None:
             palette = phase_pal_transition
         elif colour_by != 'KNN_phase' and palette is None:
             # Generate a palette if none is provided
@@ -1359,8 +1367,10 @@ def plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, veloc
                 for i, label in enumerate(unique_labels)
                 for r, g, b, _ in [cmap(i / max(len(unique_labels) - 1, 1))]
             }
-        else:
+        elif isinstance(palette, dict):
             palette = palette 
+        else:
+            raise ValueError(f"For categorical variables, 'palette' must be a dictionary mapping items to colors.")
 
 
     scatter_traces = make_new_traces(z_df, radius, offset, color_by=colour_by, palette=palette, marker_size=marker_size, is_continuous=is_cont)
