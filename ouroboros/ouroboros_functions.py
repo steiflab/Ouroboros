@@ -313,7 +313,12 @@ def find_cyc_center(z_df, ref_embed, phase_category = 'phase'):
     z_df: embedded points including cycling cells to find the centre of
     ref_embed: reference embedded points 
     phase_category: name of the columns with phase labels to parse (needs to have G1/S/G2M)"""
-    cyc = z_df[z_df[phase_category].isin(['G2M', 'S', 'G1'])]
+    curr_z_df = z_df.copy()
+    curr_z_df['phase'] = curr_z_df[phase_category] 
+    curr_z_df = curr_z_df[['dim1', 'dim2', 'dim3', 'phase']]
+    curr_z_df = pd.concat([curr_z_df, ref_embed])
+
+    cyc = curr_z_df[curr_z_df['phase'].isin(['G2M', 'S', 'G1'])]
     points = cyc[['dim1', 'dim2', 'dim3']].values
     # Fit the great circle
     great_circle, normal_vector = fit_great_circle(points)
