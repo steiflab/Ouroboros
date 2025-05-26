@@ -191,7 +191,8 @@ def run_ouroboros(data, data_type, species = 'human', outdir = '.'):
         raise TypeError("Unsupported species. Model only optimized for --human or --mouse")
 
     missing = check_features(data)
-
+    
+    
     if len(missing) > 0:
         logger.warning(f"""Key training genes seem to be missing from your dataset\n
               Missing genes include: {missing}
@@ -203,14 +204,17 @@ def run_ouroboros(data, data_type, species = 'human', outdir = '.'):
         z_df = embed_in_retrained_sphere(data, model, in_order_feature_set)
         show_progress(2)
         z_df = KNN_predict(ref_embed, z_df)
+    
+        cc_df = calculate_cell_cycle_pseudotime(z_df, ref_embed,  phase_category = 'KNN_phase')
+        cc_df = cc_df[['cell_cycle_pseudotime']]
+        z_df = z_df.merge(cc_df, how = 'left', left_index = True, right_index = True)
         pseud, ref_pseud = dormancy_depth(z_df, ref_embed, retrained = True)
         z_df = z_df.merge(pseud, how = 'left', left_index = True, right_index = True)
         z_df.to_csv(f'{outdir}/ouroboros_embeddings_pseudotimes.csv')
-        plot_sphere(z_df, colour_by = 'cell_cycle_pseudotime', palette = None, ref = ref_embed, velocity = None, marker_size = 2, cycle_pole = reference_CC_pole_point, savefig = f'{outdir}/ouroboros_cell_cycle_pseudotime.html', show = True)
-        plot_sphere(z_df, colour_by = 'dormancy_depth', palette = None, ref = ref_embed, velocity = None, marker_size = 2, cycle_pole = reference_CC_pole_point, savefig = f'{outdir}/ouroboros_dormancy_depth.html', show = True)
+        plot_sphere(z_df, colour_by = 'cell_cycle_pseudotime', palette = None, ref = ref_embed, velocity = None, marker_size = 2, cycle_pole = reference_CC_pole_point, savefig = f'{outdir}/ouroboros_cell_cycle_pseudotime.html', show = False)
+        plot_sphere(z_df, colour_by = 'dormancy_depth', palette = None, ref = ref_embed, velocity = None, marker_size = 2, cycle_pole = reference_CC_pole_point, savefig = f'{outdir}/ouroboros_dormancy_depth.html', show = False)
         show_progress(3)
         return z_df
-        
     else:
         logger.info('All training genes present, embedding your cells in VAE latent space...')
         matrix = ouroboros_preprocess(data, data_type, species = 'human')
@@ -226,7 +230,7 @@ def run_ouroboros(data, data_type, species = 'human', outdir = '.'):
         show_progress(3)
         z_df.to_csv(f'{outdir}/ouroboros_embeddings_pseudotimes.csv')
         return z_df
-
+    
 
 def main():
     parser = argparse.ArgumentParser()

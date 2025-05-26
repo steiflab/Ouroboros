@@ -218,4 +218,39 @@ Converts mouse gene symbols in `Anndata` or `pandas df` input to human orthologs
 ---
 
 
+## `plot_robinson_projection_with_velocity(z_df, colour_by, velocity_df=None, palette=None, ref_df=None, central_longitude=80, title="", alpha=0.7, scale=10)`
+
+**Description:**
+Projects 3D spherical coordinates onto a 2D Robinson map with optional RNA velocity overlays and flexible coloring by categorical or continuous metadata. NA values are shown in grey. Used for interpreting global cell state structure or transitions in a biologically interpretable planar projection.
+
+**Example usage:**
+```python
+plot_robinson_projection_with_velocity(
+    z_df=embedding_df,
+    colour_by='cell_cycle_pseudotime',
+    velocity_df=velocity_df,
+    palette='rocket_r',
+    ref_df=reference_df,
+    title="Differentiation Trajectory",
+    scale=15
+)
+``
+`
+**Parameters:**
+| Parameter           | Type                      | Description                                                                                                                          |
+| ------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `z_df`              | `DataFrame`               | DataFrame containing 3D spherical embedding coordinates (`dim1`, `dim2`, `dim3`) and associated metadata for coloring.               |
+| `colour_by`         | `str`                     | Column in `z_df` to color by. Supports both categorical (e.g., `'KNN_phase'`) and continuous (e.g., `'cell_cycle_pseudotime'`) data. |
+| `velocity_df`       | `DataFrame`, optional     | Optional RNA velocity DataFrame with `dim1`, `dim2` columns representing directional flow vectors in spherical projection.           |
+| `palette`           | `dict` or `str`, optional | Custom palette. Dictionary for categorical data, or colormap name (e.g., `'mako'`, `'viridis'`) for continuous variables.            |
+| `ref_df`            | `DataFrame`, optional     | Optional reference DataFrame with `dim1`, `dim2`, `dim3` and `putative_phase_transition` columns. Plots as faint background points.  |
+| `central_longitude` | `int`, default `80`       | Longitude (in degrees) to center the Robinson projection.                                                                            |
+| `title`             | `str`, optional           | Title of the plot.                                                                                                                   |
+| `alpha`             | `float`, default `0.7`    | Transparency of the primary data points.                                                                                             |
+| `scale`             | `float`, default `10`     | Scale of the velocity vector arrows.                                                                                                 |
+
+
+
 📘 For full tutorials, see the [Python Tutorial](python_tutorial.ipynb).
+
+
