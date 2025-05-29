@@ -208,11 +208,6 @@ def run_ouroboros(data, data_type, species = 'human', outdir = '.'):
         z_df = calculate_cell_cycle_pseudotime(z_df, ref_embed,  phase_category = 'KNN_phase')
         pseud, ref_pseud = dormancy_depth(z_df, ref_embed, retrained = True)
         z_df = z_df.merge(pseud, how = 'left', left_index = True, right_index = True)
-        z_df.to_csv(f'{outdir}/ouroboros_embeddings_pseudotimes.csv')
-        plot_sphere(z_df, colour_by = 'cell_cycle_pseudotime', palette = None, ref = ref_embed, velocity = None, marker_size = 2, cycle_pole = reference_CC_pole_point, savefig = f'{outdir}/ouroboros_cell_cycle_pseudotime.html', show = False)
-        plot_sphere(z_df, colour_by = 'dormancy_depth', palette = None, ref = ref_embed, velocity = None, marker_size = 2, cycle_pole = reference_CC_pole_point, savefig = f'{outdir}/ouroboros_dormancy_depth.html', show = False)
-        show_progress(3)
-        return z_df
     else:
         logger.info('All training genes present, embedding your cells in VAE latent space...')
         matrix = ouroboros_preprocess(data, data_type)
@@ -223,11 +218,19 @@ def run_ouroboros(data, data_type, species = 'human', outdir = '.'):
         ref_embed = pd.read_csv(DATA_DIR / 'reference_embeddings.csv')
         # set cell id to be index
         ref_embed = ref_embed.set_index('cell_id')
+
+    z_df.to_csv(f'{outdir}/ouroboros_embeddings_pseudotimes.csv')
+    try:
         plot_sphere(z_df, colour_by = 'cell_cycle_pseudotime', palette = None, ref = ref_embed, velocity = None, marker_size = 2, cycle_pole = reference_CC_pole_point, savefig = f'{outdir}/ouroboros_cell_cycle_pseudotime.html', show = False)
+    except ValueError as e:
+        logger.info(f"Caught error in cell_cycle_pseudotime plot: {e}")
+    try:
         plot_sphere(z_df, colour_by = 'dormancy_depth', palette = None, ref = ref_embed, velocity = None, marker_size = 2, cycle_pole = reference_CC_pole_point, savefig = f'{outdir}/ouroboros_dormancy_depth.html', show = False)
-        show_progress(3)
-        z_df.to_csv(f'{outdir}/ouroboros_embeddings_pseudotimes.csv')
-        return z_df
+    except ValueError as e:
+        logger.info(f"Caught error in dormancy_depth plot: {e}")
+
+    show_progress(3)
+    return z_df
     
 
 def main():

@@ -1327,6 +1327,9 @@ def plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, veloc
     if colour_by not in z_df.columns:
         raise ValueError(f"{colour_by} column not found in z_df")
 
+    if z_df[colour_by].isna().all():
+        raise ValueError(f"Column '{colour_by}' contains only NaN values.")
+
     # Sphere properties
     mtx = z_df[['dim1', 'dim2', 'dim3']].values
     radius = np.mean(np.linalg.norm(mtx, axis=1)) - 0.01
