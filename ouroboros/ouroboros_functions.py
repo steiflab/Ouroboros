@@ -308,7 +308,7 @@ def fit_great_circle(points):
 
 
 
-def find_cyc_center(z_df, ref_embed, phase_category = 'phase', _method = "z_df"):
+def find_cyc_center(z_df, ref_embed, phase_category = 'phase', _method = "both"):
     """ Find a point on the sphere's surface that represents the centre of the cycling cells
     z_df: embedded points including cycling cells to find the centre of
     ref_embed: reference embedded points 
