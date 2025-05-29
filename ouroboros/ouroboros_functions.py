@@ -308,15 +308,24 @@ def fit_great_circle(points):
 
 
 
-def find_cyc_center(z_df, ref_embed, phase_category = 'phase'):
+def find_cyc_center(z_df, ref_embed, phase_category = 'phase', _method = "z_df"):
     """ Find a point on the sphere's surface that represents the centre of the cycling cells
     z_df: embedded points including cycling cells to find the centre of
     ref_embed: reference embedded points 
     phase_category: name of the columns with phase labels to parse (needs to have G1/S/G2M)"""
-    curr_z_df = z_df.copy()
-    curr_z_df['phase'] = curr_z_df[phase_category] 
-    curr_z_df = curr_z_df[['dim1', 'dim2', 'dim3', 'phase']]
-    curr_z_df = pd.concat([curr_z_df, ref_embed])
+
+    if _method not in ['ref', 'z_df', 'both']:
+        raise ValueError(f"Invalid method '{method}'. Expected one of: 'ref', 'z_df', 'both'.")
+    
+    if _method == "both":
+        curr_z_df = z_df.copy()
+        curr_z_df['phase'] = curr_z_df[phase_category] 
+        curr_z_df = pd.concat([curr_z_df, ref_embed])
+    elif _method == 'z_df':
+        curr_z_df = z_df.copy()
+        curr_z_df['phase'] = curr_z_df[phase_category] 
+    else:
+        curr_z_df = ref_embed.copy()
 
     cyc = curr_z_df[curr_z_df['phase'].isin(['G2M', 'S', 'G1'])]
     points = cyc[['dim1', 'dim2', 'dim3']].values
