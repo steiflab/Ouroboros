@@ -17,14 +17,14 @@ dependencies = [
   "seaborn>=0.11.2",
   "tensorflow==1.14",
   "tensorflow-probability==0.7.0",
+  "plotly>=5.18.0",
+  "scikit-learn>=0.24.2",
   "cartopy",
-]
-
-[project.optional-dependencies]
-extra = [
+  "importlib_resources",
+  "nbformat",
+  "kaleido",
   "git+https://github.com/klarman-cell-observatory/scPhere.git"
 ]
-
 
 [project.urls]
 Homepage = "https://github.com/haleymac/Ouroboros"
