@@ -285,14 +285,26 @@ def ouroboros_retrain(test_adata):
 def embed_in_retrained_sphere(adata, model, in_order_feature_set):
     bdata = adata.copy()
 
-    bdata = bdata[:, bdata.var_names.isin(in_order_feature_set)].copy()
-    matrix = bdata.X.copy()
+    if isinstance(bdata, pd.DataFrame):
+        bdata = bdata[in_order_feature_set]
+        matrix = bdata.copy()
+        gene_list = list(matrix.columns)
+        cell_list = list(matrix.index)
+    elif isinstance(bdata, ad.AnnData):
+        bdata = bdata[:, bdata.var_names.isin(in_order_feature_set)].copy()
+        matrix = bdata.X.copy()
+        gene_list = bdata.var_names
+        cell_list = bdata.obs_names
 
+    else:
+        raise TypeError("Expect test_adata to be a pandas DataFrame or an AnnData object.")
+
+    
     if scipy.sparse.issparse(matrix):
         matrix = matrix.toarray()
 
     # Need to make sure the new matrix has genes in the right order as the training matrix was 
-    new_data_df = pd.DataFrame(matrix, columns=bdata.var_names)
+    new_data_df = pd.DataFrame(matrix, columns=gene_list)
     aligned_new_data = new_data_df.loc[:, in_order_feature_set].values
     matrix = aligned_new_data.copy()
 
@@ -301,7 +313,7 @@ def embed_in_retrained_sphere(adata, model, in_order_feature_set):
 
     # Project the new data into the latent space
     z_mean = model.encode(matrix, new_batch)    
-    z_mean_df = pd.DataFrame(z_mean, index=bdata.obs_names, columns=["dim1", "dim2", 'dim3'])
+    z_mean_df = pd.DataFrame(z_mean, index=cell_list, columns=["dim1", "dim2", 'dim3'])
     return z_mean_df
     
 
