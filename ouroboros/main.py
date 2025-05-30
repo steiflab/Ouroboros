@@ -105,17 +105,17 @@ progress_frames = [
 ]
 
 def show_progress(stage):
-    import sys
-    from IPython.display import clear_output, display
-
     try:
         get_ipython  # Will raise NameError if not in IPython/Jupyter
+        import sys
+        from IPython.display import clear_output, display
         clear_output(wait=True)
         print(progress_frames[stage])
-    except NameError:
+    except (NameError, ImportError):
         # CLI fallback
         print("\033c", end="")  # Terminal clear
         print(progress_frames[stage])
+
 
 
  
