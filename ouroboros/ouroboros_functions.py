@@ -238,10 +238,16 @@ def ouroboros_retrain(test_adata):
     feature_set = feature_set.feature_set.tolist()
 
     bdata = test_adata.copy()
+    if isinstance(bdata, pd.DataFrame):
+        test_genes = bdata.index
+    elif isinstance(bdata, ad.AnnData):
+        test_genes = bdata.var_names
+    else:
+        raise TypeError("Expect test_adata to be a pandas DataFrame or an AnnData object.")
 
     present_features = []
     for feature in feature_set:
-        if feature in bdata.var_names:
+        if feature in test_genes:
             present_features.append(feature)
     new_feature_set = present_features
     matrix = matrix.loc[:, new_feature_set]
