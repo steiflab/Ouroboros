@@ -80,7 +80,7 @@ def test_ouroboros_retrain_pandas():
     
     model, ref_embed, in_order_feature_set = obo.ouroboros_functions.ouroboros_retrain(df)
 
-    assert ref_embed.columns == ['dim1', 'dim2', 'dim3', 'phase', 'library']
+    assert ref_embed.columns.tolist() == ['dim1', 'dim2', 'dim3', 'phase', 'library']
     assert set(in_order_feature_set) == set(feature_gene_subset)
     assert ref_embed.shape[0] == train_meta.shape[0]
     assert isinstance(model, SCPHERE)
@@ -117,7 +117,7 @@ def test_embed_in_retrained_sphere_pandas():
     df = pd.DataFrame(adata.X, index=adata.obs_names, columns=adata.var_names)
     z_df = obo.ouroboros_functions.embed_in_retrained_sphere(df, model, in_order_feature_set)
 
-    assert z_df.columns == ["dim1", "dim2", "dim3"]
+    assert z_df.columns.tolist() == ["dim1", "dim2", "dim3"]
     assert z_df.shape == (df.shape[0], 3)
     assert set(z_df.index.tolist()) == set(df.index.to_list())
 
