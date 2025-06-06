@@ -15,7 +15,6 @@ from sklearn.decomposition import PCA
 import tensorflow as tf
 
 import anndata as ad
-import cartopy.crs as ccrs
 from matplotlib import cm
 from matplotlib.colors import Normalize
 from matplotlib.cm import get_cmap
@@ -1665,6 +1664,16 @@ def plot_robinson_projection(
     alpha=0.7,
     scale=10
 ):
+    try:
+        import cartopy.crs as ccrs
+    except ImportError:
+        raise ImportError(
+            "The 'cartopy' package is required for this function but is not installed.\n"
+            "You can install it with conda (recommended):\n"
+            "  conda install -c conda-forge cartopy\n"
+            "Or with pip (requires system dependencies to be installed first):\n"
+            "  pip install cartopy"
+        )
     x, y, z = z_df['dim1'].values, z_df['dim2'].values, z_df['dim3'].values
     r = np.sqrt(x**2 + y**2 + z**2)
     lon = np.degrees(np.arctan2(y, x))
