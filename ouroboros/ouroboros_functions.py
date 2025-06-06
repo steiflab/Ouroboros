@@ -1650,3 +1650,115 @@ def sphere_snapshot(lat, lon,  z_df, colour_by='KNN_phase', palette=None, radius
         camera_position=camera,
         snap_png=save_as_png,
     )
+    
+    
+
+
+def plot_robinson_projection(
+    z_df, 
+    colour_by, 
+    velocity_df=None, 
+    palette=None, 
+    ref_df=None,
+    central_longitude=80, 
+    title="", 
+    alpha=0.7,
+    scale=10
+):
+    x, y, z = z_df['dim1'].values, z_df['dim2'].values, z_df['dim3'].values
+    r = np.sqrt(x**2 + y**2 + z**2)
+    lon = np.degrees(np.arctan2(y, x))
+    lat = np.degrees(np.arcsin(z / r))
+
+    is_cont = is_continuous(z_df[colour_by])
+    has_na = z_df[colour_by].isna()
+
+    fig = plt.figure(figsize=(12, 6))
+    ax = plt.axes(projection=ccrs.Robinson(central_longitude=central_longitude))
+    ax.set_global()
+    ax.gridlines(draw_labels=False, linewidth=0.5, color='gray', alpha=0.7, linestyle='--')
+
+    if is_cont:
+        values = z_df[colour_by].values
+
+        # Set colormap
+        if palette is None:
+            if colour_by == 'cell_cycle_pseudotime':
+                cmap = get_cmap('rocket_r')
+            elif colour_by == 'dormancy_depth':
+                cmap = get_cmap('mako')
+            else:
+                cmap = get_cmap('viridis')
+        elif isinstance(palette, str):
+            cmap = get_cmap(palette)
+        else:
+            cmap = get_cmap('viridis')
+
+        # Plot non-NA points
+        not_na = ~has_na
+        sc = ax.scatter(
+            lon[not_na], lat[not_na], c=values[not_na], s=10, alpha=alpha,
+            cmap=cmap,
+            transform=ccrs.PlateCarree()
+        )
+
+        # Plot NA points in grey
+        if has_na.any():
+            ax.scatter(
+                lon[has_na], lat[has_na], c='lightgrey', s=10, alpha=alpha,
+                transform=ccrs.PlateCarree()
+            )
+
+        cb = plt.colorbar(sc, ax=ax, orientation='vertical', shrink=0.6, pad=0.05)
+        cb.set_label(colour_by.replace("_", " ").capitalize(), fontsize=12)
+
+    else:
+        unique_labels = z_df[colour_by].dropna().unique()
+        if palette is None:
+            if colour_by == 'KNN_phase':
+                palette = phase_pal_transition
+            else:
+                cmap = get_cmap('tab20')
+                palette = {label: cmap(i / len(unique_labels)) for i, label in enumerate(unique_labels)}
+
+        for label in unique_labels:
+            idx = z_df[colour_by] == label
+            ax.scatter(lon[idx], lat[idx],
+                       s=10, label=label, 
+                       c=palette.get(label, 'grey'), alpha=alpha,
+                       transform=ccrs.PlateCarree())
+
+        # Plot NA values in grey
+        if has_na.any():
+            ax.scatter(
+                lon[has_na], lat[has_na],
+                s=10, c='lightgrey', label='NA',
+                alpha=alpha, transform=ccrs.PlateCarree()
+            )
+
+        plt.legend(loc="upper right", bbox_to_anchor=(1.3, 1.0))
+
+    if velocity_df is not None:
+        ax.quiver(
+            lon, lat,
+            velocity_df['dim1'].values,
+            velocity_df['dim2'].values,
+            scale=scale, color='black', alpha=0.6, width=0.002,
+            transform=ccrs.PlateCarree()
+        )
+
+    if ref_df is not None:
+        xr, yr, zr = ref_df['dim1'].values, ref_df['dim2'].values, ref_df['dim3'].values
+        rr = np.sqrt(xr**2 + yr**2 + zr**2)
+        lon_r = np.degrees(np.arctan2(yr, xr))
+        lat_r = np.degrees(np.arcsin(zr / rr))
+        ref_labels = ref_df['putative_phase_transition'].unique()
+        for label in ref_labels:
+            idx = ref_df['putative_phase_transition'] == label
+            ax.scatter(lon_r[idx], lat_r[idx],
+                       s=20, label=label, 
+                       c=palette.get(label, 'grey') if not is_cont else 'grey', alpha=0.1,
+                       transform=ccrs.PlateCarree())
+
+    plt.title(title)
+    plt.show()
