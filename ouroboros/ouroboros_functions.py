@@ -1790,6 +1790,9 @@ def find_threshold(model, new_feature_set, z_df, ref_embed, outdir):
 
     plt.plot(x_dense, y_smooth)
     plt.axvline(knee.knee)
+    plt.title(f'Wechter senescence dataset\nThreshold: {knee.knee}')
+    plt.xlabel("Dormancy Depth")
+    plt.ylabel("Proportion of cells")
     plt.savefig(f"{outdir}/dormancy_depth_threshold.png")
     plt.close()
 
