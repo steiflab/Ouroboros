@@ -1741,7 +1741,7 @@ def plot_robinson_projection(
 
 def find_threshold(model, new_feature_set, z_df, ref_embed, outdir):
 
-    discrete = ad.read_h5ad(str(DATA_DIR / "wechter_discrete.h5ad"))
+    discrete = ad.read_h5ad("/projects/steiflab/scratch/hmacdonald/total_RNA_scratch/wechter_scratch/starsolo_counts/h5ads/discrete.h5ad")
     bdata = discrete[:, discrete.var_names.isin(new_feature_set)].copy()
     matrix = bdata.layers['raw_counts'].toarray()
 
