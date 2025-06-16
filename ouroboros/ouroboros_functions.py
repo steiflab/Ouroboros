@@ -1781,10 +1781,23 @@ def find_threshold(model, new_feature_set, z_df, ref_embed, outdir):
     x_dense = np.linspace(x.min(), x.max(), 500)
     y_smooth = spline(x_dense)
 
-    # Take only the decreasing part (from peak to end)
+   # Find global maximum
     peak_idx_max = np.argmax(y_smooth)
-    peak_idx_min = np.argmin(y_smooth[peak_idx_max:])
-    knee = (x_dense[peak_idx_max] + x_dense[peak_idx_max+peak_idx_min])/2
+
+    # Region after the peak
+    y_tail = y_smooth[peak_idx_max:]
+    x_tail = x_dense[peak_idx_max:]
+
+    # Try to find local minima
+    local_min_indices = argrelextrema(y_tail, np.less)[0]
+    if len(local_min_indices) > 0:
+        # Use first local minimum after peak
+        min_idx = local_min_indices[0]
+    else:
+        # No local min: fallback to absolute minimum in tail
+        min_idx = np.argmin(y_tail)
+
+    knee = (x_dense[peak_idx_max] + x_dense[peak_idx_max + min_idx]) / 2
 
     plt.plot(x_dense, y_smooth)
     plt.axvline(knee)
