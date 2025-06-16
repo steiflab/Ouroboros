@@ -12,7 +12,8 @@ from sklearn.neighbors import KNeighborsClassifier
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 from sklearn.decomposition import PCA
-from kneed import KneeLocator
+from scipy.signal import argrelextrema
+
 from scipy.interpolate import UnivariateSpline
 import tensorflow as tf
 import random
