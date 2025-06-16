@@ -1782,15 +1782,13 @@ def find_threshold(model, new_feature_set, z_df, ref_embed, outdir):
     y_smooth = spline(x_dense)
 
     # Take only the decreasing part (from peak to end)
-    peak_idx = np.argmax(y_smooth)
-    x_decreasing = x_dense[peak_idx+50:]
-    y_decreasing = y_smooth[peak_idx+50:]
-
-    knee = KneeLocator(x_decreasing, y_decreasing, curve='convex', direction='decreasing')
+    peak_idx_max = np.argmax(y_smooth)
+    peak_idx_min = np.argmin(y_smooth[peak_idx_max:])
+    knee = (x_dense[peak_idx_max] + x_dense[peak_idx_max+peak_idx_min])/2
 
     plt.plot(x_dense, y_smooth)
-    plt.axvline(knee.knee)
-    plt.title(f'Wechter senescence dataset\nThreshold: {knee.knee}')
+    plt.axvline(knee)
+    plt.title(f'Wechter senescence dataset\nThreshold: {knee}')
     plt.xlabel("Dormancy Depth")
     plt.ylabel("Proportion of cells")
     plt.savefig(f"{outdir}/dormancy_depth_threshold.png")
@@ -1798,9 +1796,9 @@ def find_threshold(model, new_feature_set, z_df, ref_embed, outdir):
 
     z_df = z_df.copy()
     z_df['G0_classification'] = np.where(
-        z_df['dormancy_depth'] > knee.knee, 'quiescence',
+        z_df['dormancy_depth'] > knee, 'quiescence',
         np.where(
-            z_df['dormancy_depth'] < knee.knee, 'senescence',
+            z_df['dormancy_depth'] < knee, 'senescence',
             np.nan
         )
     ) 
