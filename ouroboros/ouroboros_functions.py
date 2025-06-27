@@ -12,7 +12,11 @@ from sklearn.neighbors import KNeighborsClassifier
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 from sklearn.decomposition import PCA
+from scipy.signal import argrelextrema
 
+from scipy.interpolate import UnivariateSpline
+import tensorflow as tf
+import random
 
 import anndata as ad
 import cartopy.crs as ccrs
@@ -246,7 +250,8 @@ def ouroboros_retrain(test_adata):
         map_dict[val] = i
     batch = train_meta['library'].map(map_dict).values
 
-
+    set_seed(0)
+    tf.reset_default_graph()
     #Initilize model
     model = SCPHERE(n_gene=matrix.shape[1], n_batch=2, batch_invariant=False,
                 z_dim=2, latent_dist='vmf',
@@ -308,12 +313,26 @@ def fit_great_circle(points):
 
 
 
-def find_cyc_center(z_df, ref_embed, phase_category = 'phase'):
+def find_cyc_center(z_df, ref_embed, phase_category = 'phase', _method = "ref"):
     """ Find a point on the sphere's surface that represents the centre of the cycling cells
     z_df: embedded points including cycling cells to find the centre of
     ref_embed: reference embedded points 
     phase_category: name of the columns with phase labels to parse (needs to have G1/S/G2M)"""
-    cyc = z_df[z_df[phase_category].isin(['G2M', 'S', 'G1'])]
+
+    if _method not in ['ref', 'z_df', 'both']:
+        raise ValueError(f"Invalid method '{method}'. Expected one of: 'ref', 'z_df', 'both'.")
+    
+    if _method == "both":
+        curr_z_df = z_df.copy()
+        curr_z_df['phase'] = curr_z_df[phase_category] 
+        curr_z_df = pd.concat([curr_z_df, ref_embed])
+    elif _method == 'z_df':
+        curr_z_df = z_df.copy()
+        curr_z_df['phase'] = curr_z_df[phase_category] 
+    else:
+        curr_z_df = ref_embed.copy()
+
+    cyc = curr_z_df[curr_z_df['phase'].isin(['G2M', 'S', 'G1'])]
     points = cyc[['dim1', 'dim2', 'dim3']].values
     # Fit the great circle
     great_circle, normal_vector = fit_great_circle(points)
@@ -1720,3 +1739,87 @@ def plot_robinson_projection(
 
     plt.title(title)
     plt.show()
+
+def find_threshold(model, new_feature_set, z_df, ref_embed, outdir):
+
+    discrete = ad.read_h5ad("/projects/steiflab/scratch/hmacdonald/total_RNA_scratch/wechter_scratch/starsolo_counts/h5ads/discrete.h5ad")
+    bdata = discrete[:, discrete.var_names.isin(new_feature_set)].copy()
+    matrix = bdata.layers['raw_counts'].toarray()
+
+    new_batch = np.full(matrix.shape[0], 2)
+
+    # Project new data
+    z_mean = model.encode(matrix, new_batch)
+    z_mean_df = pd.DataFrame(z_mean, index=discrete.obs_names, columns=["dim1", "dim2", 'dim3'])
+    
+    z_mean_df = KNN_predict(ref_embed, z_mean_df)    
+    z_mean_df = calculate_cell_cycle_pseudotime(z_mean_df, ref_embed,  phase_category = 'KNN_phase')
+    pseud = dormancy_depth(z_mean_df, ref_embed, retrained = False)
+    z_mean_df = z_mean_df.merge(pseud, how = 'left', left_index = True, right_index = True)
+    z_mean_df = z_mean_df.merge(discrete.obs[['rep', 'treatment']], left_index=True, right_index=True)
+
+    # Bin data
+    num_bins = 30
+
+    discrete_filtered = z_mean_df.dropna(subset=["dormancy_depth"]).copy()
+    min_val = discrete_filtered["dormancy_depth"].min()
+    max_val = discrete_filtered["dormancy_depth"].max()
+    bin_edges = np.linspace(min_val, max_val, num_bins + 1)
+    discrete_filtered["pseudotime_bin"] = pd.cut(discrete_filtered["dormancy_depth"], bins=bin_edges, include_lowest=True)
+    assert discrete_filtered["pseudotime_bin"].isna().sum() == 0
+
+    # 
+    discrete_filtered = discrete_filtered[discrete_filtered['treatment'].isin(['IR-induced senescence (10 Gy)', 'Replicative senescence (PDL 57)', 'Etoposide-induced senescent (50 microM)'])]
+    bin_counts = discrete_filtered.groupby(["pseudotime_bin"]).size()
+    bin_proportions = bin_counts.div(bin_counts.sum(axis=0))
+    y = bin_proportions.values
+
+    bin_midpoints = [(interval.left + interval.right) / 2 for interval in bin_proportions.index]
+    x = np.array(bin_midpoints) 
+
+    # Spline smoothing
+    spline = UnivariateSpline(x, y, s=0.01)
+    x_dense = np.linspace(x.min(), x.max(), 500)
+    y_smooth = spline(x_dense)
+
+   # Find global maximum
+    peak_idx_max = np.argmax(y_smooth)
+
+    # Region after the peak
+    y_tail = y_smooth[peak_idx_max:]
+    x_tail = x_dense[peak_idx_max:]
+
+    # Try to find local minima
+    local_min_indices = argrelextrema(y_tail, np.less)[0]
+    if len(local_min_indices) > 0:
+        # Use first local minimum after peak
+        min_idx = local_min_indices[0]
+    else:
+        # No local min: fallback to absolute minimum in tail
+        min_idx = np.argmin(y_tail)
+
+    knee = (x_dense[peak_idx_max] + x_dense[peak_idx_max + min_idx]) / 2
+
+    plt.plot(x_dense, y_smooth)
+    plt.axvline(knee)
+    plt.title(f'Wechter senescence dataset\nThreshold: {knee}')
+    plt.xlabel("Dormancy Depth")
+    plt.ylabel("Proportion of cells")
+    plt.savefig(f"{outdir}/dormancy_depth_threshold.png")
+    plt.close()
+
+    z_df = z_df.copy()
+    z_df['G0_classification'] = np.where(
+        z_df['dormancy_depth'] > knee, 'quiescence',
+        np.where(
+            z_df['dormancy_depth'] < knee, 'senescence',
+            np.nan
+        )
+    ) 
+    return z_df
+
+
+def set_seed(seed=0):
+    random.seed(seed)
+    np.random.seed(seed)
+    tf.set_random_seed(seed)
