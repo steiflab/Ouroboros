@@ -219,9 +219,7 @@ def KNN_predict(ref_embed, z_df):
     return z_df
 
 
-
-
-def ouroboros_retrain(test_adata):
+def ouroboros_retrain(test_adata, seed):
     """Useful if some training genes are missing in embedding dataset and you want to embed them in the riba-mahd embedding"""
     #Read in training data
     matrix = pd.read_csv(DATA_DIR / 'train_matrix.csv')
@@ -250,7 +248,7 @@ def ouroboros_retrain(test_adata):
         map_dict[val] = i
     batch = train_meta['library'].map(map_dict).values
 
-    set_seed(0)
+    set_seed(seed)
     tf.reset_default_graph()
     #Initilize model
     model = SCPHERE(n_gene=matrix.shape[1], n_batch=2, batch_invariant=False,
@@ -1740,8 +1738,11 @@ def plot_robinson_projection(
     plt.title(title)
     plt.show()
 
-def find_threshold(model, new_feature_set, z_df, ref_embed, outdir):
 
+def find_threshold(model, new_feature_set, z_df, ref_embed, outdir):
+    """
+    Depreciated function; Attepts to find threshold for quiscence and senescence. 
+    """
     discrete = ad.read_h5ad("/projects/steiflab/scratch/hmacdonald/total_RNA_scratch/wechter_scratch/starsolo_counts/h5ads/discrete.h5ad")
     bdata = discrete[:, discrete.var_names.isin(new_feature_set)].copy()
     matrix = bdata.layers['raw_counts'].toarray()
@@ -1757,7 +1758,8 @@ def find_threshold(model, new_feature_set, z_df, ref_embed, outdir):
     pseud = dormancy_depth(z_mean_df, ref_embed, retrained = False)
     z_mean_df = z_mean_df.merge(pseud, how = 'left', left_index = True, right_index = True)
     z_mean_df = z_mean_df.merge(discrete.obs[['rep', 'treatment']], left_index=True, right_index=True)
-
+    
+    
     # Bin data
     num_bins = 30
 
