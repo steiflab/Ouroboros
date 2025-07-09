@@ -27,8 +27,9 @@ from plotly.io import write_image
 import seaborn as sns
 from scipy.sparse import issparse
 from scipy.spatial.transform import Rotation as R
-
-
+from scipy import stats
+import shutil
+import matplotlib.patches as patches
 
 reference_CC_pole_point = [0.86202236, 0.24824865, 0.44191636]
 
@@ -318,7 +319,7 @@ def find_cyc_center(z_df, ref_embed, phase_category = 'phase', _method = "ref"):
     phase_category: name of the columns with phase labels to parse (needs to have G1/S/G2M)"""
 
     if _method not in ['ref', 'z_df', 'both']:
-        raise ValueError(f"Invalid method '{method}'. Expected one of: 'ref', 'z_df', 'both'.")
+        raise ValueError(f"Invalid method '{_method}'. Expected one of: 'ref', 'z_df', 'both'.")
     
     if _method == "both":
         curr_z_df = z_df.copy()
@@ -1771,8 +1772,6 @@ def qc_and_threshold(model, trainer, z_df, new_feature_set, ref_embed, outdir, s
     
     training_embed['pseudotime'] = np.where(training_embed['dormancy_depth'].isna(), training_embed['cell_cycle_pseudotime'], training_embed['dormancy_depth'])
 
-
-
     ### Find Threshold
     threshold = find_threshold(z_mean_df)
     z_df = z_df.copy()
@@ -1868,8 +1867,6 @@ def quality_control(trainer, wetchner_df, training_df, new_feature_set, threshol
     hernandez_segura_corr = wetchner_training['dormancy_depth'].corr(wetchner_training['core_up_sen_genes'], method='spearman')
 
    
-
-
     qc_df = pd.DataFrame({
         'seed': [seed],
         'wetchner_senescence_recall': [senescence_recall],
@@ -1888,3 +1885,100 @@ def set_seed(seed=0):
     random.seed(seed)
     np.random.seed(seed)
     tf.set_random_seed(seed)
+
+
+def select_seed(repeat, outdir):
+    all_z_df = []
+    for i in range(repeat):
+        z_df = pd.read_csv(outdir + "/retrain/" + str(i) + "/ouroboros_embeddings_pseudotimes.csv")
+        z_df.set_index('Unnamed: 0', inplace = True)
+        z_df['pseudotime'] = np.where(z_df['dormancy_depth'].isna(), z_df['cell_cycle_pseudotime'], z_df['dormancy_depth'])
+        z_df['seed'] = i
+        all_z_df.append(z_df)
+    all_z_df = pd.concat(all_z_df)
+    dormant_df = all_z_df.copy()
+
+    depth_matrix = dormant_df.pivot_table(
+        index=dormant_df.index, 
+        columns='seed', 
+        values='pseudotime'
+    )
+    consensus_curve = depth_matrix.median(axis=1) 
+    
+    seed_r = {}
+    for col in depth_matrix.columns:
+        curr = depth_matrix[col]
+        
+        valid = curr.notna() & consensus_curve.notna()
+        if valid.sum() > 2:  
+            r, pval = stats.pearsonr(curr[valid], consensus_curve[valid])
+            if pval < 0.05:
+                seed_r[col] = r
+    
+    selected_seed = max(seed_r, key=seed_r.get)
+    selected_seed_corr = max(seed_r.values())
+    
+    plot_consensus(depth_matrix, selected_seed, outdir)
+
+    selected_seed_path = outdir + "/retrain/" + str(selected_seed) 
+    z_df = pd.read_csv(selected_seed_path + "/ouroboros_embeddings_pseudotimes.csv")
+    ref_embed = pd.read_csv(selected_seed_path + "/retrained_reference_embeddings.csv")
+
+
+    for file in ['ouroboros_embeddings_pseudotimes.csv', "qc.csv", "retrained_reference_embeddings.csv", "model.meta", "model.index", "model.data-00000-of-00001", "checkpoint"]:
+        source_path = selected_seed_path + "/" + file
+        destination_path = outdir + "/" + file
+        shutil.move(source_path, destination_path)
+    
+    return z_df, ref_embed
+    
+
+def plot_consensus(depth_matrix, selected_seed, outdir):
+    depth_matrix_long = depth_matrix.melt(var_name='seed', value_name='pseudotime')
+
+    fig, ax = plt.subplots(figsize=(10, 4))
+
+    for seed in depth_matrix_long['seed'].unique():
+        curr = depth_matrix_long[depth_matrix_long['seed'] == seed]
+
+        if seed != selected_seed:
+        # Create histogram plot
+            hist = sns.kdeplot(
+                data=curr, x='pseudotime',alpha = 0.1, linewidth=1
+            )
+        else:
+            hist = sns.kdeplot(
+                data=curr, x='pseudotime', alpha = 1, linewidth=2.5, linestyle='--'
+            )
+
+    # Remove the default box (spines)
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+
+    # Draw axes at (0,0)
+    ax.axhline(0, color='black', linewidth=1)
+    ax.axvline(0, color='black', linewidth=1)
+
+    # Labels below the axis
+    ax.text(-0.5, -0.8, 'G0 pseudotime (Φ)', ha='center', fontsize=12, clip_on=False)
+    ax.text(0.5, -0.8, 'CC pseudotime (θ)', ha='center', fontsize=12, clip_on=False)
+
+    # Define the colored boxes for G1, S, G2M phases
+    phase_colors = {'G1': '#1f77b4', 'S': '#ff7f0e', 'G2M': '#2ca02c', 'Quiescent-like': 'lightgrey', 'Senescent-like':'black'}
+    phase_regions = {'G1': (0, 0.4), 'S': (0.4, 0.75), 'G2M': (0.75, 1), 'Quiescent-like':(-0.6, 0),'Senescent-like': (-1, -0.6)}
+
+    # Add colored boxes at the top of the plot
+    for phase, (start, end) in phase_regions.items():
+        ax.add_patch(patches.Rectangle(
+            (start, ax.get_ylim()[1] * 1.02),  # Position at top
+            end - start,  # Width
+            ax.get_ylim()[1] * 0.02,  # Height
+            color=phase_colors[phase],
+            clip_on=False
+        ))
+        ax.text((start + end) / 2, ax.get_ylim()[1] * 1.04, phase, 
+                ha='center', va='bottom', fontsize=10, fontweight='bold')
+    
+    plt.savefig(f"{outdir}/consensus_seed.png")
+    plt.close()
+
