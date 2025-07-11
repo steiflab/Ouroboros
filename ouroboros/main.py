@@ -119,7 +119,7 @@ def show_progress(stage):
 
 
  
-def run_ouroboros(data, data_type, species = 'human', outdir = '.'):
+def run_ouroboros(data, data_type, species = 'human', outdir = '.', seed = 0, repeat = 1):
     """
     Run the full Ouroboros pipeline for projecting single-cell expression data
     into VAE spherical embedding space and using KNN to compute cell cycle phase, pseudotime and dormancy pseudotime.
@@ -199,27 +199,32 @@ def run_ouroboros(data, data_type, species = 'human', outdir = '.'):
               Missing genes include: {missing}
               For higher accuracy consider including these genes in the matrix and running Ouroboros again.
               Retraining model without them......""")
-        model, ref_embed, in_order_feature_set = ouroboros_retrain(data)
-        ref_embed.to_csv(f'{outdir}/retrained_reference_embeddings.csv')
-        model.save_sess(f'{outdir}/model')
+        for i in range(repeat):
+            curr_seed = seed + i
+            curr_outdir = outdir + "/retrain/" + str(i)
+            os.makedirs(curr_outdir, exist_ok=True)
+            model, ref_embed, in_order_feature_set, trainer_model = ouroboros_retrain(data, curr_seed)
+            ref_embed.to_csv(f'{curr_outdir}/retrained_reference_embeddings.csv')
+            model.save_sess(f'{curr_outdir}/model')
 
-        show_progress(1)
-        z_df = embed_in_retrained_sphere(data, model, in_order_feature_set)
-        show_progress(2)
-        z_df = KNN_predict(ref_embed, z_df)
-    
-        cc_df = calculate_cell_cycle_pseudotime(z_df, ref_embed,  phase_category = 'KNN_phase')
-        cc_df = cc_df[['cell_cycle_pseudotime']]
-        z_df = z_df.merge(cc_df, how = 'left', left_index = True, right_index = True)
-        pseud, ref_pseud = dormancy_depth(z_df, ref_embed, retrained = True)
-        z_df = z_df.merge(pseud, how = 'left', left_index = True, right_index = True)
+            show_progress(1)
+            z_df = embed_in_retrained_sphere(data, model, in_order_feature_set)
+            show_progress(2)
+            z_df = KNN_predict(ref_embed, z_df)
+        
+            cc_df = calculate_cell_cycle_pseudotime(z_df, ref_embed,  phase_category = 'KNN_phase')
+            cc_df = cc_df[['cell_cycle_pseudotime']]
+            z_df = z_df.merge(cc_df, how = 'left', left_index = True, right_index = True)
+            pseud, ref_pseud = dormancy_depth(z_df, ref_embed, retrained = True)
+            z_df = z_df.merge(pseud, how = 'left', left_index = True, right_index = True)
+            z_df = qc_and_threshold(model, trainer_model, z_df, in_order_feature_set, ref_embed, curr_outdir, seed)
+            z_df.to_csv(f'{curr_outdir}/ouroboros_embeddings_pseudotimes.csv')
 
-        z_df = find_threshold(model, in_order_feature_set, z_df, ref_embed, outdir)
-
-        z_df.to_csv(f'{outdir}/ouroboros_embeddings_pseudotimes.csv')
+        z_df, ref_embed = select_seed(repeat, outdir)
         plot_sphere(z_df, colour_by = 'cell_cycle_pseudotime', palette = None, ref = ref_embed, velocity = None, marker_size = 2, cycle_pole = reference_CC_pole_point, savefig = f'{outdir}/ouroboros_cell_cycle_pseudotime.html', show = False)
         plot_sphere(z_df, colour_by = 'dormancy_depth', palette = None, ref = ref_embed, velocity = None, marker_size = 2, cycle_pole = reference_CC_pole_point, savefig = f'{outdir}/ouroboros_dormancy_depth.html', show = False)
         show_progress(3)
+
         return z_df
     else:
         logger.info('All training genes present, embedding your cells in VAE latent space...')
@@ -244,9 +249,11 @@ def main():
     parser.add_argument("--data_type", choices=["csv", "h5ad"], required=True)
     parser.add_argument("--species", default="human")
     parser.add_argument("--outdir", default=".")
+    parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--repeat", type=int, default=1)
     args = parser.parse_args()
 
-    run_ouroboros(args.data, args.data_type, species=args.species, outdir=args.outdir)
+    run_ouroboros(args.data, args.data_type, species=args.species, outdir=args.outdir, seed=args.seed, repeat=args.repeat)
 
 
 if __name__ == "__main__":
