@@ -1730,9 +1730,9 @@ def plot_robinson_projection(
         rr = np.sqrt(xr**2 + yr**2 + zr**2)
         lon_r = np.degrees(np.arctan2(yr, xr))
         lat_r = np.degrees(np.arcsin(zr / rr))
-        ref_labels = ref_df['putative_phase_transition'].unique()
+        ref_labels = ref_df['phase'].unique()
         for label in ref_labels:
-            idx = ref_df['putative_phase_transition'] == label
+            idx = ref_df['phase'] == label
             ax.scatter(lon_r[idx], lat_r[idx],
                        s=20, label=label, 
                        c=palette.get(label, 'grey') if not is_cont else 'grey', alpha=0.1,
