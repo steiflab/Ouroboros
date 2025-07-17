@@ -1639,7 +1639,9 @@ def plot_robinson_projection(
     central_longitude=80, 
     title="", 
     alpha=0.7,
-    scale=10
+    scale=10,
+    save_fig = None,
+    show = True
 ):
     x, y, z = z_df['dim1'].values, z_df['dim2'].values, z_df['dim3'].values
     r = np.sqrt(x**2 + y**2 + z**2)
@@ -1737,7 +1739,10 @@ def plot_robinson_projection(
                        transform=ccrs.PlateCarree())
 
     plt.title(title)
-    plt.show()
+    if save_fig is not None:
+        plt.savefig(save_fig, dpi=300, bbox_inches='tight')
+    if show == True:
+        plt.show()
 
 
 def qc_and_threshold(model, trainer, z_df, new_feature_set, ref_embed, outdir, seed, debug = True):
