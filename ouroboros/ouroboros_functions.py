@@ -1731,12 +1731,16 @@ def plot_robinson_projection(
         lon_r = np.degrees(np.arctan2(yr, xr))
         lat_r = np.degrees(np.arcsin(zr / rr))
         ref_labels = ref_df['phase'].unique()
+        
         for label in ref_labels:
             idx = ref_df['phase'] == label
-            ax.scatter(lon_r[idx], lat_r[idx],
-                       s=20, label=label, 
-                       c=palette.get(label, 'grey') if not is_cont else 'grey', alpha=0.1,
-                       transform=ccrs.PlateCarree())
+            color = phase_pal_transition[label] if label in phase_pal_transition else 'grey'
+            ax.scatter(
+                lon_r[idx], lat_r[idx],
+                s=20, label=f"ref: {label}",
+                c=color, alpha=0.1,
+                transform=ccrs.PlateCarree()
+            )
 
     plt.title(title)
     if save_fig is not None:
