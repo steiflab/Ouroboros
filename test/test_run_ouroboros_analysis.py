@@ -58,13 +58,14 @@ with resources.path("ouroboros.data", "train_meta.csv") as path:
     train_meta = pd.read_csv(path)
 
 def test_ouroboros_retrain_adata():
+    seed = random.randint(1, 1000000)
     extra_genes = [f"Gene_{i}" for i in range(100)]
     removed_genes = random.sample(feature_set, 30) 
     feature_gene_subset = [gene for gene in feature_set if gene not in removed_genes]
     genes = feature_gene_subset + extra_genes
     adata = make_adata(genes, 100)
     
-    model, ref_embed, in_order_feature_set = obo.ouroboros_functions.ouroboros_retrain(adata)
+    model, ref_embed, in_order_feature_set, trainer = obo.ouroboros_functions.ouroboros_retrain(adata, seed)
 
     assert ref_embed.columns.tolist() == ['dim1', 'dim2', 'dim3', 'phase', 'library']
     assert set(in_order_feature_set) == set(feature_gene_subset)
@@ -72,13 +73,14 @@ def test_ouroboros_retrain_adata():
     assert isinstance(model, SCPHERE)
 
 def test_ouroboros_retrain_pandas():
+    seed = random.randint(1, 1000000)
     extra_genes = [f"Gene_{i}" for i in range(100)]
     removed_genes = random.sample(feature_set, 30) 
     feature_gene_subset = [gene for gene in feature_set if gene not in removed_genes]
     genes = feature_gene_subset + extra_genes
     df = make_pandas(genes, 100)
     
-    model, ref_embed, in_order_feature_set = obo.ouroboros_functions.ouroboros_retrain(df)
+    model, ref_embed, in_order_feature_set, trainer = obo.ouroboros_functions.ouroboros_retrain(df, seed)
 
     assert ref_embed.columns.tolist() == ['dim1', 'dim2', 'dim3', 'phase', 'library']
     assert set(in_order_feature_set) == set(feature_gene_subset)
