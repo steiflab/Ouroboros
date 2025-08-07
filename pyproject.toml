@@ -23,6 +23,11 @@ dependencies = [
   "importlib_resources",
   "nbformat",
   "kaleido",
+  "kneed"
+]
+
+[project.optional-dependencies]
+extra = [
   "git+https://github.com/klarman-cell-observatory/scPhere.git"
 ]
 

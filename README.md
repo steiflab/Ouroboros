@@ -91,7 +91,9 @@ ouroboros \
     --data /path/to/h5ad  \
     --data_type h5ad \
     --species human \
-    --outdir /path/to/output/directory
+    --outdir /path/to/output/directory \
+    --seed 0 \
+    --repeat 5 
 ```
 
 Arguments: 
@@ -101,7 +103,10 @@ Arguments:
 | `--data_type` | **Required.** Format of the input data. Must be `h5ad` or `csv`.              |
 | `--species`   | Species of origin for the dataset. Must be `human` or `mouse`.  Default is human |
 | `--outdir`    | Output directory where results (embeddings, figures, logs) will be saved. Default is '.'|
+| `--seed`      | Seed used for Ouroborous for data reproducibility. Default is 0 |
+| `--repeat`*    | Number of times to retrain model (only if input data is missing any training genes). Default is 1.|
 
+\* If any gene is missing from training feature set from the input data, the model must be retrained. To ensure robust performance, Ouroboros will retrain the VAE {repeat} times and select the model that correlates with the consensus. However, increasing the repeat parameter will significantly extend runtime.
 
 
 

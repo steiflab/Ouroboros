@@ -12,7 +12,11 @@ from sklearn.neighbors import KNeighborsClassifier
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 from sklearn.decomposition import PCA
+
+from kneed import KneeLocator
+from scipy.interpolate import UnivariateSpline
 import tensorflow as tf
+import random
 
 import anndata as ad
 from matplotlib import cm
@@ -22,8 +26,9 @@ from plotly.io import write_image
 import seaborn as sns
 from scipy.sparse import issparse
 from scipy.spatial.transform import Rotation as R
-
-
+from scipy import stats
+import shutil
+import matplotlib.patches as patches
 
 reference_CC_pole_point = [0.86202236, 0.24824865, 0.44191636]
 
@@ -222,9 +227,7 @@ def KNN_predict(ref_embed, z_df):
     return z_df
 
 
-
-
-def ouroboros_retrain(test_adata):
+def ouroboros_retrain(test_adata, seed):
     """Useful if some training genes are missing in embedding dataset and you want to embed them in the riba-mahd embedding"""
     #Read in training data
     matrix = pd.read_csv(DATA_DIR / 'train_matrix.csv')
@@ -259,7 +262,8 @@ def ouroboros_retrain(test_adata):
         map_dict[val] = i
     batch = train_meta['library'].map(map_dict).values
 
-
+    set_seed(seed)
+    tf.reset_default_graph()
     #Initilize model
     model = SCPHERE(n_gene=matrix.shape[1], n_batch=2, batch_invariant=False,
                 z_dim=2, latent_dist='vmf',
@@ -276,7 +280,7 @@ def ouroboros_retrain(test_adata):
     train_df = z_mean_df.merge(train_meta, how = 'left', left_index = True, right_index = True)
     
     
-    return model, train_df, in_order_feature_set
+    return model, train_df, in_order_feature_set, trainer
 
 
 
@@ -336,12 +340,26 @@ def fit_great_circle(points):
 
 
 
-def find_cyc_center(z_df, ref_embed, phase_category = 'phase'):
+def find_cyc_center(z_df, ref_embed, phase_category = 'phase', _method = "ref"):
     """ Find a point on the sphere's surface that represents the centre of the cycling cells
     z_df: embedded points including cycling cells to find the centre of
     ref_embed: reference embedded points 
     phase_category: name of the columns with phase labels to parse (needs to have G1/S/G2M)"""
-    cyc = z_df[z_df[phase_category].isin(['G2M', 'S', 'G1'])]
+
+    if _method not in ['ref', 'z_df', 'both']:
+        raise ValueError(f"Invalid method '{_method}'. Expected one of: 'ref', 'z_df', 'both'.")
+    
+    if _method == "both":
+        curr_z_df = z_df.copy()
+        curr_z_df['phase'] = curr_z_df[phase_category] 
+        curr_z_df = pd.concat([curr_z_df, ref_embed])
+    elif _method == 'z_df':
+        curr_z_df = z_df.copy()
+        curr_z_df['phase'] = curr_z_df[phase_category] 
+    else:
+        curr_z_df = ref_embed.copy()
+
+    cyc = curr_z_df[curr_z_df['phase'].isin(['G2M', 'S', 'G1'])]
     points = cyc[['dim1', 'dim2', 'dim3']].values
     # Fit the great circle
     great_circle, normal_vector = fit_great_circle(points)
@@ -1346,6 +1364,10 @@ def plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, veloc
 
     if z_df[colour_by].isna().all():
         raise ValueError(f"Column '{colour_by}' contains only NaN values.")
+    
+    if len(cycle_pole) != 3:
+        raise ValueError(f"cycle_pole must have exactly 3 elements, got {len(cycle_pole)}")
+
 
     # Sphere properties
     mtx = z_df[['dim1', 'dim2', 'dim3']].values
@@ -1662,7 +1684,9 @@ def plot_robinson_projection(
     central_longitude=80, 
     title="", 
     alpha=0.7,
-    scale=10
+    scale=10,
+    save_fig = None,
+    show = True
 ):
     try:
         import cartopy.crs as ccrs
@@ -1761,13 +1785,264 @@ def plot_robinson_projection(
         rr = np.sqrt(xr**2 + yr**2 + zr**2)
         lon_r = np.degrees(np.arctan2(yr, xr))
         lat_r = np.degrees(np.arcsin(zr / rr))
-        ref_labels = ref_df['putative_phase_transition'].unique()
+        ref_labels = ref_df['phase'].unique()
+        
         for label in ref_labels:
-            idx = ref_df['putative_phase_transition'] == label
-            ax.scatter(lon_r[idx], lat_r[idx],
-                       s=20, label=label, 
-                       c=palette.get(label, 'grey') if not is_cont else 'grey', alpha=0.1,
-                       transform=ccrs.PlateCarree())
+            idx = ref_df['phase'] == label
+            color = phase_pal_transition[label] if label in phase_pal_transition else 'grey'
+            ax.scatter(
+                lon_r[idx], lat_r[idx],
+                s=20, label=f"ref: {label}",
+                c=color, alpha=0.1,
+                transform=ccrs.PlateCarree()
+            )
 
     plt.title(title)
-    plt.show()
+    if save_fig is not None:
+        plt.savefig(save_fig, dpi=300, bbox_inches='tight')
+    if show == True:
+        plt.show()
+
+
+def qc_and_threshold(model, trainer, z_df, new_feature_set, ref_embed, outdir, seed, debug = True):
+    """
+    Depreciated function; Attepts to find threshold for quiscence and senescence. 
+    """
+
+    ## Process Wetchner dataset
+    discrete = ad.read_h5ad("/projects/steiflab/scratch/hmacdonald/total_RNA_scratch/wechter_scratch/starsolo_counts/h5ads/discrete.h5ad")
+    discrete.X = discrete.layers['raw_counts'].toarray()
+    z_mean_df = embed_in_retrained_sphere(discrete, model, new_feature_set)
+    z_mean_df = KNN_predict(ref_embed, z_mean_df)    
+    z_mean_df = calculate_cell_cycle_pseudotime(z_mean_df, ref_embed,  phase_category = 'KNN_phase')
+    pseud, _ = dormancy_depth(z_mean_df, ref_embed, retrained = True)
+    z_mean_df = z_mean_df.merge(pseud, how = 'left', left_index = True, right_index = True)
+    z_mean_df = z_mean_df.merge(discrete.obs[['rep', 'treatment']], left_index=True, right_index=True)
+    
+    if debug:
+        plt.hist(z_mean_df['dormancy_depth'])
+        plt.savefig(f"{outdir}/wetchner.png")
+        plt.close()
+
+    z_mean_df['pseudotime'] = np.where(z_mean_df['dormancy_depth'].isna(), z_mean_df['cell_cycle_pseudotime'], z_mean_df['dormancy_depth'])
+
+    ## Process training dataset
+    training_embed = ref_embed.copy()
+    cc_df = calculate_cell_cycle_pseudotime(training_embed, ref_embed,  phase_category = 'phase')
+    cc_df = cc_df[['cell_cycle_pseudotime']]
+    training_embed = training_embed.merge(cc_df, how = 'left', left_index = True, right_index = True)
+    pseud, ref_pseud = dormancy_depth(training_embed, ref_embed, retrained = True)
+    training_embed = training_embed.merge(pseud, how = 'left', left_index = True, right_index = True)
+    
+    training_embed['pseudotime'] = np.where(training_embed['dormancy_depth'].isna(), training_embed['cell_cycle_pseudotime'], training_embed['dormancy_depth'])
+
+    ### Find Threshold
+    threshold = find_threshold(z_mean_df)
+    z_df = z_df.copy()
+
+    z_df['G0_classification'] = np.where(
+        z_df['dormancy_depth'] > threshold, 'quiescence',
+        np.where(
+            z_df['dormancy_depth'] < threshold, 'senescence',
+            np.nan
+        )
+    ) 
+
+    ### QC
+    qc = quality_control(trainer, z_mean_df, training_embed, new_feature_set, threshold, seed, outdir)
+    qc.to_csv(f"{outdir}/qc.csv", sep=',')
+
+    return z_df
+
+def find_threshold(wetchner_df):
+    num_bins = 30
+    senescence_df = wetchner_df[wetchner_df['treatment'].isin(['IR-induced senescence (10 Gy)', 'Replicative senescence (PDL 57)', 'Etoposide-induced senescent (50 microM)'])]
+
+    discrete_filtered = senescence_df.dropna(subset=["dormancy_depth"]).copy()
+    min_val = discrete_filtered["dormancy_depth"].min()
+    max_val = discrete_filtered["dormancy_depth"].max()
+    bin_edges = np.linspace(min_val, max_val, num_bins + 1)
+    discrete_filtered["pseudotime_bin"] = pd.cut(discrete_filtered["dormancy_depth"], bins=bin_edges, include_lowest=True)
+
+    discrete_filtered = discrete_filtered[discrete_filtered['treatment'].isin(['IR-induced senescence (10 Gy)', 'Replicative senescence (PDL 57)', 'Etoposide-induced senescent (50 microM)'])]
+    bin_counts = discrete_filtered.groupby(["pseudotime_bin"]).size()
+    bin_proportions = bin_counts.div(bin_counts.sum(axis=0))
+    y = bin_proportions.values
+
+    bin_midpoints = [(interval.left + interval.right) / 2 for interval in bin_proportions.index]
+    x = np.array(bin_midpoints) 
+
+    # Spline smoothing
+    spline = UnivariateSpline(x, y, s=0.01)
+    x_dense = np.linspace(x.min(), x.max(), 500)
+    y_smooth = spline(x_dense)
+
+    kl = KneeLocator(x_dense, y_smooth, curve="convex", direction="decreasing", online=True)
+    knee = kl.knee
+
+    return knee
+    
+
+
+def quality_control(trainer, wetchner_df, training_df, new_feature_set, threshold, seed, outdir):
+    # Recall using Wechner dataset
+    wetchner_df['pseudotime'] = np.where(wetchner_df['dormancy_depth'].isna(), wetchner_df['cell_cycle_pseudotime'], wetchner_df['dormancy_depth'])
+    senescence_df = wetchner_df[wetchner_df['treatment'].isin(['IR-induced senescence (10 Gy)', 'Replicative senescence (PDL 57)', 'Etoposide-induced senescent (50 microM)'])]
+
+    senescene = senescence_df[senescence_df['pseudotime'] < -0.6].shape[0]
+    true_senescence = senescence_df.shape[0]
+    senescence_recall = senescene / true_senescence
+
+    # Model log likelihood
+    log_likihood = trainer.status['log_likelihood'][-1] 
+    kl_divergenet = trainer.status['kl_divergence'][-1]
+
+    # Missing genes 
+    feature_set = pd.read_csv(DATA_DIR / 'SHAP_feature_set.csv')
+    feature_set = feature_set.feature_set.tolist()
+    missing_gene = len(set(feature_set) - set(new_feature_set))
+    proportion_missing_gene = missing_gene / len(feature_set)
+
+    # SHAP score loss
+    shap_score = pd.read_csv("/projects/steiflab/research/hmacdonald/total_RNA/Ouroboros_paper/model/feature_selection/output/mean_shap_values.csv")
+
+    shap_loss = {}
+    for cell_cycle in ['G0', 'G1', 'G1-G0 transition', 'G2M', 'S']:
+        curr_cell_cycle = shap_score[shap_score['Class'] == cell_cycle]
+        curr_cell_cycle = curr_cell_cycle[curr_cell_cycle['Feature'].isin(feature_set)]
+        total_shap_score = curr_cell_cycle['AbsoluteSHAPValue'].sum()
+        shap_score_loss = curr_cell_cycle[~curr_cell_cycle['Feature'].isin(new_feature_set)]['AbsoluteSHAPValue'].sum()
+
+        prop_shap_loss = shap_score_loss/total_shap_score
+        shap_loss[f'{cell_cycle}_shap_loss'] = [prop_shap_loss]
+
+
+    # Scenscenece threshold Diff
+    threshold_diff = abs(-0.6 - threshold)
+
+    # Scenscence gene expression score
+    wetchner_training = pd.concat([wetchner_df, training_df], axis=0)
+    senescence_score = pd.read_csv('/projects/steiflab/scratch/glchang/Ouroboros_paper/senescence.csv')
+    wetchner_training = wetchner_training.merge(senescence_score, right_on="cell_id", left_index = True)
+
+    wetchner_training = wetchner_training[~wetchner_training['dormancy_depth'].isna()]
+    
+    senmayo_corr = wetchner_training['dormancy_depth'].corr(wetchner_training['senmayo'], method='spearman')
+    hernandez_segura_corr = wetchner_training['dormancy_depth'].corr(wetchner_training['core_up_sen_genes'], method='spearman')
+
+   
+    qc_df = pd.DataFrame({
+        'seed': [seed],
+        'wetchner_senescence_recall': [senescence_recall],
+        'log_likihood': [log_likihood],
+        'kl_divergenet': [kl_divergenet],
+        'missing_gene': [missing_gene], 
+        'proportion_missing_gene': [proportion_missing_gene],
+        'threshold_diff': [threshold_diff],
+        'senmayo_corr': [senmayo_corr],
+        'hernandez_segura_corr': [hernandez_segura_corr],
+        **shap_loss
+    })
+    return qc_df
+
+def set_seed(seed=0):
+    random.seed(seed)
+    np.random.seed(seed)
+    tf.set_random_seed(seed)
+
+
+def select_seed(repeat, outdir):
+    all_z_df = []
+    for i in range(repeat):
+        z_df = pd.read_csv(outdir + "/retrain/" + str(i) + "/ouroboros_embeddings_pseudotimes.csv")
+        z_df.set_index('Unnamed: 0', inplace = True)
+        z_df['pseudotime'] = np.where(z_df['dormancy_depth'].isna(), z_df['cell_cycle_pseudotime'], z_df['dormancy_depth'])
+        z_df['seed'] = i
+        all_z_df.append(z_df)
+    all_z_df = pd.concat(all_z_df)
+    dormant_df = all_z_df.copy()
+
+    depth_matrix = dormant_df.pivot_table(
+        index=dormant_df.index, 
+        columns='seed', 
+        values='pseudotime'
+    )
+    consensus_curve = depth_matrix.median(axis=1) 
+    
+    seed_r = {}
+    for col in depth_matrix.columns:
+        curr = depth_matrix[col]
+        
+        valid = curr.notna() & consensus_curve.notna()
+        if valid.sum() > 2:  
+            r, pval = stats.pearsonr(curr[valid], consensus_curve[valid])
+            if pval < 0.05:
+                seed_r[col] = r
+    
+    selected_seed = max(seed_r, key=seed_r.get)
+    selected_seed_corr = max(seed_r.values())
+    
+    plot_consensus(depth_matrix, selected_seed, outdir)
+
+    selected_seed_path = outdir + "/retrain/" + str(selected_seed) 
+    z_df = pd.read_csv(selected_seed_path + "/ouroboros_embeddings_pseudotimes.csv")
+    ref_embed = pd.read_csv(selected_seed_path + "/retrained_reference_embeddings.csv")
+
+
+    for file in ['ouroboros_embeddings_pseudotimes.csv', "qc.csv", "retrained_reference_embeddings.csv", "model.meta", "model.index", "model.data-00000-of-00001", "checkpoint"]:
+        source_path = selected_seed_path + "/" + file
+        destination_path = outdir + "/" + file
+        shutil.move(source_path, destination_path)
+    
+    return z_df, ref_embed
+    
+
+def plot_consensus(depth_matrix, selected_seed, outdir):
+    depth_matrix_long = depth_matrix.melt(var_name='seed', value_name='pseudotime')
+
+    fig, ax = plt.subplots(figsize=(10, 4))
+
+    for seed in depth_matrix_long['seed'].unique():
+        curr = depth_matrix_long[depth_matrix_long['seed'] == seed]
+
+        if seed != selected_seed:
+        # Create histogram plot
+            hist = sns.kdeplot(
+                data=curr, x='pseudotime',alpha = 0.1, linewidth=1
+            )
+        else:
+            hist = sns.kdeplot(
+                data=curr, x='pseudotime', alpha = 1, linewidth=2.5, linestyle='--'
+            )
+
+    # Remove the default box (spines)
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+
+    # Draw axes at (0,0)
+    ax.axhline(0, color='black', linewidth=1)
+    ax.axvline(0, color='black', linewidth=1)
+
+    # Labels below the axis
+    ax.text(-0.5, -0.8, 'G0 pseudotime (Φ)', ha='center', fontsize=12, clip_on=False)
+    ax.text(0.5, -0.8, 'CC pseudotime (θ)', ha='center', fontsize=12, clip_on=False)
+
+    # Define the colored boxes for G1, S, G2M phases
+    phase_colors = {'G1': '#1f77b4', 'S': '#ff7f0e', 'G2M': '#2ca02c', 'Quiescent-like': 'lightgrey', 'Senescent-like':'black'}
+    phase_regions = {'G1': (0, 0.4), 'S': (0.4, 0.75), 'G2M': (0.75, 1), 'Quiescent-like':(-0.6, 0),'Senescent-like': (-1, -0.6)}
+
+    # Add colored boxes at the top of the plot
+    for phase, (start, end) in phase_regions.items():
+        ax.add_patch(patches.Rectangle(
+            (start, ax.get_ylim()[1] * 1.02),  # Position at top
+            end - start,  # Width
+            ax.get_ylim()[1] * 0.02,  # Height
+            color=phase_colors[phase],
+            clip_on=False
+        ))
+        ax.text((start + end) / 2, ax.get_ylim()[1] * 1.04, phase, 
+                ha='center', va='bottom', fontsize=10, fontweight='bold')
+    
+    plt.savefig(f"{outdir}/consensus_seed.png")
+    plt.close()
+
