@@ -1992,7 +1992,7 @@ def select_seed(repeat, outdir):
     for file in ['ouroboros_embeddings_pseudotimes.csv', "qc.csv", "retrained_reference_embeddings.csv", "model.meta", "model.index", "model.data-00000-of-00001", "checkpoint"]:
         source_path = selected_seed_path + "/" + file
         destination_path = outdir + "/" + file
-        shutil.move(source_path, destination_path)
+        shutil.copy(source_path, destination_path)
     
     return z_df, ref_embed
     
