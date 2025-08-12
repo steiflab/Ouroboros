@@ -241,7 +241,7 @@ def ouroboros_retrain(test_adata, seed):
 
     bdata = test_adata.copy()
     if isinstance(bdata, pd.DataFrame):
-        test_genes = bdata.index
+        test_genes = bdata.columns
     elif isinstance(bdata, ad.AnnData):
         test_genes = bdata.var_names
     else:
