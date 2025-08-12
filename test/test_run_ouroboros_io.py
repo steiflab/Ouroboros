@@ -72,7 +72,8 @@ def test_run_ouroboros_missing_all_gene_pandas():
 
 
 ### Test for expected output
-EXPECTED_COL = ['dim1', 'dim2', 'dim3', 'KNN_phase', 'cell_cycle_pseudotime', 'south', 'dormancy_depth'] 
+EXPECTED_COL = ['dim1', 'dim2', 'dim3', 'KNN_phase', 'cell_cycle_pseudotime', 'south', 'dormancy_pseudotime', 'G0_classification']
+
 
 def test_run_ouroboros_full_h5ad():
     adata = ad.read_h5ad("test/test_data/test_dataset.h5ad")
@@ -80,7 +81,7 @@ def test_run_ouroboros_full_h5ad():
         tf.reset_default_graph()
         z_df = obo.run_ouroboros("test/test_data/test_dataset.h5ad", "h5ad", "human", tmp_output_dir)
 
-        expected_output_files = ['ouroboros_embeddings_pseudotimes.csv', 'ouroboros_KNN_sphere.html', 'ouroboros_cell_cycle_pseudotime.html', 'ouroboros_dormancy_depth.html']
+        expected_output_files = ['ouroboros_embeddings_pseudotimes.csv', 'ouroboros_KNN_sphere.html', 'ouroboros_cell_cycle_pseudotime.html', 'ouroboros_dormancy_pseudotime.html']
         for file in expected_output_files:
             file = os.path.join(tmp_output_dir, file)
             assert os.path.exists(file), f"Expected output not found: {file}"
@@ -94,7 +95,7 @@ def test_run_ouroboros_partial_h5ad():
         tf.reset_default_graph()
         z_df = obo.run_ouroboros("test/test_data/test_partial_dataset.h5ad", "h5ad", "human", tmp_output_dir)
 
-        expected_output_files = ['ouroboros_embeddings_pseudotimes.csv', 'retrained_reference_embeddings.csv', 'ouroboros_cell_cycle_pseudotime.html', 'ouroboros_dormancy_depth.html']
+        expected_output_files = ['ouroboros_embeddings_pseudotimes.csv', 'retrained_reference_embeddings.csv', 'ouroboros_cell_cycle_pseudotime.html', 'ouroboros_dormancy_pseudotime.html']
         for file in expected_output_files:
             file = os.path.join(tmp_output_dir, file)
             assert os.path.exists(file), f"Expected output not found: {file}"
@@ -114,7 +115,7 @@ def test_run_ouroboros_full_pandas():
         tf.reset_default_graph()
         z_df = obo.run_ouroboros(pandas_file, "csv", "human", tmp_output_dir)
 
-        expected_output_files = ['ouroboros_embeddings_pseudotimes.csv', 'ouroboros_KNN_sphere.html', 'ouroboros_cell_cycle_pseudotime.html', 'ouroboros_dormancy_depth.html']
+        expected_output_files = ['ouroboros_embeddings_pseudotimes.csv', 'ouroboros_KNN_sphere.html', 'ouroboros_cell_cycle_pseudotime.html', 'ouroboros_dormancy_pseudotime.html']
         for file in expected_output_files:
             file = os.path.join(tmp_output_dir, file)
             assert os.path.exists(file), f"Expected output not found: {file}"
@@ -133,7 +134,7 @@ def test_run_ouroboros_partial_pandas():
         df.to_csv(pandas_file)
         z_df = obo.run_ouroboros(pandas_file, "csv", "human", tmp_output_dir)
 
-        expected_output_files = ['ouroboros_embeddings_pseudotimes.csv', 'retrained_reference_embeddings.csv', 'ouroboros_cell_cycle_pseudotime.html', 'ouroboros_dormancy_depth.html']
+        expected_output_files = ['ouroboros_embeddings_pseudotimes.csv', 'retrained_reference_embeddings.csv', 'ouroboros_cell_cycle_pseudotime.html', 'ouroboros_dormancy_pseudotime.html']
         for file in expected_output_files:
             file = os.path.join(tmp_output_dir, file)
             assert os.path.exists(file), f"Expected output not found: {file}"
