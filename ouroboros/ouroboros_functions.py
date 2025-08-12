@@ -1956,7 +1956,7 @@ def quality_control(trainer, wetchner_df, training_df, new_feature_set, threshol
 def set_seed(seed=0):
     random.seed(seed)
     np.random.seed(seed)
-    tf.random.set_seed(seed)
+    tf.set_random_seed(seed)
 
 
 def select_seed(repeat, outdir):
