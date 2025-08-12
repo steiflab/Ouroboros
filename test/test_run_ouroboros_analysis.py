@@ -36,7 +36,7 @@ def test_ouroboros_embed():
     matrix = np.load('test/test_data/test_matrix.npy')
 
     with tempfile.TemporaryDirectory() as outdir:
-        tf.reset_default_graph()
+        tf.compat.v1.reset_default_graph()
         z_df = obo.ouroboros_functions.ouroboros_embed(matrix, adata, "h5ad", outdir = outdir)
 
         output_file = os.path.join(outdir, "ouroboros_KNN_sphere.html")
@@ -92,7 +92,7 @@ def test_embed_in_retrained_sphere_adata():
     with open("test/test_data/test_partial_in_order_feature_set.pkl", "rb") as f:
         in_order_feature_set = pickle.load(f)
 
-    tf.reset_default_graph()
+    tf.compat.v1.reset_default_graph()
     model = SCPHERE(n_gene=len(in_order_feature_set), n_batch=2, batch_invariant=False,
                 z_dim=2, latent_dist='vmf',
                 observation_dist='nb')
@@ -109,7 +109,7 @@ def test_embed_in_retrained_sphere_pandas():
     with open("test/test_data/test_partial_in_order_feature_set.pkl", "rb") as f:
         in_order_feature_set = pickle.load(f)
 
-    tf.reset_default_graph()
+    tf.compat.v1.reset_default_graph()
     model = SCPHERE(n_gene=len(in_order_feature_set), n_batch=2, batch_invariant=False,
                 z_dim=2, latent_dist='vmf',
                 observation_dist='nb')

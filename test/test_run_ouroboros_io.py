@@ -77,7 +77,7 @@ EXPECTED_COL = ['dim1', 'dim2', 'dim3', 'KNN_phase', 'cell_cycle_pseudotime', 's
 def test_run_ouroboros_full_h5ad():
     adata = ad.read_h5ad("test/test_data/test_dataset.h5ad")
     with tempfile.TemporaryDirectory() as tmp_output_dir:
-        tf.reset_default_graph()
+        tf.compat.v1.reset_default_graph()
         z_df = obo.run_ouroboros("test/test_data/test_dataset.h5ad", "h5ad", "human", tmp_output_dir)
 
         expected_output_files = ['ouroboros_embeddings_pseudotimes.csv', 'ouroboros_KNN_sphere.html', 'ouroboros_cell_cycle_pseudotime.html', 'ouroboros_dormancy_depth.html']
@@ -85,13 +85,13 @@ def test_run_ouroboros_full_h5ad():
             file = os.path.join(tmp_output_dir, file)
             assert os.path.exists(file), f"Expected output not found: {file}"
 
-        assert z_df.columns.to_list() == EXPECTED_COL
+        assert z_df.columns.to_list() == EXPECTED_COL, f"Column names unexpected: {z_df.columns.to_list()}"
         assert set(z_df.index) == set(adata.obs_names)
 
 def test_run_ouroboros_partial_h5ad():
     adata = ad.read_h5ad("test/test_data/test_partial_dataset.h5ad")
     with tempfile.TemporaryDirectory() as tmp_output_dir:
-        tf.reset_default_graph()
+        tf.compat.v1.reset_default_graph()
         z_df = obo.run_ouroboros("test/test_data/test_partial_dataset.h5ad", "h5ad", "human", tmp_output_dir)
 
         expected_output_files = ['ouroboros_embeddings_pseudotimes.csv', 'retrained_reference_embeddings.csv', 'ouroboros_cell_cycle_pseudotime.html', 'ouroboros_dormancy_depth.html']
@@ -99,7 +99,7 @@ def test_run_ouroboros_partial_h5ad():
             file = os.path.join(tmp_output_dir, file)
             assert os.path.exists(file), f"Expected output not found: {file}"
 
-        assert z_df.columns.to_list() == EXPECTED_COL
+        assert z_df.columns.to_list() == EXPECTED_COL, f"Column names unexpected: {z_df.columns.to_list()}"
         assert set(z_df.index) == set(adata.obs_names)
 
 def test_run_ouroboros_full_pandas():
@@ -111,7 +111,7 @@ def test_run_ouroboros_full_pandas():
         pandas_file = os.path.join(tmp_output_dir, "test_dataset.csv")
         df.to_csv(pandas_file)
 
-        tf.reset_default_graph()
+        tf.compat.v1.reset_default_graph()
         z_df = obo.run_ouroboros(pandas_file, "csv", "human", tmp_output_dir)
 
         expected_output_files = ['ouroboros_embeddings_pseudotimes.csv', 'ouroboros_KNN_sphere.html', 'ouroboros_cell_cycle_pseudotime.html', 'ouroboros_dormancy_depth.html']
@@ -128,7 +128,7 @@ def test_run_ouroboros_partial_pandas():
     df['cell_id'] = adata.obs_names
 
     with tempfile.TemporaryDirectory() as tmp_output_dir:
-        tf.reset_default_graph()
+        tf.compat.v1.reset_default_graph()
         pandas_file = os.path.join(tmp_output_dir, "test_partial_dataset.csv")
         df.to_csv(pandas_file)
         z_df = obo.run_ouroboros(pandas_file, "csv", "human", tmp_output_dir)

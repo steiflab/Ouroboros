@@ -178,7 +178,7 @@ def ouroboros_embed(matrix, data, data_type, outdir = '.'):
         latent_dist='vmf',
         observation_dist='nb'
     )
-    tf.reset_default_graph()
+    tf.compat.v1.reset_default_graph()
     model.load_sess(str(DATA_DIR / "model" / "model"))
     new_batch = np.full(matrix.shape[0], 2)
 
@@ -263,7 +263,7 @@ def ouroboros_retrain(test_adata, seed):
     batch = train_meta['library'].map(map_dict).values
 
     set_seed(seed)
-    tf.reset_default_graph()
+    tf.compat.v1.reset_default_graph()
     #Initilize model
     model = SCPHERE(n_gene=matrix.shape[1], n_batch=2, batch_invariant=False,
                 z_dim=2, latent_dist='vmf',
@@ -1948,7 +1948,7 @@ def quality_control(trainer, wetchner_df, training_df, new_feature_set, threshol
 def set_seed(seed=0):
     random.seed(seed)
     np.random.seed(seed)
-    tf.set_random_seed(seed)
+    tf.random.set_seed(seed)
 
 
 def select_seed(repeat, outdir):
@@ -1985,7 +1985,7 @@ def select_seed(repeat, outdir):
     plot_consensus(depth_matrix, selected_seed, outdir)
 
     selected_seed_path = outdir + "/retrain/" + str(selected_seed) 
-    z_df = pd.read_csv(selected_seed_path + "/ouroboros_embeddings_pseudotimes.csv")
+    z_df = pd.read_csv(selected_seed_path + "/ouroboros_embeddings_pseudotimes.csv", index_col=0)
     ref_embed = pd.read_csv(selected_seed_path + "/retrained_reference_embeddings.csv")
 
 
