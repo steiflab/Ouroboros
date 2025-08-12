@@ -125,8 +125,7 @@ def test_run_ouroboros_full_pandas():
 
 def test_run_ouroboros_partial_pandas():
     adata = ad.read_h5ad("test/test_data/test_partial_dataset.h5ad")
-    df = pd.DataFrame(adata.X, columns=adata.var_names)
-    df['cell_id'] = adata.obs_names
+    df = pd.DataFrame(adata.X, columns=adata.var_names, index=adata.obs_names)
 
     with tempfile.TemporaryDirectory() as tmp_output_dir:
         tf.reset_default_graph()
