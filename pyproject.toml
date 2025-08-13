@@ -19,9 +19,9 @@ dependencies = [
   "tensorflow_probability==0.17.0",
   "plotly>=5.18.0",
   "scikit-learn>=0.24.2",
+  "kaleido<1.0.0",
   "importlib_resources",
   "nbformat",
-  "kaleido",
   "kneed"
 ]
 
