@@ -1,7 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
-from scphere.model.vae import SCPHERE
-from scphere.util.trainer import Trainer
+from .scphere.model.vae import SCPHERE
+from .scphere.util.trainer import Trainer
 import pandas as pd
 import anndata as ad
 import plotly.graph_objects as go

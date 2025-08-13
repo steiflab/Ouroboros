@@ -7,7 +7,7 @@ import tempfile
 import os
 from pathlib import Path
 import tensorflow as tf
-from scphere.model.vae import SCPHERE
+from ouroboros.scphere.model.vae import SCPHERE
 import random
 import pytest
 import pickle
