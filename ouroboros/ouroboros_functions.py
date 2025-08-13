@@ -587,15 +587,16 @@ def detect_phase_switch(data, angle_column='angle', phase_column='phase', bins=2
     # What percentage of total counts in each bin are for each phase?
     row_sums = binned_data.sum(axis=1)
     binned_data_percent = (binned_data.div(row_sums, axis=0)) * 100
+    binned_data_percent_filtered = binned_data_percent[['G1', 'S', 'G2M']]
 
     # We need to make sure that these bins are being calculated in increasing order along the cell cycle trajectory, so that when we find our G2M-G1 break it's in the right spot, and not in wrong direction
     # calculate what phase did we initially land in randomly?
-    first_bin = binned_data_percent.iloc[0]
+    first_bin = binned_data_percent_filtered.iloc[0]
     first_phase = first_bin.idxmax()
 
     # Going along the bins 
-    for i in range(0, len(binned_data_percent)):
-            next_phase = binned_data_percent.iloc[i].idxmax()
+    for i in range(0, len(binned_data_percent_filtered)):
+            next_phase = binned_data_percent_filtered.iloc[i].idxmax()
             if next_phase != first_phase:
                     break
 
