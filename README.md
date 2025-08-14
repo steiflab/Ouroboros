@@ -9,68 +9,20 @@ For more information see the Wiki: *add wiki*
 
 ## Installation 
 
-**Dependencies:**
-- python=3.6
-- numpy>=1.16.4
-- scipy>=1.3.0
-- pandas>=0.21.0
-- anndata=0.7.5
-- matplotlib>=3.1.0
-- seaborn>=0.11.2
-- plotly>=5.24.1
-- tensorflow=1.14
-- tensorflow-probability=0.7.0
-- scPhere
-- scikit-learn>=0.24.2
-- nbformat
+Ouroboros supports Python **3.9–3.12**.
 
-
-To install manually follow these commands: 
-*Note I prefer mamba to conda because it's far faster, but you can just replace any instance of 'mamba' with 'conda' if you wish*
+Install directly from GitHub with:
 ```bash 
-conda create -n ouroboros_env python=3.6
-conda activate ouroboros_env
-
-mamba install "numpy>=1.16.4" "scipy>=1.3.0" "pandas>=0.21.0" "anndata=0.7.5" "matplotlib>=3.1.0" "seaborn>=0.11.2" "plotly>=5.24.1" "scikit-learn>=0.24.2" "scanpy" "cartopy"
-
-pip install tensorflow==1.14
-pip install -U tensorflow-probability==0.7.0
-
-pip install "setuptools_scm<6.4"
-
-pip install importlib_resources
-
-git clone https://github.com/klarman-cell-observatory/scPhere
-cd scPhere
-python setup.py install
-cd ../
-
-git clone https://github.com/haleymac/Ouroboros.git
-cd Ouroboros/
-pip install .
-
-pip install --upgrade nbformat
-
-# necessary for subsequent plotting only, not running Ouroboros main
-pip install -U kaleido
+# Temporary GitHub install — will update to PyPI path once released
+pip install git+https://github.com/haleymac/Ouroboros.git
 ```
+[ScPhere](https://github.com/klarman-cell-observatory/scPhere) is included as part of Ouroboros and has been updated for compatibility with TensorFlow 2. ScPhere was originally developed by Jiarui Ding and colleagues at the Klarman Cell Observatory.
 
-These commands have been included in install.sh as well, so to avoid calling them manually just run: 
-```bash
-# Grab the installation script
-wget https://raw.githubusercontent.com/haleymac/Ouroboros/main/install.sh
-# execute it
-bash install.sh
-```
-This will only work if you already have conda and mamba installed. Also note that 2 github repos (scPhere and Ouroboros) will be dumped in the working directory. 
-
-
-
-Also if you want to plot in a jupyter notebook like in the tutorial you will need an older version of ipykernal:
+#### Optional dependency
+Cartopy – required for some plotting functions, such as plot_robinson_projection. Installation via conda is recommended to ensure required system dependencies are installed first:
 ```bash 
-mamba install ipykernel=5.5 jupyter_client=6.1.12 jupyter_core=4.7.1
+conda install cartopy
 ```
-
 ## Running Ouroboros 
 For a full tutorial see the Wiki: *add wiki*
 
