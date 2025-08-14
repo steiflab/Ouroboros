@@ -1491,20 +1491,25 @@ def plot_gene_sphere(
     velocity=None,
     show=False,
     outpath=None,
+    title="",
     cycle_pole=reference_CC_pole_point
 ):
     """
-    Plot gene expression projected on the Ouroboros VAE sphere.
+    Plot gene expression projected on the Ouroboros VAE sphere. Gene_name can be a list of genes or a single gene.
     """
+    if isinstance(gene_name, str):
+        gene_name = [gene_name]
 
-    if gene_name not in adata.var_names:
-        raise ValueError(f"The gene {gene_name} is not in the AnnData object.")
+    included_genes = [gene for gene in gene_name if gene in adata.var_names]
+
+    if len(included_genes) == 0:
+        raise ValueError(f"None of the genes in gene_name is in the AnnData object.")    
 
     if layer:
         adata.X = adata.layers[layer].copy()
 
-    expr = adata[:, gene_name].X
-    gene_expression = expr.toarray().flatten() if issparse(expr) else expr.flatten()
+    expr = adata[:, included_genes].X
+    gene_expression = np.array(expr.mean(axis=1)).flatten() if issparse(expr) else expr.mean(axis=1)
     z_df["gene_expression"] = gene_expression
 
     # Geometry
@@ -1534,7 +1539,7 @@ def plot_gene_sphere(
             color=z_df["gene_expression"],
             colorscale="Viridis",
             colorbar=dict(
-                title=f"{gene_name}",
+                title=title,
                 len=0.5,
                 thickness=20,
                 x=1.5,
@@ -1554,7 +1559,7 @@ def plot_gene_sphere(
     # Assemble figure
     fig = go.Figure(data=fig_data)
     fig.update_layout(
-        title=f"{gene_name}",
+        title=title,
         scene=dict(
             xaxis=dict(showgrid=False, zeroline=False, showticklabels=False, visible=False),
             yaxis=dict(showgrid=False, zeroline=False, showticklabels=False, visible=False),
