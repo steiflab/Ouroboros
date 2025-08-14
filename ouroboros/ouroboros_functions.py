@@ -1700,6 +1700,7 @@ def plot_robinson_projection(
     alpha=0.7,
     scale=10,
     save_fig = None,
+    rasterize = True,
     show = True
 ):
     try:
@@ -1746,14 +1747,15 @@ def plot_robinson_projection(
         sc = ax.scatter(
             lon[not_na], lat[not_na], c=values[not_na], s=10, alpha=alpha,
             cmap=cmap,
-            transform=ccrs.PlateCarree()
+            transform=ccrs.PlateCarree(), 
+            rasterized=rasterize
         )
 
         # Plot NA points in grey
         if has_na.any():
             ax.scatter(
                 lon[has_na], lat[has_na], c='lightgrey', s=10, alpha=alpha,
-                transform=ccrs.PlateCarree()
+                transform=ccrs.PlateCarree(), rasterized=rasterize
             )
 
         cb = plt.colorbar(sc, ax=ax, orientation='vertical', shrink=0.6, pad=0.05)
@@ -1773,14 +1775,15 @@ def plot_robinson_projection(
             ax.scatter(lon[idx], lat[idx],
                        s=10, label=label, 
                        c=palette.get(label, 'grey'), alpha=alpha,
-                       transform=ccrs.PlateCarree())
+                       transform=ccrs.PlateCarree(), rasterized=rasterize)
 
         # Plot NA values in grey
         if has_na.any():
             ax.scatter(
                 lon[has_na], lat[has_na],
                 s=10, c='lightgrey', label='NA',
-                alpha=alpha, transform=ccrs.PlateCarree()
+                alpha=alpha, transform=ccrs.PlateCarree(), 
+                rasterized=rasterize
             )
 
         plt.legend(loc="upper right", bbox_to_anchor=(1.3, 1.0))
@@ -1791,7 +1794,7 @@ def plot_robinson_projection(
             velocity_df['dim1'].values,
             velocity_df['dim2'].values,
             scale=scale, color='black', alpha=0.6, width=0.002,
-            transform=ccrs.PlateCarree()
+            transform=ccrs.PlateCarree(), rasterized=rasterize 
         )
 
     if ref_df is not None:
@@ -1808,7 +1811,8 @@ def plot_robinson_projection(
                 lon_r[idx], lat_r[idx],
                 s=20, label=f"ref: {label}",
                 c=color, alpha=0.1,
-                transform=ccrs.PlateCarree()
+                transform=ccrs.PlateCarree(), 
+                rasterized=rasterize 
             )
 
     plt.title(title)
