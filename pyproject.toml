@@ -22,7 +22,8 @@ dependencies = [
   "kaleido<1.0.0",
   "importlib_resources",
   "nbformat",
-  "kneed"
+  "kneed", 
+  "requests"
 ]
 
 [project.urls]
