@@ -105,17 +105,17 @@ progress_frames = [
 ]
 
 def show_progress(stage):
-    import sys
-    from IPython.display import clear_output, display
-
     try:
         get_ipython  # Will raise NameError if not in IPython/Jupyter
+        import sys
+        from IPython.display import clear_output, display
         clear_output(wait=True)
         print(progress_frames[stage])
-    except NameError:
+    except (NameError, ImportError):
         # CLI fallback
         print("\033c", end="")  # Terminal clear
         print(progress_frames[stage])
+
 
 
  
@@ -128,7 +128,7 @@ def run_ouroboros(data, data_type, species = 'human', outdir = '.', seed = 0, re
     ----------
     data : str 
         Path to input file (needs to be either a 'h5ad' or a 'csv')
-        - For 'h5ad': Anndata object - Ouroboros expects raw counts in .layers['raw_counts']
+        - For 'h5ad': Anndata object
         - For 'csv' : expects a CSV with cells as rows and genes as columns, with a 'cell_id' index column - must be RAW COUNTS
 
     data_type : str
@@ -169,11 +169,15 @@ def run_ouroboros(data, data_type, species = 'human', outdir = '.', seed = 0, re
 
     if data_type == 'h5ad':
         data = ad.read_h5ad(data)
-        data.X = data.layers['raw_counts'].copy()
+        if "raw_counts" in data.layers: 
+            data.X = data.layers['raw_counts'].copy()
         
     elif data_type == 'csv':
         data = pd.read_csv(data)
-        data = data.set_index('cell_id')
+        if "cell_id" in data.columns:
+            data = data.set_index('cell_id')
+        elif "Unnamed: 0" in data.columns:
+            data = data.set_index('Unnamed: 0')
     else: 
         raise TypeError("Unsupported data type. Expected --h5ad or --csv for data_type.")
 
@@ -182,8 +186,6 @@ def run_ouroboros(data, data_type, species = 'human', outdir = '.', seed = 0, re
     if species == 'mouse':
         logger.info('Converting mouse genes to human orthologs...')
         data = convert_to_human_genes(data)
-        if isinstance(data, ad.AnnData):
-            data.layers['raw_counts'] = data.X.copy()
         logger.info('Genes successfully converted to human orthologs')
     elif species == 'human':
         pass
@@ -212,23 +214,16 @@ def run_ouroboros(data, data_type, species = 'human', outdir = '.', seed = 0, re
             show_progress(2)
             z_df = KNN_predict(ref_embed, z_df)
         
-            cc_df = calculate_cell_cycle_pseudotime(z_df, ref_embed,  phase_category = 'KNN_phase')
-            cc_df = cc_df[['cell_cycle_pseudotime']]
-            z_df = z_df.merge(cc_df, how = 'left', left_index = True, right_index = True)
+            z_df = calculate_cell_cycle_pseudotime(z_df, ref_embed,  phase_category = 'KNN_phase')
             pseud, ref_pseud = dormancy_depth(z_df, ref_embed, retrained = True)
             z_df = z_df.merge(pseud, how = 'left', left_index = True, right_index = True)
             z_df = qc_and_threshold(model, trainer_model, z_df, in_order_feature_set, ref_embed, curr_outdir, seed)
             z_df.to_csv(f'{curr_outdir}/ouroboros_embeddings_pseudotimes.csv')
 
         z_df, ref_embed = select_seed(repeat, outdir)
-        plot_sphere(z_df, colour_by = 'cell_cycle_pseudotime', palette = None, ref = ref_embed, velocity = None, marker_size = 2, cycle_pole = reference_CC_pole_point, savefig = f'{outdir}/ouroboros_cell_cycle_pseudotime.html', show = False)
-        plot_sphere(z_df, colour_by = 'dormancy_depth', palette = None, ref = ref_embed, velocity = None, marker_size = 2, cycle_pole = reference_CC_pole_point, savefig = f'{outdir}/ouroboros_dormancy_depth.html', show = False)
-        show_progress(3)
-
-        return z_df
     else:
         logger.info('All training genes present, embedding your cells in VAE latent space...')
-        matrix = ouroboros_preprocess(data, data_type, species = 'human')
+        matrix = ouroboros_preprocess(data, data_type)
         show_progress(1)
         z_df = ouroboros_embed(matrix, data, data_type, outdir = outdir)
         show_progress(2)
@@ -236,11 +231,19 @@ def run_ouroboros(data, data_type, species = 'human', outdir = '.', seed = 0, re
         ref_embed = pd.read_csv(DATA_DIR / 'reference_embeddings.csv')
         # set cell id to be index
         ref_embed = ref_embed.set_index('cell_id')
+
+    z_df.to_csv(f'{outdir}/ouroboros_embeddings_pseudotimes.csv')
+    try:
         plot_sphere(z_df, colour_by = 'cell_cycle_pseudotime', palette = None, ref = ref_embed, velocity = None, marker_size = 2, cycle_pole = reference_CC_pole_point, savefig = f'{outdir}/ouroboros_cell_cycle_pseudotime.html', show = False)
-        plot_sphere(z_df, colour_by = 'dormancy_depth', palette = None, ref = ref_embed, velocity = None, marker_size = 2, cycle_pole = reference_CC_pole_point, savefig = f'{outdir}/ouroboros_dormancy_depth.html', show = False)
-        show_progress(3)
-        z_df.to_csv(f'{outdir}/ouroboros_embeddings_pseudotimes.csv')
-        return z_df
+    except ValueError as e:
+        logger.info(f"Caught error in cell_cycle_pseudotime plot: {e}")
+    try:
+        plot_sphere(z_df, colour_by = 'dormancy_pseudotime', palette = None, ref = ref_embed, velocity = None, marker_size = 2, cycle_pole = reference_CC_pole_point, savefig = f'{outdir}/ouroboros_dormancy_pseudotime.html', show = False)
+    except ValueError as e:
+        logger.info(f"Caught error in dormancy_pseudotime plot: {e}")
+
+    show_progress(3)
+    return z_df
     
 
 def main():

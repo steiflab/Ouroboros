@@ -19,7 +19,6 @@ import tensorflow as tf
 import random
 
 import anndata as ad
-import cartopy.crs as ccrs
 from matplotlib import cm
 from matplotlib.colors import Normalize
 from matplotlib.cm import get_cmap
@@ -47,6 +46,8 @@ def convert_to_human_genes(data):
     
     if isinstance(data, ad.AnnData):
         adata = data[:, data.var_names.isin(list(orth.mouse_genes.astype(str)))]
+        if adata.shape[1] == 0:
+            raise ValueError("No genes in the input match known mouse genes with human orthologs.")
         mouse_orth = orth.set_index('mouse_genes')
         # Change mouse genes names to human orthologs
         adata.var = adata.var.merge(mouse_orth, how='left', left_index=True, right_index=True)
@@ -67,11 +68,15 @@ def convert_to_human_genes(data):
     elif isinstance(data, pd.DataFrame):
         # Subset to mouse genes that have human orthologs
         df = data.loc[:, data.columns.isin(orth['mouse_genes'])]
+        if df.shape[1] == 0:
+            raise ValueError("No genes in the input match known mouse genes with human orthologs.")
         # Map mouse genes to human orthologs
         mouse_to_human = orth.set_index('mouse_genes')['human_genes'].to_dict()
         df.columns = df.columns.map(mouse_to_human)
         # Collapse duplicated human gene symbols by summing across columns
         new_data = df.groupby(axis=1, level=0).sum()
+    else:
+        raise TypeError("Data must be pandas or adata")
         
     return new_data
 
@@ -93,6 +98,8 @@ def check_features(data):
                 missing.append(feature)
         else:
             raise TypeError("Unsupported data type. Expected AnnData or DataFrame.")
+    if len(missing) == len(feature_set):
+        raise ValueError("None of the training genes found in data. Check that gene names (var_names) are Hugo symbol format")
     return missing
 
 
@@ -131,7 +138,7 @@ def read_in_features():
     return feature_set
 
 
-def ouroboros_preprocess(data, data_type, species = 'human'):
+def ouroboros_preprocess(data, data_type):
         # Load SHAP feature set
     feature_set = pd.read_csv(DATA_DIR / "SHAP_feature_set.csv").feature_set.tolist()
     gene_order = pd.read_csv(DATA_DIR / "gene_order.csv")
@@ -139,7 +146,6 @@ def ouroboros_preprocess(data, data_type, species = 'human'):
     
     if data_type == 'h5ad':
         bdata = data.copy()
-        bdata.X = bdata.layers['raw_counts'].copy()
         bdata = bdata[:, bdata.var_names.isin(feature_set)].copy()
 
         matrix = bdata.X.copy()
@@ -172,7 +178,7 @@ def ouroboros_embed(matrix, data, data_type, outdir = '.'):
         latent_dist='vmf',
         observation_dist='nb'
     )
-
+    tf.compat.v1.reset_default_graph()
     model.load_sess(str(DATA_DIR / "model" / "model"))
     new_batch = np.full(matrix.shape[0], 2)
 
@@ -195,6 +201,14 @@ def ouroboros_embed(matrix, data, data_type, outdir = '.'):
     pseud = dormancy_depth(z_mean_df, ref_embed, retrained = False)
     z_mean_df = z_mean_df.merge(pseud, how = 'left', left_index = True, right_index = True)
     
+    z_mean_df['G0_classification'] = np.where(
+            z_mean_df['dormancy_pseudotime'] > -0.6, 'quiescence',
+            np.where(
+                z_mean_df['dormancy_pseudotime'] < -0.6, 'senescence',
+                np.nan
+            )
+        ) 
+    
     plot_sphere(z_mean_df, colour_by = 'KNN_phase', ref = ref_embed, marker_size = 2, cycle_pole = reference_CC_pole_point, savefig = f'{outdir}/ouroboros_KNN_sphere.html')
     return z_mean_df
 
@@ -205,6 +219,7 @@ def KNN_predict(ref_embed, z_df):
     X_train_knn = ref_embed[["dim1", "dim2", "dim3"]].values
     y_train_knn = ref_embed["phase"].values
 
+    z_df = z_df.copy()
     X_test_knn = z_df[["dim1", "dim2", "dim3"]].values
 
     # Step 2: Train the KNN classifier
@@ -233,10 +248,16 @@ def ouroboros_retrain(test_adata, seed):
     feature_set = feature_set.feature_set.tolist()
 
     bdata = test_adata.copy()
+    if isinstance(bdata, pd.DataFrame):
+        test_genes = bdata.columns
+    elif isinstance(bdata, ad.AnnData):
+        test_genes = bdata.var_names
+    else:
+        raise TypeError("Expect test_adata to be a pandas DataFrame or an AnnData object.")
 
     present_features = []
     for feature in feature_set:
-        if feature in bdata.var_names:
+        if feature in test_genes:
             present_features.append(feature)
     new_feature_set = present_features
     matrix = matrix.loc[:, new_feature_set]
@@ -250,7 +271,7 @@ def ouroboros_retrain(test_adata, seed):
     batch = train_meta['library'].map(map_dict).values
 
     set_seed(seed)
-    tf.reset_default_graph()
+    tf.compat.v1.reset_default_graph()
     #Initilize model
     model = SCPHERE(n_gene=matrix.shape[1], n_batch=2, batch_invariant=False,
                 z_dim=2, latent_dist='vmf',
@@ -275,11 +296,26 @@ def ouroboros_retrain(test_adata, seed):
 def embed_in_retrained_sphere(adata, model, in_order_feature_set):
     bdata = adata.copy()
 
-    bdata = bdata[:, bdata.var_names.isin(in_order_feature_set)].copy()
-    matrix = bdata.X.copy()
+    if isinstance(bdata, pd.DataFrame):
+        bdata = bdata[in_order_feature_set]
+        matrix = bdata.copy()
+        gene_list = list(matrix.columns)
+        cell_list = list(matrix.index)
+    elif isinstance(bdata, ad.AnnData):
+        bdata = bdata[:, bdata.var_names.isin(in_order_feature_set)].copy()
+        matrix = bdata.X.copy()
+        gene_list = bdata.var_names
+        cell_list = bdata.obs_names
+
+    else:
+        raise TypeError("Expect test_adata to be a pandas DataFrame or an AnnData object.")
+
+    
+    if scipy.sparse.issparse(matrix):
+        matrix = matrix.toarray()
 
     # Need to make sure the new matrix has genes in the right order as the training matrix was 
-    new_data_df = pd.DataFrame(matrix, columns=bdata.var_names)
+    new_data_df = pd.DataFrame(matrix, columns=gene_list)
     aligned_new_data = new_data_df.loc[:, in_order_feature_set].values
     matrix = aligned_new_data.copy()
 
@@ -288,7 +324,7 @@ def embed_in_retrained_sphere(adata, model, in_order_feature_set):
 
     # Project the new data into the latent space
     z_mean = model.encode(matrix, new_batch)    
-    z_mean_df = pd.DataFrame(z_mean, index=bdata.obs_names, columns=["dim1", "dim2", 'dim3'])
+    z_mean_df = pd.DataFrame(z_mean, index=cell_list, columns=["dim1", "dim2", 'dim3'])
     return z_mean_df
     
 
@@ -551,15 +587,16 @@ def detect_phase_switch(data, angle_column='angle', phase_column='phase', bins=2
     # What percentage of total counts in each bin are for each phase?
     row_sums = binned_data.sum(axis=1)
     binned_data_percent = (binned_data.div(row_sums, axis=0)) * 100
+    binned_data_percent_filtered = binned_data_percent[['G1', 'S', 'G2M']]
 
     # We need to make sure that these bins are being calculated in increasing order along the cell cycle trajectory, so that when we find our G2M-G1 break it's in the right spot, and not in wrong direction
     # calculate what phase did we initially land in randomly?
-    first_bin = binned_data_percent.iloc[0]
+    first_bin = binned_data_percent_filtered.iloc[0]
     first_phase = first_bin.idxmax()
 
     # Going along the bins 
-    for i in range(0, len(binned_data_percent)):
-            next_phase = binned_data_percent.iloc[i].idxmax()
+    for i in range(0, len(binned_data_percent_filtered)):
+            next_phase = binned_data_percent_filtered.iloc[i].idxmax()
             if next_phase != first_phase:
                     break
 
@@ -924,7 +961,7 @@ def make_ref_bin_df_from_g0_tip(projected_df):
         direction = 'positive_direction'
 
         # Normalize the angle to the range [0, 1] for pseudotime
-    bin_df['dormancy_depth'] = bin_df['adjusted_angle'] / (2 * np.pi)
+    bin_df['dormancy_pseudotime'] = bin_df['adjusted_angle'] / (2 * np.pi)
     return bin_df, switch_angle, switched 
 
 
@@ -944,7 +981,7 @@ def make_z_bin_df(z_projected_df, switch_angle, switched):
     if switched == True:
         bin_df['adjusted_angle'] = bin_df['adjusted_angle']*-1
             # Normalize the angle to the range [0, 1] for pseudotime
-    bin_df['dormancy_depth'] = bin_df['adjusted_angle'] / (2 * np.pi)
+    bin_df['dormancy_pseudotime'] = bin_df['adjusted_angle'] / (2 * np.pi)
     return bin_df
 
 
@@ -956,16 +993,16 @@ def find_g0_tip(bin_df):
     # Calculate the distance from the center (0, 0)
     outer_df['distance'] = np.sqrt(outer_df['x']**2 + outer_df['y']**2)
     # Classify points within the inner radius as 'NaN' or a label
-    outer_df['dormancy_depth'] = np.where(
+    outer_df['dormancy_pseudotime'] = np.where(
         outer_df['distance'] <= inner_radius,
         np.nan,  # Assign NaN to inner points
-        outer_df['dormancy_depth']  # Keep original classification for outer points
+        outer_df['dormancy_pseudotime']  # Keep original classification for outer points
     )
     # Now use the new adjusted angle to find the center of the points around the G0 tip in spherical space
-    if outer_df['dormancy_depth'].min() < 0:
-        high_g0 = outer_df[outer_df['dormancy_depth'] > -0.1]
+    if outer_df['dormancy_pseudotime'].min() < 0:
+        high_g0 = outer_df[outer_df['dormancy_pseudotime'] > -0.1]
     else:
-        high_g0 = outer_df[outer_df['dormancy_depth'] > 0.9]
+        high_g0 = outer_df[outer_df['dormancy_pseudotime'] > 0.9]
     ## Extract the points
     points = high_g0[['dim1', 'dim2', 'dim3']].values
     ## Compute the Cartesian median
@@ -978,10 +1015,10 @@ def find_g0_tip(bin_df):
 
 def find_g0_transition_point(bin_df, reference_df, phase_category = 'KNN_phase'):
     #Bin cells along angles so we can find gap between G0 and cell cycle
-    min_angle = bin_df['dormancy_depth'].min()
-    max_angle = bin_df['dormancy_depth'].max()
+    min_angle = bin_df['dormancy_pseudotime'].min()
+    max_angle = bin_df['dormancy_pseudotime'].max()
     bin_edges = np.linspace(min_angle, max_angle, 40 + 1)
-    bin_df['bin'] = pd.cut(bin_df['dormancy_depth'], bins=bin_edges, labels=False, include_lowest=True)
+    bin_df['bin'] = pd.cut(bin_df['dormancy_pseudotime'], bins=bin_edges, labels=False, include_lowest=True)
 
     binned_data = bin_df.groupby('bin')[phase_category].value_counts().unstack(fill_value=0)
 
@@ -1035,16 +1072,16 @@ def assign_new_retrained_g0_pseudotime(bin_df, g0_tip, transition_cell):
     bin_df['g0_latitude'] = latitude
 
     trans_latitude = bin_df[bin_df.index == transition_cell]['g0_latitude'][0]
-    bin_df['dormancy_depth'] = np.where(bin_df['g0_latitude'] > trans_latitude, np.nan, bin_df['g0_latitude'])
+    bin_df['dormancy_pseudotime'] = np.where(bin_df['g0_latitude'] > trans_latitude, np.nan, bin_df['g0_latitude'])
     # Find min and max g0_pseudotime values (excluding NaNs)
-    min_pseudotime = bin_df['dormancy_depth'].min()
+    min_pseudotime = bin_df['dormancy_pseudotime'].min()
     max_pseudotime = trans_latitude  # Transition latitude (upper bound)
 
     # Normalize g0_pseudotime to [-1, 0]
-    bin_df['dormancy_depth'] = -1 + (bin_df['dormancy_depth'] - min_pseudotime) / (max_pseudotime - min_pseudotime)
+    bin_df['dormancy_pseudotime'] = -1 + (bin_df['dormancy_pseudotime'] - min_pseudotime) / (max_pseudotime - min_pseudotime)
 
     # Ensure NaN values stay NaN
-    bin_df['dormancy_depth'] = np.where(bin_df['g0_latitude'] > trans_latitude, np.nan, bin_df['dormancy_depth'])
+    bin_df['dormancy_pseudotime'] = np.where(bin_df['g0_latitude'] > trans_latitude, np.nan, bin_df['dormancy_pseudotime'])
 
     return bin_df, trans_latitude
 
@@ -1062,12 +1099,12 @@ def assign_dormancy_depth_in_reference(z_df, ref_embed, g0_tip):
     embed['g0_latitude'] = latitude
     embed['south'] = embed.index.isin(south_df.index.tolist())
 
-    embed['dormancy_depth'] = np.where(embed['south'], embed['g0_latitude'], np.nan)
+    embed['dormancy_pseudotime'] = np.where(embed['south'], embed['g0_latitude'], np.nan)
 
-    min_lat = embed['dormancy_depth'].min()
-    max_lat = embed['dormancy_depth'].max()
+    min_lat = embed['dormancy_pseudotime'].min()
+    max_lat = embed['dormancy_pseudotime'].max()
 
-    embed['dormancy_depth'] = -1 + (embed['dormancy_depth'] - min_lat) / (max_lat - min_lat)
+    embed['dormancy_pseudotime'] = -1 + (embed['dormancy_pseudotime'] - min_lat) / (max_lat - min_lat)
 
     return embed, min_lat, max_lat
 
@@ -1104,15 +1141,15 @@ def assign_g0_pseud_to_all_cells(z_bin_df, g0_tip):
     z_bin_df['g0_latitude'] = latitude
     
     trans_latitude = z_bin_df['g0_latitude'].max()
-    z_bin_df['dormancy_depth'] = np.where(z_bin_df['g0_latitude'] > trans_latitude, np.nan, z_bin_df['g0_latitude'])
+    z_bin_df['dormancy_pseudotime'] = np.where(z_bin_df['g0_latitude'] > trans_latitude, np.nan, z_bin_df['g0_latitude'])
     # Find min and max g0_pseudotime values (excluding NaNs)
-    min_pseudotime = z_bin_df['dormancy_depth'].min()
+    min_pseudotime = z_bin_df['dormancy_pseudotime'].min()
     max_pseudotime = trans_latitude  # Transition latitude (upper bound)
 
     # Normalize g0_pseudotime to [-1, 0]
-    z_bin_df['dormancy_depth'] = -1 + (z_bin_df['dormancy_depth'] - min_pseudotime) / (max_pseudotime - min_pseudotime)
+    z_bin_df['dormancy_pseudotime'] = -1 + (z_bin_df['dormancy_pseudotime'] - min_pseudotime) / (max_pseudotime - min_pseudotime)
     # Ensure NaN values stay NaN
-    z_bin_df['dormancy_depth'] = np.where(z_bin_df['g0_latitude'] > trans_latitude, np.nan, z_bin_df['dormancy_depth'])
+    z_bin_df['dormancy_pseudotime'] = np.where(z_bin_df['g0_latitude'] > trans_latitude, np.nan, z_bin_df['dormancy_pseudotime'])
     return z_bin_df, trans_latitude
 
 
@@ -1157,13 +1194,13 @@ def dormancy_depth(z_df, ref_embed, retrained = False):
         bin_df['g0_latitude'] = latitude
 
         # Normalize those cells to fall within -1 - 0 as dormancy depth 
-        bin_df['dormancy_depth'] = np.where(
+        bin_df['dormancy_pseudotime'] = np.where(
             bin_df['south'],
             -1 + (bin_df['g0_latitude'] - min_lat) / (max_lat - min_lat),
             np.nan
         )
-        pseud = bin_df[['dormancy_depth']]
-        ref_pseud = embed[['dormancy_depth']]
+        pseud = bin_df[['dormancy_pseudotime']]
+        ref_pseud = embed[['dormancy_pseudotime']]
         #pseud = bin_df[['dormancy_depth']]
         'Yay! We found some pseudotime - dont forget to double check that the reference G0 pseudotime makes sense too as we are still debugging this feature :D'
         return pseud, ref_pseud
@@ -1191,12 +1228,12 @@ def dormancy_depth(z_df, ref_embed, retrained = False):
         bin_df['g0_latitude'] = latitude
 
         # Normalize those cells to fall within -1 - 0 as dormancy depth 
-        bin_df['dormancy_depth'] = np.where(
+        bin_df['dormancy_pseudotime'] = np.where(
             bin_df['south'],
             -1 + (bin_df['g0_latitude'] - ref_min_lat) / (ref_max_lat - ref_min_lat),
             np.nan
         )
-        pseud = bin_df[['dormancy_depth']]
+        pseud = bin_df[['dormancy_pseudotime']]
         return pseud 
     
    
@@ -1282,6 +1319,9 @@ def make_new_traces(z_df, radius, offset, color_by='KNN_phase', palette=None, ma
     else:
         if palette is None:
             palette = {}
+        if not set(z_df[color_by].unique()).issubset(set(palette.keys())):
+            missing = set(z_df[color_by].unique()) - set(palette.keys())
+            raise ValueError(f"The palette is missing colors for the following categories: {', '.join(missing)}")
         for phase, color in palette.items():
             phase_df = z_df[z_df[color_by] == phase]
             x, y, z = phase_df['dim1'].values, phase_df['dim2'].values, phase_df['dim3'].values
@@ -1326,6 +1366,18 @@ def normalize_colormap(cmap_name='mako', vmin=-1, vmax=0, n_colors=256):
 def plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, velocity = None, marker_size = 2, cycle_pole = reference_CC_pole_point, savefig = None, show = False, camera_position = None, snap_png = None):
     fig_data = []
 
+    if {'dim1', 'dim2', 'dim3'} - set(z_df.columns):
+        raise ValueError("Require dim1, dim2 and dim3 columns in z_df")
+    if colour_by not in z_df.columns:
+        raise ValueError(f"{colour_by} column not found in z_df")
+
+    if z_df[colour_by].isna().all():
+        raise ValueError(f"Column '{colour_by}' contains only NaN values.")
+    
+    if len(cycle_pole) != 3:
+        raise ValueError(f"cycle_pole must have exactly 3 elements, got {len(cycle_pole)}")
+
+
     # Sphere properties
     mtx = z_df[['dim1', 'dim2', 'dim3']].values
     radius = np.mean(np.linalg.norm(mtx, axis=1)) - 0.01
@@ -1347,13 +1399,13 @@ def plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, veloc
             palette = seaborn_to_plotly(palette)
         elif palette is None and colour_by == 'cell_cycle_pseudotime':
             palette = normalize_colormap('rocket_r', vmin=0, vmax=1)
-        elif palette is None and colour_by == 'dormancy_depth':
+        elif palette is None and colour_by == 'dormancy_pseudotime':
             palette = normalize_colormap('mako', vmin=-1, vmax=0)
         elif palette is None:
             palette = seaborn_to_plotly('viridis')
         
     else: 
-        if colour_by == 'KNN_phase':
+        if colour_by == 'KNN_phase' and palette is None:
             palette = phase_pal_transition
         elif colour_by != 'KNN_phase' and palette is None:
             # Generate a palette if none is provided
@@ -1366,8 +1418,10 @@ def plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, veloc
                 for i, label in enumerate(unique_labels)
                 for r, g, b, _ in [cmap(i / max(len(unique_labels) - 1, 1))]
             }
-        else:
+        elif isinstance(palette, dict):
             palette = palette 
+        else:
+            raise ValueError(f"For categorical variables, 'palette' must be a dictionary mapping items to colors.")
 
 
     scatter_traces = make_new_traces(z_df, radius, offset, color_by=colour_by, palette=palette, marker_size=marker_size, is_continuous=is_cont)
@@ -1399,8 +1453,8 @@ def plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, veloc
         fig.update_layout(
             coloraxis=dict(
                 colorscale=palette,
-                cmin=-1 if colour_by == 'dormancy_depth' else None,
-                cmax=0 if colour_by == 'dormancy_depth' else None,
+                cmin=-1 if colour_by == 'dormancy_pseudotime' else None,
+                cmax=0 if colour_by == 'dormancy_pseudotime' else None,
                 colorbar=dict(
                     title=dict(
                         text=colour_by.replace('_', ' ').capitalize(),
@@ -1437,20 +1491,25 @@ def plot_gene_sphere(
     velocity=None,
     show=False,
     outpath=None,
+    title="",
     cycle_pole=reference_CC_pole_point
 ):
     """
-    Plot gene expression projected on the Ouroboros VAE sphere.
+    Plot gene expression projected on the Ouroboros VAE sphere. Gene_name can be a list of genes or a single gene.
     """
+    if isinstance(gene_name, str):
+        gene_name = [gene_name]
 
-    if gene_name not in adata.var_names:
-        raise ValueError(f"The gene {gene_name} is not in the AnnData object.")
+    included_genes = [gene for gene in gene_name if gene in adata.var_names]
+
+    if len(included_genes) == 0:
+        raise ValueError(f"None of the genes in gene_name is in the AnnData object.")    
 
     if layer:
         adata.X = adata.layers[layer].copy()
 
-    expr = adata[:, gene_name].X
-    gene_expression = expr.toarray().flatten() if issparse(expr) else expr.flatten()
+    expr = adata[:, included_genes].X
+    gene_expression = np.array(expr.mean(axis=1)).flatten() if issparse(expr) else expr.mean(axis=1)
     z_df["gene_expression"] = gene_expression
 
     # Geometry
@@ -1480,7 +1539,7 @@ def plot_gene_sphere(
             color=z_df["gene_expression"],
             colorscale="Viridis",
             colorbar=dict(
-                title=f"{gene_name}",
+                title=title,
                 len=0.5,
                 thickness=20,
                 x=1.5,
@@ -1500,7 +1559,7 @@ def plot_gene_sphere(
     # Assemble figure
     fig = go.Figure(data=fig_data)
     fig.update_layout(
-        title=f"{gene_name}",
+        title=title,
         scene=dict(
             xaxis=dict(showgrid=False, zeroline=False, showticklabels=False, visible=False),
             yaxis=dict(showgrid=False, zeroline=False, showticklabels=False, visible=False),
@@ -1641,8 +1700,19 @@ def plot_robinson_projection(
     alpha=0.7,
     scale=10,
     save_fig = None,
+    rasterize = True,
     show = True
 ):
+    try:
+        import cartopy.crs as ccrs
+    except ImportError:
+        raise ImportError(
+            "The 'cartopy' package is required for this function but is not installed.\n"
+            "You can install it with conda (recommended):\n"
+            "  conda install -c conda-forge cartopy\n"
+            "Or with pip (requires system dependencies to be installed first):\n"
+            "  pip install cartopy"
+        )
     x, y, z = z_df['dim1'].values, z_df['dim2'].values, z_df['dim3'].values
     r = np.sqrt(x**2 + y**2 + z**2)
     lon = np.degrees(np.arctan2(y, x))
@@ -1663,7 +1733,7 @@ def plot_robinson_projection(
         if palette is None:
             if colour_by == 'cell_cycle_pseudotime':
                 cmap = get_cmap('rocket_r')
-            elif colour_by == 'dormancy_depth':
+            elif colour_by == 'dormancy_pseudotime':
                 cmap = get_cmap('mako')
             else:
                 cmap = get_cmap('viridis')
@@ -1677,14 +1747,15 @@ def plot_robinson_projection(
         sc = ax.scatter(
             lon[not_na], lat[not_na], c=values[not_na], s=10, alpha=alpha,
             cmap=cmap,
-            transform=ccrs.PlateCarree()
+            transform=ccrs.PlateCarree(), 
+            rasterized=rasterize
         )
 
         # Plot NA points in grey
         if has_na.any():
             ax.scatter(
                 lon[has_na], lat[has_na], c='lightgrey', s=10, alpha=alpha,
-                transform=ccrs.PlateCarree()
+                transform=ccrs.PlateCarree(), rasterized=rasterize
             )
 
         cb = plt.colorbar(sc, ax=ax, orientation='vertical', shrink=0.6, pad=0.05)
@@ -1704,14 +1775,15 @@ def plot_robinson_projection(
             ax.scatter(lon[idx], lat[idx],
                        s=10, label=label, 
                        c=palette.get(label, 'grey'), alpha=alpha,
-                       transform=ccrs.PlateCarree())
+                       transform=ccrs.PlateCarree(), rasterized=rasterize)
 
         # Plot NA values in grey
         if has_na.any():
             ax.scatter(
                 lon[has_na], lat[has_na],
                 s=10, c='lightgrey', label='NA',
-                alpha=alpha, transform=ccrs.PlateCarree()
+                alpha=alpha, transform=ccrs.PlateCarree(), 
+                rasterized=rasterize
             )
 
         plt.legend(loc="upper right", bbox_to_anchor=(1.3, 1.0))
@@ -1722,7 +1794,7 @@ def plot_robinson_projection(
             velocity_df['dim1'].values,
             velocity_df['dim2'].values,
             scale=scale, color='black', alpha=0.6, width=0.002,
-            transform=ccrs.PlateCarree()
+            transform=ccrs.PlateCarree(), rasterized=rasterize 
         )
 
     if ref_df is not None:
@@ -1739,7 +1811,8 @@ def plot_robinson_projection(
                 lon_r[idx], lat_r[idx],
                 s=20, label=f"ref: {label}",
                 c=color, alpha=0.1,
-                transform=ccrs.PlateCarree()
+                transform=ccrs.PlateCarree(), 
+                rasterized=rasterize 
             )
 
     plt.title(title)
@@ -1765,11 +1838,11 @@ def qc_and_threshold(model, trainer, z_df, new_feature_set, ref_embed, outdir, s
     z_mean_df = z_mean_df.merge(discrete.obs[['rep', 'treatment']], left_index=True, right_index=True)
     
     if debug:
-        plt.hist(z_mean_df['dormancy_depth'])
+        plt.hist(z_mean_df['dormancy_pseudotime'])
         plt.savefig(f"{outdir}/wetchner.png")
         plt.close()
 
-    z_mean_df['pseudotime'] = np.where(z_mean_df['dormancy_depth'].isna(), z_mean_df['cell_cycle_pseudotime'], z_mean_df['dormancy_depth'])
+    z_mean_df['pseudotime'] = np.where(z_mean_df['dormancy_pseudotime'].isna(), z_mean_df['cell_cycle_pseudotime'], z_mean_df['dormancy_pseudotime'])
 
     ## Process training dataset
     training_embed = ref_embed.copy()
@@ -1779,16 +1852,16 @@ def qc_and_threshold(model, trainer, z_df, new_feature_set, ref_embed, outdir, s
     pseud, ref_pseud = dormancy_depth(training_embed, ref_embed, retrained = True)
     training_embed = training_embed.merge(pseud, how = 'left', left_index = True, right_index = True)
     
-    training_embed['pseudotime'] = np.where(training_embed['dormancy_depth'].isna(), training_embed['cell_cycle_pseudotime'], training_embed['dormancy_depth'])
+    training_embed['pseudotime'] = np.where(training_embed['dormancy_pseudotime'].isna(), training_embed['cell_cycle_pseudotime'], training_embed['dormancy_pseudotime'])
 
     ### Find Threshold
     threshold = find_threshold(z_mean_df)
     z_df = z_df.copy()
 
     z_df['G0_classification'] = np.where(
-        z_df['dormancy_depth'] > threshold, 'quiescence',
+        z_df['dormancy_pseudotime'] > threshold, 'quiescence',
         np.where(
-            z_df['dormancy_depth'] < threshold, 'senescence',
+            z_df['dormancy_pseudotime'] < threshold, 'senescence',
             np.nan
         )
     ) 
@@ -1803,11 +1876,11 @@ def find_threshold(wetchner_df):
     num_bins = 30
     senescence_df = wetchner_df[wetchner_df['treatment'].isin(['IR-induced senescence (10 Gy)', 'Replicative senescence (PDL 57)', 'Etoposide-induced senescent (50 microM)'])]
 
-    discrete_filtered = senescence_df.dropna(subset=["dormancy_depth"]).copy()
-    min_val = discrete_filtered["dormancy_depth"].min()
-    max_val = discrete_filtered["dormancy_depth"].max()
+    discrete_filtered = senescence_df.dropna(subset=["dormancy_pseudotime"]).copy()
+    min_val = discrete_filtered["dormancy_pseudotime"].min()
+    max_val = discrete_filtered["dormancy_pseudotime"].max()
     bin_edges = np.linspace(min_val, max_val, num_bins + 1)
-    discrete_filtered["pseudotime_bin"] = pd.cut(discrete_filtered["dormancy_depth"], bins=bin_edges, include_lowest=True)
+    discrete_filtered["pseudotime_bin"] = pd.cut(discrete_filtered["dormancy_pseudotime"], bins=bin_edges, include_lowest=True)
 
     discrete_filtered = discrete_filtered[discrete_filtered['treatment'].isin(['IR-induced senescence (10 Gy)', 'Replicative senescence (PDL 57)', 'Etoposide-induced senescent (50 microM)'])]
     bin_counts = discrete_filtered.groupby(["pseudotime_bin"]).size()
@@ -1831,7 +1904,7 @@ def find_threshold(wetchner_df):
 
 def quality_control(trainer, wetchner_df, training_df, new_feature_set, threshold, seed, outdir):
     # Recall using Wechner dataset
-    wetchner_df['pseudotime'] = np.where(wetchner_df['dormancy_depth'].isna(), wetchner_df['cell_cycle_pseudotime'], wetchner_df['dormancy_depth'])
+    wetchner_df['pseudotime'] = np.where(wetchner_df['dormancy_pseudotime'].isna(), wetchner_df['cell_cycle_pseudotime'], wetchner_df['dormancy_pseudotime'])
     senescence_df = wetchner_df[wetchner_df['treatment'].isin(['IR-induced senescence (10 Gy)', 'Replicative senescence (PDL 57)', 'Etoposide-induced senescent (50 microM)'])]
 
     senescene = senescence_df[senescence_df['pseudotime'] < -0.6].shape[0]
@@ -1870,10 +1943,10 @@ def quality_control(trainer, wetchner_df, training_df, new_feature_set, threshol
     senescence_score = pd.read_csv('/projects/steiflab/scratch/glchang/Ouroboros_paper/senescence.csv')
     wetchner_training = wetchner_training.merge(senescence_score, right_on="cell_id", left_index = True)
 
-    wetchner_training = wetchner_training[~wetchner_training['dormancy_depth'].isna()]
+    wetchner_training = wetchner_training[~wetchner_training['dormancy_pseudotime'].isna()]
     
-    senmayo_corr = wetchner_training['dormancy_depth'].corr(wetchner_training['senmayo'], method='spearman')
-    hernandez_segura_corr = wetchner_training['dormancy_depth'].corr(wetchner_training['core_up_sen_genes'], method='spearman')
+    senmayo_corr = wetchner_training['dormancy_pseudotime'].corr(wetchner_training['senmayo'], method='spearman')
+    hernandez_segura_corr = wetchner_training['dormancy_pseudotime'].corr(wetchner_training['core_up_sen_genes'], method='spearman')
 
    
     qc_df = pd.DataFrame({
@@ -1901,7 +1974,7 @@ def select_seed(repeat, outdir):
     for i in range(repeat):
         z_df = pd.read_csv(outdir + "/retrain/" + str(i) + "/ouroboros_embeddings_pseudotimes.csv")
         z_df.set_index('Unnamed: 0', inplace = True)
-        z_df['pseudotime'] = np.where(z_df['dormancy_depth'].isna(), z_df['cell_cycle_pseudotime'], z_df['dormancy_depth'])
+        z_df['pseudotime'] = np.where(z_df['dormancy_pseudotime'].isna(), z_df['cell_cycle_pseudotime'], z_df['dormancy_pseudotime'])
         z_df['seed'] = i
         all_z_df.append(z_df)
     all_z_df = pd.concat(all_z_df)
@@ -1930,14 +2003,14 @@ def select_seed(repeat, outdir):
     plot_consensus(depth_matrix, selected_seed, outdir)
 
     selected_seed_path = outdir + "/retrain/" + str(selected_seed) 
-    z_df = pd.read_csv(selected_seed_path + "/ouroboros_embeddings_pseudotimes.csv")
+    z_df = pd.read_csv(selected_seed_path + "/ouroboros_embeddings_pseudotimes.csv", index_col=0)
     ref_embed = pd.read_csv(selected_seed_path + "/retrained_reference_embeddings.csv")
 
 
     for file in ['ouroboros_embeddings_pseudotimes.csv', "qc.csv", "retrained_reference_embeddings.csv", "model.meta", "model.index", "model.data-00000-of-00001", "checkpoint"]:
         source_path = selected_seed_path + "/" + file
         destination_path = outdir + "/" + file
-        shutil.move(source_path, destination_path)
+        shutil.copy(source_path, destination_path)
     
     return z_df, ref_embed
     

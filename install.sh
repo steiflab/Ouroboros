@@ -14,7 +14,7 @@ echo "Installing core dependencies via conda..."
 mamba install -y \
   "numpy>=1.16.4" "scipy>=1.3.0" "pandas>=0.21.0" \
   "anndata=0.7.5" "matplotlib>=3.1.0" "seaborn>=0.11.2" \
-  "plotly>=5.24.1" "scikit-learn>=0.24.2" "cartopy"
+  "plotly>=5.24.1" "scikit-learn>=0.24.2" "cartopy" "importlib_resources"
 
 # Install pip-only packages
 echo "Installing TensorFlow and TFP via pip..."
@@ -23,11 +23,7 @@ pip install -U tensorflow-probability==0.7.0
 
 # Install scPhere
 echo "Cloning and installing scPhere..."
-cd /projects/steiflab/research/hmacdonald/applications/
-git clone https://github.com/klarman-cell-observatory/scPhere || true
-cd scPhere
-python setup.py install
-cd ../
+pip install git+https://github.com/klarman-cell-observatory/scPhere.git
 
 # Clone and install Ouroboros
 echo "Cloning and installing Ouroboros..."
@@ -35,6 +31,8 @@ cd /projects/steiflab/research/hmacdonald/applications/
 git clone https://github.com/haleymac/Ouroboros.git || true
 cd Ouroboros
 pip install .
+#pip install git+https://github.com/haleymac/Ouroboros.git
+
 
 pip install --upgrade nbformat
 
