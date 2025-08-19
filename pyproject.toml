@@ -4,7 +4,8 @@ version = "0.1.0"
 description = "A toolkit for investigating cell cycling dynamics in scRNA-seq"
 readme = "README.md"
 requires-python = ">=3.9,<=3.12"
-license = {text = "MIT"}
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
   {name = "Haley MacDonald", email = "hmacdonald@bcgsc.ca"}
 ]
