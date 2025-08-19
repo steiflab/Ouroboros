@@ -1,7 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
-from scphere.model.vae import SCPHERE
-from scphere.util.trainer import Trainer
+from .scphere.model.vae import SCPHERE
+from .scphere.util.trainer import Trainer
 import pandas as pd
 import anndata as ad
 import plotly.graph_objects as go
@@ -29,6 +29,8 @@ from scipy.spatial.transform import Rotation as R
 from scipy import stats
 import shutil
 import matplotlib.patches as patches
+import requests
+
 
 reference_CC_pole_point = [0.86202236, 0.24824865, 0.44191636]
 
@@ -1822,13 +1824,26 @@ def plot_robinson_projection(
         plt.show()
 
 
+def get_wetchner_adata():
+    adata_file = DATA_DIR / "wetchner.h5ad"
+    if not adata_file.exists():
+        url = "https://zenodo.org/record/16818988/files/wetchner.h5ad?download=1"
+        response = requests.get(url, stream=True)
+        response.raise_for_status()  # fail if something goes wrong
+        with open(adata_file, "wb") as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+    adata = ad.read_h5ad(adata_file)
+    return adata
+
+
 def qc_and_threshold(model, trainer, z_df, new_feature_set, ref_embed, outdir, seed, debug = True):
     """
     Depreciated function; Attepts to find threshold for quiscence and senescence. 
     """
 
     ## Process Wetchner dataset
-    discrete = ad.read_h5ad("/projects/steiflab/scratch/hmacdonald/total_RNA_scratch/wechter_scratch/starsolo_counts/h5ads/discrete.h5ad")
+    discrete = get_wetchner_adata()
     discrete.X = discrete.layers['raw_counts'].toarray()
     z_mean_df = embed_in_retrained_sphere(discrete, model, new_feature_set)
     z_mean_df = KNN_predict(ref_embed, z_mean_df)    
@@ -1966,7 +1981,7 @@ def quality_control(trainer, wetchner_df, training_df, new_feature_set, threshol
 def set_seed(seed=0):
     random.seed(seed)
     np.random.seed(seed)
-    tf.set_random_seed(seed)
+    tf.random.set_seed(seed)
 
 
 def select_seed(repeat, outdir):
