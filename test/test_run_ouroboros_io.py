@@ -72,7 +72,8 @@ def test_run_ouroboros_missing_all_gene_pandas():
 
 
 ### Test for expected output
-EXPECTED_COL = ['dim1', 'dim2', 'dim3', 'KNN_phase', 'cell_cycle_pseudotime', 'south', 'dormancy_depth'] 
+EXPECTED_COL = ['dim1', 'dim2', 'dim3', 'KNN_phase', 'cell_cycle_pseudotime', 'south', 'dormancy_pseudotime', 'G0_classification']
+
 
 def test_run_ouroboros_full_h5ad():
     adata = ad.read_h5ad("test/test_data/test_dataset.h5ad")
@@ -80,7 +81,7 @@ def test_run_ouroboros_full_h5ad():
         tf.compat.v1.reset_default_graph()
         z_df = obo.run_ouroboros("test/test_data/test_dataset.h5ad", "h5ad", "human", tmp_output_dir)
 
-        expected_output_files = ['ouroboros_embeddings_pseudotimes.csv', 'ouroboros_KNN_sphere.html', 'ouroboros_cell_cycle_pseudotime.html', 'ouroboros_dormancy_depth.html']
+        expected_output_files = ['ouroboros_embeddings_pseudotimes.csv', 'ouroboros_KNN_sphere.html', 'ouroboros_cell_cycle_pseudotime.html', 'ouroboros_dormancy_pseudotime.html']
         for file in expected_output_files:
             file = os.path.join(tmp_output_dir, file)
             assert os.path.exists(file), f"Expected output not found: {file}"
@@ -92,9 +93,9 @@ def test_run_ouroboros_partial_h5ad():
     adata = ad.read_h5ad("test/test_data/test_partial_dataset.h5ad")
     with tempfile.TemporaryDirectory() as tmp_output_dir:
         tf.compat.v1.reset_default_graph()
-        z_df = obo.run_ouroboros("test/test_data/test_partial_dataset.h5ad", "h5ad", "human", tmp_output_dir)
+        z_df = obo.run_ouroboros("test/test_data/test_partial_dataset.h5ad", "h5ad", "human", tmp_output_dir, repeat=2)
 
-        expected_output_files = ['ouroboros_embeddings_pseudotimes.csv', 'retrained_reference_embeddings.csv', 'ouroboros_cell_cycle_pseudotime.html', 'ouroboros_dormancy_depth.html']
+        expected_output_files = ['ouroboros_embeddings_pseudotimes.csv', 'retrained_reference_embeddings.csv', 'ouroboros_cell_cycle_pseudotime.html', 'ouroboros_dormancy_pseudotime.html']
         for file in expected_output_files:
             file = os.path.join(tmp_output_dir, file)
             assert os.path.exists(file), f"Expected output not found: {file}"
@@ -114,7 +115,7 @@ def test_run_ouroboros_full_pandas():
         tf.compat.v1.reset_default_graph()
         z_df = obo.run_ouroboros(pandas_file, "csv", "human", tmp_output_dir)
 
-        expected_output_files = ['ouroboros_embeddings_pseudotimes.csv', 'ouroboros_KNN_sphere.html', 'ouroboros_cell_cycle_pseudotime.html', 'ouroboros_dormancy_depth.html']
+        expected_output_files = ['ouroboros_embeddings_pseudotimes.csv', 'ouroboros_KNN_sphere.html', 'ouroboros_cell_cycle_pseudotime.html', 'ouroboros_dormancy_pseudotime.html']
         for file in expected_output_files:
             file = os.path.join(tmp_output_dir, file)
             assert os.path.exists(file), f"Expected output not found: {file}"
@@ -124,16 +125,15 @@ def test_run_ouroboros_full_pandas():
 
 def test_run_ouroboros_partial_pandas():
     adata = ad.read_h5ad("test/test_data/test_partial_dataset.h5ad")
-    df = pd.DataFrame(adata.X, columns=adata.var_names)
-    df['cell_id'] = adata.obs_names
+    df = pd.DataFrame(adata.X, columns=adata.var_names, index=adata.obs_names)
 
     with tempfile.TemporaryDirectory() as tmp_output_dir:
         tf.compat.v1.reset_default_graph()
         pandas_file = os.path.join(tmp_output_dir, "test_partial_dataset.csv")
         df.to_csv(pandas_file)
-        z_df = obo.run_ouroboros(pandas_file, "csv", "human", tmp_output_dir)
+        z_df = obo.run_ouroboros(pandas_file, "csv", "human", tmp_output_dir, repeat=2)
 
-        expected_output_files = ['ouroboros_embeddings_pseudotimes.csv', 'retrained_reference_embeddings.csv', 'ouroboros_cell_cycle_pseudotime.html', 'ouroboros_dormancy_depth.html']
+        expected_output_files = ['ouroboros_embeddings_pseudotimes.csv', 'retrained_reference_embeddings.csv', 'ouroboros_cell_cycle_pseudotime.html', 'ouroboros_dormancy_pseudotime.html']
         for file in expected_output_files:
             file = os.path.join(tmp_output_dir, file)
             assert os.path.exists(file), f"Expected output not found: {file}"
