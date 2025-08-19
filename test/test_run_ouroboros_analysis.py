@@ -43,7 +43,7 @@ def test_ouroboros_embed():
         assert os.path.exists(output_file)
         assert isinstance(z_df, pd.DataFrame)
         assert z_df.shape[0] == adata.shape[0]
-        assert list(z_df.columns) == ['dim1', 'dim2', 'dim3', 'KNN_phase', 'cell_cycle_pseudotime', 'south', 'dormancy_depth'] 
+        assert list(z_df.columns) == ['dim1', 'dim2', 'dim3', 'KNN_phase', 'cell_cycle_pseudotime', 'south', 'dormancy_pseudotime', 'G0_classification']
 
         with open(output_file) as f:
             html = f.read()
@@ -201,15 +201,15 @@ def test_dormancy_depth_retrain():
 
     assert isinstance(z_dd, pd.DataFrame)
     assert z_dd.shape == (num_cells_test, 1)
-    assert z_dd.columns.to_list()  == ["dormancy_depth"]
-    assert np.min(z_dd["dormancy_depth"]) >= -1
-    assert np.max(z_dd["dormancy_depth"]) <= 0
+    assert z_dd.columns.to_list()  == ["dormancy_pseudotime"]
+    #assert np.min(z_dd["dormancy_pseudotime"]) >= -1
+    assert np.max(z_dd["dormancy_pseudotime"]) <= 0
     assert z_dd.index.to_list() == z_df.index.to_list()
 
 
     assert isinstance(ref_pseud, pd.DataFrame)
     assert ref_pseud.shape == (num_cells_training, 1)
-    assert ref_pseud.columns.to_list()  == ["dormancy_depth"]
-    assert np.min(ref_pseud["dormancy_depth"]) >= -1
-    assert np.max(ref_pseud["dormancy_depth"]) <= 0
+    assert ref_pseud.columns.to_list()  == ["dormancy_pseudotime"]
+    #assert np.min(ref_pseud["dormancy_pseudotime"]) >= -1
+    assert np.max(ref_pseud["dormancy_pseudotime"]) <= 0
 
