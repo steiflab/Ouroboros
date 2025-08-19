@@ -1,5 +1,5 @@
 [project]
-name = "ouroboros"
+name = "sc-ouroboros"
 version = "1.0.0"
 description = "A toolkit for investigating cell cycling dynamics in scRNA-seq"
 readme = "README.md"
