@@ -11,11 +11,16 @@ For more information see the Wiki: *add wiki*
 
 Ouroboros supports Python **3.9–3.12**.
 
+Install from PyPI:
+```bash 
+pip install sc-ouroboros
+```
+
 Install directly from GitHub with:
 ```bash 
-# Temporary GitHub install — will update to PyPI path once released
 pip install git+https://github.com/haleymac/Ouroboros.git
 ```
+
 [ScPhere](https://github.com/klarman-cell-observatory/scPhere) is included as part of Ouroboros and has been updated for compatibility with TensorFlow 2. ScPhere was originally developed by Jiarui Ding and colleagues at the Klarman Cell Observatory.
 
 #### Optional dependency
