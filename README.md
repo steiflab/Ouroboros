@@ -101,4 +101,14 @@ We have included several python functions to help you explore the Ouroboros outp
 See Wiki tutorials for more information [*add link*]
 
 
+## Acknowledgements
+This project makes use of scPhere, developed by the Broad Institute and distributed under the BSD 3-Clause License.
 
+We have included a lightly modified version of scPhere (updated for TensorFlow 2.x support) within this repository.
+
+If you use functionality derived from scPhere, please also cite:
+Ding, J., Regev, A. Deep generative model embedding of single-cell RNA-Seq profiles on hyperspheres and hyperbolic spaces. Nat Commun 12, 2554 (2021). https://doi.org/10.1038/s41467-021-22851-4
+
+## License
+Ouroboros is distributed under the MIT License (see LICENSE).
+scPhere is distributed under the BSD 3-Clause License (see scphere/LICENSE).
