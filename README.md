@@ -15,6 +15,10 @@ Install from PyPI:
 ```bash 
 pip install sc-ouroboros
 ```
+Install from Conda:
+```bash
+conda install glchang::sc-ouroboros
+```
 
 Install directly from GitHub with:
 ```bash 
