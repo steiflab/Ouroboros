@@ -22,7 +22,7 @@ conda install glchang::sc-ouroboros
 
 Install directly from GitHub with:
 ```bash 
-pip install git+https://github.com/haleymac/Ouroboros.git
+pip install git+https://github.com/steiflab/Ouroboros.git
 ```
 
 [ScPhere](https://github.com/klarman-cell-observatory/scPhere) is included as part of Ouroboros and has been updated for compatibility with TensorFlow 2. ScPhere was originally developed by Jiarui Ding and colleagues at the Klarman Cell Observatory.
