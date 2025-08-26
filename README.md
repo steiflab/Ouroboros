@@ -9,7 +9,7 @@ For more information see the Wiki: *add wiki*
 
 ## Installation 
 
-Ouroboros supports Python **3.9–3.12**.
+Ouroboros supports Python **3.9–3.10**.
 
 Install from PyPI:
 ```bash 

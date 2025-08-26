@@ -1,13 +1,13 @@
 {% set name = "sc-ouroboros" %}
-{% set version = "1.0.2" %}
+{% set version = "1.0.5" %}
 
 package:
   name: {{ name }}
   version: {{ version }}
 
 source:
-  url: https://files.pythonhosted.org/packages/04/12/4ed4aa73b00651665a73b50b672687efc724a641f2bc948ce678fca4d077/sc_ouroboros-1.0.2.tar.gz
-  sha256: 14e16152ba0934507845e49422cb925e52b3c0a53b12167a6318bb9983aba5a0
+  url: https://files.pythonhosted.org/packages/5d/fc/107a25ffab8ed6bcd05782613fdcde5dfe9960b35ddb87e5baa74335318f/sc_ouroboros-1.0.4.tar.gz
+  sha256: 8c45d2a825c92844dd7706bf044f76ccb75010a603e2cb428dd026cfdebd16db
 
 requirements:
   host:
@@ -16,16 +16,15 @@ requirements:
     - setuptools >=42
     - wheel
   run:
-    - python >=3.9,<3.13
-    - numpy >=1.24.4,<2
-    - scipy >=1.3.0
+    - python >=3.9,<3.11
+    - numpy >=1.22,<1.25
+    - scipy >=1.7,<1.10      
     - pandas >=0.21.0
     - anndata >=0.7.5
     - matplotlib >=3.1.0
     - seaborn >=0.11.2
-    - tensorflow-cpu >=2.0
-    - tensorflow-probability>=0.19
-    - tf-keras 
+    - tensorflow-cpu >=2.9,<2.12
+    - tensorflow-probability >=0.18,<0.19
     - plotly >=5.18.0
     - scikit-learn >=0.24.2
     - python-kaleido <1.0.0

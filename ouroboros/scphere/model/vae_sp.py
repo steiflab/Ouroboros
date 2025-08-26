@@ -190,7 +190,7 @@ class SCPHERE(object):
         self.saver = tf.compat.v1.train.Saver()
 
     def _encoder(self, x, batch):
-        regularizer = tf.keras.regularizers.l2(l=0.5 * (0.01))
+        regularizer = tf.keras.regularizers.l2(0.5 * (0.01))
 
         if self.observation_dist == 'nb':
             x = tf.math.log1p(x)
@@ -239,7 +239,7 @@ class SCPHERE(object):
         return z_mu, z_sigma_square
 
     def _decoder(self, z, batch):
-        regularizer = tf.keras.regularizers.l2(l=0.5 * (0.01))
+        regularizer = tf.keras.regularizers.l2(0.5 * (0.01))
 
         z = tf.concat([z, batch], 1)
         with tf.compat.v1.name_scope('decoder-net'):
