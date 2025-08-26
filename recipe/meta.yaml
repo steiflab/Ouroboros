@@ -39,7 +39,7 @@ test:
     - ouroboros --help
 
 about:
-  home: https://github.com/haleymac/Ouroboros
+  home: https://github.com/steiflab/Ouroboros
   license: MIT
   summary: "A toolkit for investigating cell cycling dynamics in scRNA-seq"
   license_file: LICENSE
