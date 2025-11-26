@@ -1837,7 +1837,7 @@ def get_wetchner_adata():
     return adata
 
 
-def qc_and_threshold(model, trainer, z_df, new_feature_set, ref_embed, outdir, seed, debug = True):
+def qc_and_threshold(model, trainer, z_df, new_feature_set, ref_embed, outdir, seed, debug = False):
     """
     Depreciated function; Attepts to find threshold for quiscence and senescence. 
     """
@@ -1987,8 +1987,7 @@ def set_seed(seed=0):
 def select_seed(repeat, outdir):
     all_z_df = []
     for i in range(repeat):
-        z_df = pd.read_csv(outdir + "/retrain/" + str(i) + "/ouroboros_embeddings_pseudotimes.csv")
-        z_df.set_index('Unnamed: 0', inplace = True)
+        z_df = pd.read_csv(outdir + "/retrain/" + str(i) + "/ouroboros_embeddings_pseudotimes.csv", index_col=0)
         z_df['pseudotime'] = np.where(z_df['dormancy_pseudotime'].isna(), z_df['cell_cycle_pseudotime'], z_df['dormancy_pseudotime'])
         z_df['seed'] = i
         all_z_df.append(z_df)
