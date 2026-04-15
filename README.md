@@ -9,15 +9,14 @@ For more information see the Wiki: *add wiki*
 
 ## Installation 
 
-Ouroboros supports Python **3.9–3.10**.
+Ouroboros supports Python **3.9–3.10**. Cartopy is an optional dependeicty required for some plotting functions. It is recommended to install via conda before installing Ouroboros. 
 
-Install from PyPI:
-```bash 
-pip install sc-ouroboros
+Installation: 
 ```
-Install from Conda:
-```bash
-conda install glchang::sc-ouroboros
+conda create -n ouroboros_env python=3.9 
+conda activate ouroboros_env 
+conda install -c conda-forge cartopy 
+pip install sc-ouroboros --no-cache-dir
 ```
 
 Install directly from GitHub with:
@@ -27,11 +26,6 @@ pip install git+https://github.com/steiflab/Ouroboros.git
 
 [ScPhere](https://github.com/klarman-cell-observatory/scPhere) is included as part of Ouroboros and has been updated for compatibility with TensorFlow 2. ScPhere was originally developed by Jiarui Ding and colleagues at the Klarman Cell Observatory.
 
-#### Optional dependency
-Cartopy – required for some plotting functions, such as plot_robinson_projection. Installation via conda is recommended to ensure required system dependencies are installed first:
-```bash 
-conda install cartopy
-```
 ## Running Ouroboros 
 For a full tutorial see the Wiki: *add wiki*
 
