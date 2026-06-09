@@ -1,0 +1,167 @@
+---
+title: "OuriGAMi"
+output: github_document 
+---
+
+This Rmd runs OuriGAMi, a tool which uses a generalized additive model to identify genes that are correlated with dormancy pseudotime and cell cycle pseudotime. OuriGAMi requires path to adata, ouroborous pseudotime result, and metadata file (file with cell_id to condition). 
+
+```{r setup}
+adata_path <- "/projects/steiflab/scratch/glchang/data/ewing_multiome/adata.h5ad"
+obo_path <- "/projects/steiflab/scratch/glchang/data/ewing_multiome/obo/ouroboros_embeddings_pseudotimes.csv"
+
+meta_path <- "/projects/steiflab/scratch/glchang/data/ewing_multiome/condition_barcodes.csv"
+```
+
+### Installation
+OuriGAMi requires the following R packages: 
+```{r eval=FALSE}
+if (!requireNamespace("BiocManager", quietly = TRUE)) 
+  install.packages("BiocManager") 
+
+install.packages(c("mgcv","furrr","future","dplyr","readr","progressr","ggplot2","purrr","reticulate"))
+BiocManager::install(c("scran","scuttle","zellkonverter"))
+```
+
+
+#### Set up enrivoment and import data
+This pipeline depends on:
+
+1. The R helper script: OuriGAMi_utils.R (use absolute path if util file is not found)
+2. ouroboros_env python path (used via reticulate)
+
+To find the correct Python path, run in terminal and copy output to PYTHOHN_ENV:
+readlink -f $(which python)
+```{r message=FALSE, warning=FALSE, echo=TRUE, results='hide'}
+PYTHON_ENV <- "/home/glchang/miniconda3/envs/ouroboros_env/bin/python3.6"
+Sys.setenv(RETICULATE_PYTHON = PYTHON_ENV)
+
+# If this fails, replace with full path to the file
+source("OuriGAMi_utils.R")
+```
+
+This will read in the adata and convert it to SingleCellExperiment object. The metadata will also be imported, make sure to select the correct column name for your cell id and experimental group.
+```{r}
+sce <- read_adata(adata_path)
+
+meta <- read_delim(meta_path, show_col_types = FALSE) %>%
+  dplyr::select(Barcode, condition) %>%
+  `colnames<-`(c("cell", 'exp'))
+
+head(meta)
+```
+
+Next filter sce to remove genes with low expression. Optionally, sce can be further filtered to run OurGAMi on HVG only and/or specific genes of interest. Afterwards, read in metadata and ouroboros data. 
+
+```{r, include=TRUE}
+assay_type = 'X' 
+min_prop_cell= 0.01 # Filter for proportion of cells expressing gene
+
+n_hvg = 200 # Number of HVG, NA to not filter by HVG
+genes = NA # Genes of interest (NA for all)
+
+# Filter low expression genes
+if (!all(is.na(min_prop_cell)) & min_prop_cell != 0){
+  keep <- rowSums(assay(sce, assay_type) > 0) / ncol(sce) >= min_prop_cell
+  sce <- sce[keep, ]
+}
+
+sce <- logNormCounts(sce, assay.type=assay_type)
+
+# Filter for HVG 
+if (all(is.na(genes))) {
+    genes <- rownames(sce)
+} else {
+    genes <- intersect(genes, rownames(sce))
+}
+
+if (!all(is.na(n_hvg)) & n_hvg != 0){
+  gene_var <- modelGeneVar(sce, assay.type = "logcounts")
+  hvgs <- getTopHVGs(gene_var, n = n_hvg, var.threshold = -Inf)
+  genes <- intersect(hvgs, genes)
+}
+
+files <- read_files(sce, meta, obo_path, genes)
+```
+
+## Get gene score (optional)
+Rather than running GAM model gene expression vs pseudotime, we can run gene set score vs pseudotime. This will require named list where name is gene set name and vector is gene name. Set HVG = 0 and n_hvg = 0
+```{r eval=FALSE, include=TRUE}
+signature <- read_delim('example_gene_signatures.csv', show_col_types = FALSE)
+gene_sets <- split(signature$gene_symbol, signature$geneSet_id)
+
+gene_set_mat <- get_gene_set(files, gene_sets)
+
+files$expr_mat <- gene_set_mat$score_mat
+files$genes <- gene_set_mat$gene_sets
+```
+
+## GAM paramters
+GAM parameters can be specified below. The main parameter is k which controls the smoothness or waviness of the model. The family function should be set to gaussian() for log normalized or gene scores and nb() (negative binomial) should be used for raw counts. 
+```{r}
+threads=42
+BIN_SIZE <- 30
+
+reference_exp <- "control" # Reference condition
+k=10 # GAM model parameter that controls smoothness/waviness of model
+family_function <- gaussian() # use nb() if raw counts
+```
+
+## Dormancy Depth
+This runs GAM model for every genes in files$genes vs dormancy pseudotime. This will take a while to run, decrease number of genes or increase threads to speed up.
+```{r}
+type <- 'dormancy'
+binned_files_dorm <- bin_files(files, type, BIN_SIZE)
+dormancy_metric <- run_GAM(binned_files_dorm, type, files$genes, threads=threads, k=k, family_function=family_function, ref_exp=reference_exp)
+dormancy_metric 
+```
+
+## Cell Cycle Pseudotime
+This runs GAM model for every genes in files$genes vs cell cycle pseudotime. 
+```{r}
+type <- 'cell_cycle'
+binned_files_cc <- bin_files(files, type, BIN_SIZE)
+cc_metric <- run_GAM(binned_files_cc, type, files$genes, threads=threads, k=k, family_function=family_function, ref_exp=reference_exp)
+cc_metric
+```
+
+## GAM output
+Both dormancy_metric and cc_metric outputs statistics of GAM models. 
+Model Fit Quality
+
+- **R2:** Variance in gene counts explained by the model
+- **deviance:** Proportion of deviance explained by the model
+
+Pseudotime Main Effect (All cells aggregated)
+
+- **main_p:** Tests whether gene expression changes significantly along pseudotime for all cells
+- **main_edf:** Complexity of curve for of all cells 
+
+Per-Experiment Metrics
+
+- **`{exp}`_p:** Significance of `{exp}` curve shape...
+- **`{exp}`_edf:** Complexity of `{exp}` curve
+- **`{exp}`_contrast:** Different baseline level compared to reference_exp
+- **`{exp}`_peak:** Region of pseudotime where `{exp}` curve peaked
+ 
+## Plot GAM for individual gene
+Plot GAM model for individual genes. Used binned_files_dorm for dormancy pseudotime and binned_files_cc for cell cycle pseudotime.
+```{r}
+gene_of_interest <- rownames(binned_files_cc$binned_mat)[1]
+plot_gene(gene_of_interest, binned_files_cc)
+```
+
+## Plot top genes 
+The cc_metric and dormancy_metric can be filtered and arrange to find genes of interest. The top genes can be plotted using plot_multi_genes. 
+```{r}
+top_genes <- cc_metric %>%
+  dplyr::filter(main_p < 0.05) %>% 
+  arrange(R2) %>%
+  dplyr::filter(!startsWith(gene, "MT-")) %>%
+  dplyr::filter(!startsWith(gene, "RPL")) %>%
+  head(9) %>%
+  pull(gene)
+
+plot_multi_genes(top_genes, cc_metric, binned_files_cc, 'cell_cycle')
+```
+
+
