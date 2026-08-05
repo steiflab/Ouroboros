@@ -1,18 +1,30 @@
-suppressPackageStartupMessages({
-  library(mgcv)
-  library(scuttle)
-  library(scran)
-  library(zellkonverter)
-  library(furrr)
-  library(future)
-  library(dplyr)
-  library(readr)
-  library(progressr)
-  library(ggplot2)
-  library(purrr)
-  library(reticulate)
-})
+ouroboros_genes <- c(
+  "BUB1", "H1-3", "KIF4A", "SNCG", "AURKB", "YPEL3", "HMMR", "ECT2", "CENPF", "SPON2",
+  "ZNF469", "SH3RF2", "IL17RE", "PTGS1", "H4C8", "RHOV", "IGFBP5", "TTK", "CDC6", "ASPM",
+  "CXCL12", "CXXC4", "F10", "CLTRN", "MKI67", "MCM4", "KIF20A", "BUB1B", "PSMC3IP", "VCAN",
+  "CKAP2L", "CLIP3", "CCNE1", "CCNB2", "ISL1", "NUF2", "KPNA2", "KIF20B", "SGO1", "WDR76",
+  "PYY", "GTSE1", "ABCC3", "CCNB1", "UNG", "RACGAP1", "UGT8", "SGO2", "CIT", "CDC25C",
+  "PLD4", "E2F8", "POLD3", "LRRC4C", "MEIS1", "H1-5", "PCDH18", "H1-1", "MASP1", "TOP2A",
+  "KIF18B", "RAD51", "PHLDA1", "COL3A1", "DTL", "PAQR4", "SGIP1", "MAFB", "PPP1R14A", "RGCC",
+  "CD24", "EXO1", "HJURP", "IQGAP3", "SLC22A18", "SOX6", "RAPSN", "PDGFRB", "NCAPH", "CDCA3",
+  "ZNF367", "IGF2", "HEPACAM2", "HMGB2", "CDK1", "ANKRD1", "SYNE2", "WNT5B", "DSN1", "TSPAN7",
+  "ACTA2", "FAM111A", "BRCA1", "MCM6", "GHRL", "DIAPH3", "CCNE2", "TCF19", "H2AC20", "CENPA",
+  "PIMREG", "CDKN1C", "SERPING1", "GINS2", "VWA5B2", "UBE2S", "NEK2", "KIF23", "APOE", "GAS2L3",
+  "INCENP", "ATAD2", "KLF6", "MCM3", "MCM5", "ARL6IP1", "SPON1", "MXD4", "KIF18A", "PCNA",
+  "PCSK1", "LUM", "TPX2", "GSN", "POLA2", "BLM", "NRARP", "UBE2C", "FLRT1", "RRM2",
+  "SULF1", "WDHD1", "TNFRSF11B", "MCM2", "KIF11", "RAB27B", "NUSAP1", "MCM10", "KRT17", "CDCA7",
+  "ARID5B", "KIF14", "SYTL4", "OSBPL6", "L1CAM", "ERCC6L", "STIL", "VILL", "PDCD4", "NDC80",
+  "SHF", "NEUROD2", "VAMP5", "NEURL1B", "ORC1", "MMS22L", "CHAF1A", "KIF2C", "DLGAP5", "YPEL2",
+  "CLDN9", "MELK", "TICRR", "CLSPN", "CENPE", "TROAP", "DNMT3B", "NR5A2", "KNSTRN", "PLK1",
+  "CRYBA2", "CDC45", "FAM83D", "CMTM8", "AURKA", "CDC20", "E2F1", "CLDN7", "PALMD", "CLDN6",
+  "NECAB2", "FAM43A", "H1-4", "CHGB", "CKAP2", "SPRY1", "MFSD3", "KIAA0040", "CEP55", "DEPDC1",
+  "FBXO5", "CDCA8", "HYLS1", "AMBP", "FCGRT", "H2BC11", "BCL2L14", "PIF1", "KNL1", "FGFR3",
+  "SAPCD2", "ARRDC3", "HELLS", "HOXB5", "ENHO", "TRPV2", "UBALD2", "FEN1", "CDCA2", "BRIP1",
+  "ESCO2", "RFC4", "PIGW", "SLFN11", "CCNF", "PSRC1", "IRAG1", "PLCXD3", "CCNA2", "TONSL",
+  "DHRS13", "SPAG5", "MGARP", "SLBP", "PCSK1N", "CDKN2D"
+)
 
+                  
 read_adata <- function(adata_path) {
   anndata <- import("anndata")
   adata <- anndata$read_h5ad(adata_path)
@@ -21,15 +33,30 @@ read_adata <- function(adata_path) {
 }
 
 read_files <- function(sce, meta, obo_path, genes, assay_type="logcounts") {
-  obo <- read_delim(obo_path, show_col_types = FALSE)
-  meta <- obo %>%
+  obo <- read_delim(obo_path, show_col_types = FALSE) 
+  
+  if ('dormancy_depth' %in% colnames(obo)) {
+    obo <- rename(obo, dormancy_pseudotime = dormancy_depth)
+  }
+  
+  obo <- obo %>%
+    dplyr::select(...1, dim1,dim2,dim3,KNN_phase,cell_cycle_pseudotime,south,dormancy_pseudotime) %>%
     dplyr::mutate(pseudotime = case_when(
       south ~ dormancy_pseudotime,
       T ~ cell_cycle_pseudotime
     )) %>%
-    dplyr::rename('cell' = '...1') %>%
-    inner_join(meta, by = 'cell') %>%
-    dplyr::filter(!is.na(exp)) %>%
+    dplyr::rename('cell' = '...1')
+  
+  if (length(meta) == 1 && is.na(meta)) {
+    meta <- obo %>%
+      dplyr::mutate(exp = 'cells')
+  } else {
+    meta <- obo %>%
+      inner_join(meta, by = 'cell') %>%
+      dplyr::filter(!is.na(exp)) 
+  }
+
+  meta <- meta %>%
     dplyr::filter(cell %in% colnames(sce))
   
   counts <- assay(sce, assay_type)
@@ -48,14 +75,20 @@ bin_files <- function(files, type, bin_size=30) {
     dorm=TRUE
   } else if (type == 'cell_cycle') {
     dorm=FALSE
+  } else if (type == 'all') {
+    dorm <- c(TRUE, FALSE)
   } else {
-    stop("Type must be 'dormancy' or 'cell_cycle'")
+    stop("Type must be 'dormancy', 'cell_cycle' or 'all'")
   }
   
+  group_vars <- if ("patient_id" %in% colnames(meta)){
+     c("exp", "patient_id") 
+  } else "exp"
+  
   binned_meta <- meta %>%
-    dplyr::filter(south == dorm) %>%
-    arrange(exp, pseudotime) %>%  
-    group_by(exp) %>%
+    dplyr::filter(south %in% dorm) %>%
+    arrange(pseudotime) %>%  
+    group_by(across(all_of(group_vars))) %>%
     mutate(
       bin = rep(
         seq_len(ceiling(n() / bin_size)),
@@ -63,15 +96,19 @@ bin_files <- function(files, type, bin_size=30) {
         length.out = n()
       )
     ) %>%
-    group_by(exp, bin) %>%
+    group_by(across(all_of(c(group_vars, "bin")))) %>%
     summarise(
       avg_pseudotime = mean(pseudotime),
       cells = list(cell),
       .groups = "drop"
     )
   
+  if ("patient_id" %in% colnames(meta)){
+    bins <- paste(binned_meta$exp, binned_meta$patient_id,binned_meta$bin, sep = "_")  
+  } else {
+    bins <- paste(binned_meta$exp, binned_meta$bin, sep = "_")  # e.g., "nsg_1"  
+  }
   
-  bins <- paste(binned_meta$exp, binned_meta$bin, sep = "_")  # e.g., "nsg_1"
   binned_mat <- matrix(0, nrow = length(genes), ncol = length(bins),
                        dimnames = list(genes, bins))
   for (i in seq_along(binned_meta$cells)) {
@@ -83,36 +120,48 @@ bin_files <- function(files, type, bin_size=30) {
   return(list(binned_mat=binned_mat, binned_meta=binned_meta, type=type))
 }
 
-fit_GAM <- function(df, type, family_function=gaussian(), k=10) {
-  single_exp <- nlevels(df$exp) <= 1  # use nlevels, not length(unique())
+fit_GAM <- function(df, type, family_function=gaussian(), k=10, cyclic_cubic=FALSE) {
   
-  if (type == 'cell_cycle') {
-    if (single_exp) {
-      fit <- gam(gene_counts ~ s(avg_pseudotime, k=k, bs="cc"),
-                 family=family_function, method="REML",
-                 knots=list(avg_pseudotime=c(0,1)), data=df)
-    } else {
-      fit <- gam(gene_counts ~ exp +
-                   s(avg_pseudotime, k=k, bs="cc") +
-                   s(avg_pseudotime, by=exp, k=k, bs="cc"),
-                 family=family_function, method="REML",
-                 knots=list(avg_pseudotime=c(0,1)), data=df)
-    }
+  # Set pseudotime range based on cell cycle or dormant
+  pseudotime_range <- if (type == 'cell_cycle') {
+    c(0,1)
   } else if (type == 'dormancy') {
-    if (single_exp) {
-      fit <- gam(gene_counts ~ s(avg_pseudotime, k=k),
-                 family=family_function, method="REML",
-                 knots=list(avg_pseudotime=c(-1,0)), data=df)
-    } else {
-      fit <- gam(gene_counts ~ exp +
-                   s(avg_pseudotime, k=k) +
-                   s(avg_pseudotime, by=exp, k=k),
-                 family=family_function, method="REML",
-                 knots=list(avg_pseudotime=c(-1,0)), data=df)
-    }
+    c(-1,0)
+  }  else if (type == 'all') {
+    c(-1,1)
+  } else stop("Type must be 'dormancy' or 'cell_cycle'")
+  
+  # Check to use cyclic cubic spline or thin plate spline
+  spline <- if (cyclic_cubic) "cc" else "tp"
+  
+  base_terms <- sprintf("s(avg_pseudotime, k=%d, bs='%s') +", k, spline)
+  
+  # Check if more than one exp condition 
+  single_exp <- nlevels(df$exp) <= 1
+  if (!single_exp) {
+    exp_fixed <- "exp +"
+    exp_term <- sprintf("s(avg_pseudotime, by=exp,k=%d, bs='%s') +", k, spline)
   } else {
-    stop("Type must be 'dormancy' or 'cell_cycle'")
+    exp_fixed <- ""
+    exp_term <- ""
   }
+  
+  # Check for whether to use patient as co-variate
+  if ("patient_id" %in% colnames(df)) {
+    patient_term <- "s(patient_id, bs='re') +"
+  } else {
+    patient_term <- ''
+  }
+  
+  # Dynamically build GAM formula
+  formula_str <- paste("gene_counts ~ ", exp_fixed, base_terms, exp_term, patient_term, sep="")
+  formula_str <- substr(formula_str, 1, nchar(formula_str) - 2)
+  
+  form <- as.formula(formula_str)
+  
+  fit <- gam(form,
+             family=family_function, method="REML",
+             knots=list(avg_pseudotime=pseudotime_range), data=df)
   return(fit)
 }
 
@@ -122,7 +171,56 @@ get_peak <- function(fit, meta, exp){
                          length.out = 200),
     exp = exp
   )
-  newdf$pred <- predict(fit, newdata = newdf)
+
+  if ("patient_id" %in% names(fit$model)) {
+    lev <- levels(fit$model$patient_id)
+    newdf$patient_id <- factor(rep(lev[1], nrow(newdf)),
+                               levels = lev)
+  }
+  
+  # Exclude the patient random-effect term so predictions reflect population-level fit
+  exclude_terms <- if ("patient_id" %in% names(fit$model)) "s(patient_id)" else NULL
+  
+  newdf$pred <- predict(fit, newdata = newdf, exclude = exclude_terms)
+  
+  return(newdf[which.max(newdf$pred), ]$avg_pseudotime)
+}
+
+peak_region <- function(peak) {
+  as.character(cut(
+    peak,
+    breaks = c(-1, -0.6, -0.4, 0, 0.4, 0.75, 1),
+    labels = c("deep_dorm", "mid_dorm", "light_dorm", "G1", "S", "G2M"),
+    right = FALSE,        # intervals are [a, b)
+    include.lowest = TRUE # -1 is included; last interval becomes [0.75, 1] closed
+  ))
+}
+
+get_main_peak <- function(fit, meta){
+  newdf <- expand.grid(
+    avg_pseudotime = seq(min(meta$avg_pseudotime), max(meta$avg_pseudotime),
+                         length.out = 200)
+  )
+  # exp must exist in newdata even though its effect will be excluded
+  newdf$exp <- levels(factor(meta$exp))[1]
+  
+  if ("patient_id" %in% names(fit$model)) {
+    lev <- levels(fit$model$patient_id)
+    newdf$patient_id <- factor(rep(lev[1], nrow(newdf)),
+                               levels = lev)
+  }
+  
+  # Exclude patient random effect AND all exp-specific interaction smooths,
+  # so predictions reflect only the main s(avg_pseudotime) term
+  s_labels <- rownames(summary(fit)$s.table)
+  exclude_terms <- s_labels[
+    grepl("^s\\(patient_id\\)$", s_labels) |
+      grepl("^s\\(avg_pseudotime\\):exp", s_labels)
+  ]
+  if (length(exclude_terms) == 0) exclude_terms <- NULL
+  
+  newdf$pred <- predict(fit, newdata = newdf, exclude = exclude_terms)
+  
   return(newdf[which.max(newdf$pred), ]$avg_pseudotime)
 }
 
@@ -142,7 +240,9 @@ parsing_GAM <- function(fit, gene, type, meta){
   exp_cols <- list()
   if (length(unique(meta$exp)) == 1){
     curr_exp <- unique(meta$exp)
-    exp_cols[["peak"]] <- get_peak(fit, meta, curr_exp)
+    peak <- get_peak(fit, meta, curr_exp)
+    exp_cols[["peak"]] <- peak
+    exp_cols[["peak_region"]] <- peak_region(peak)
   } else {
     for (curr_exp in unique(meta$exp)){
       exp_cols[[paste0(curr_exp, "_p")]]   <- s_table[paste0('s(avg_pseudotime):exp', curr_exp), "p-value"]
@@ -154,9 +254,18 @@ parsing_GAM <- function(fit, gene, type, meta){
           error = function(e) NA
         )
       )
-      exp_cols[[paste0(curr_exp, "_peak")]] <- get_peak(fit, meta, curr_exp)
+      peak <- get_peak(fit, meta, curr_exp)
+      exp_cols[[paste0(curr_exp, "_peak")]] <- peak
+      exp_cols[[paste0(curr_exp, "_peak_region")]] <- peak_region(peak)
     }
   }
+  
+  if ("s(patient_id)" %in% rownames(s_table)) {
+    exp_cols[['patient_edf']] <- s_table['s(patient_id)', "edf"]
+    exp_cols[['patient_p']] <- s_table['s(patient_id)', "p-value"]
+  } 
+  
+  main_peak <- get_main_peak(fit, meta)
   
   metrics <- tibble(
     gene = gene,
@@ -165,31 +274,45 @@ parsing_GAM <- function(fit, gene, type, meta){
     deviance = dev_expl,
     main_p = main_p, 
     main_edf = main_edf,
+    main_peak = main_peak,
+    main_peak_region = peak_region(main_peak),
     !!!exp_cols
   )
   return(metrics)
 }
 
-run_GAM <- function(binned_files, type, genes, threads=16, family_function=gaussian(), k=10, ref_exp=NULL){
+run_GAM <- function(binned_files, type, genes, threads=16, family_function=gaussian(), k=10, ref_exp=NULL, cyclic_cubic=F){
   on.exit(plan(sequential), add = TRUE)
   binned_mat <- binned_files$binned_mat
   binned_meta <- binned_files$binned_meta
   
+  if (length(unique(binned_meta$exp)) == 1){
+    ref_exp=NULL
+  }
+  
   plan("multisession", workers = threads)
+  
+  gene_counts_list <- setNames(
+    lapply(genes, function(g) binned_mat[g, ]),
+    genes
+  )
   
   metrics <- with_progress({
     p <- progressor(steps = length(genes))
     
-    future_map(genes, function(gene) {
+    future_map2(genes, gene_counts_list, function(gene, count) {
       p()
       tryCatch({
         df <- binned_meta
-        df$gene_counts <- binned_mat[gene, ]
+        df$gene_counts <- count
         df$exp <- factor(df$exp)
+        if ('patient_id' %in% colnames(df)) {
+          df$patient_id <- factor(df$patient_id)
+        }
         if (!is.null(ref_exp)){
           df$exp <- relevel(df$exp, ref = ref_exp)
         }
-        fit <- fit_GAM(df, type, family_function, k)
+        fit <- fit_GAM(df, type, family_function, k, cyclic_cubic)
         parsing_GAM(fit, gene, type, binned_meta)
       }, error = function(e) {
         tibble(gene = gene, error=conditionMessage(e))
@@ -201,52 +324,56 @@ run_GAM <- function(binned_files, type, genes, threads=16, family_function=gauss
   return(metrics)
 }
 
-plot_gene <- function(gene, binned_files) {
+default_palette_exp <- c(
+  "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
+  "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"
+)
+
+# patient_id: usually more levels -> a longer, distinct qualitative set
+default_palette_patient <- c(
+  "#66C2A5", "#FC8D62", "#8DA0CB", "#E78AC3", "#A6D854",
+  "#FFD92F", "#E5C494", "#B3B3B3", "#1B9E77", "#D95F02",
+  "#7570B3", "#E7298A", "#66A61E", "#E6AB02", "#A6761D",
+  "#B15928", "#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C"
+)
+
+default_palettes <- list(
+  exp        = default_palette_exp,
+  patient_id = default_palette_patient
+)
+
+plot_gene <- function(gene, binned_files, colour_by_patient=F, palette=NA) {
   binned_mat <- binned_files$binned_mat
   binned_meta <- binned_files$binned_meta
   type <- binned_files$type
   
-  df <- binned_meta
-  df$gene_counts <- binned_mat[gene, ]
-  df$exp <- factor(df$exp)
-  fit <- fit_GAM(df, type, family_function, k)
-  
-  newdf <- expand.grid(
-    avg_pseudotime = seq(min(df$avg_pseudotime),
-                         max(df$avg_pseudotime),
-                         length.out = 200),
-    exp = levels(df$exp)
-  )
-  newdf$pred <- predict(fit, newdata = newdf, type = "response")
+  gam_pred <- get_gam_predictions(gene, binned_meta, binned_mat, type)
+  newdf <- gam_pred$pred
+  df <- gam_pred$obs
   
   ymax <- max(df$gene_counts, na.rm = TRUE)
   bar_y    <- ymax * 1.02   # bottom of color bars
   bar_h    <- ymax * 0.02   # height of color bars
   label_y  <- ymax * 1.045  # y position of phase labels
   
-  # Phase definitions (mirrors your Python dict)
-  if (type == 'dormancy') {
-    phase_colors <- c(
-      Light = 'lightgrey',
-      Mid   = 'darkgrey',
-      Deep  = 'black'
-    )
-    phase_regions <- list(
-      Light = c(-0.4, 0),
-      Mid   = c(-0.6, -0.4),
-      Deep  = c(-1,   -0.6)
-    )
-  } else if (type == 'cell_cycle') {
-    phase_colors <- c(
-      G1    = '#1f77b4',
-      S     = '#ff7f0e',
-      G2M   = '#2ca02c'
-    )
-    phase_regions <- list(
-      G1    = c(0,    0.4),
-      S     = c(0.4,  0.75),
-      G2M   = c(0.75, 1)
-    )
+  # Phase definitions
+  phase <- get_phase(type)
+  phase_colors <- phase$phase_colors
+  phase_regions <- phase$phase_regions
+  
+  if (identical(palette, NA)) {
+    pal <- default_palettes[['exp']]
+    levels_needed <- sort(unique(as.character(df[['exp']])))
+    pal <- setNames(pal[seq_along(levels_needed)], levels_needed)
+    
+    if (colour_by_patient){
+      patient_pal <- default_palettes[['patient_id']]
+      levels_needed <- sort(unique(as.character(df[['patient_id']])))
+      patient_pal <- setNames(patient_pal[seq_along(levels_needed)], levels_needed)
+      pal <- c(pal, patient_pal)
+    }
+  } else {
+    pal <- palette 
   }
   
   # Build annotation data frames
@@ -271,11 +398,16 @@ plot_gene <- function(gene, binned_files) {
   }))
   
   
-  ggplot(df, aes(avg_pseudotime, gene_counts, color = exp)) +
-    geom_point(alpha = 0.4) +
+  p <- ggplot(df, aes(avg_pseudotime, gene_counts, color = exp)) +
+    (if (colour_by_patient) {
+      geom_point(alpha = 0.4, aes(color = patient_id))
+    } else {
+      geom_point(alpha = 0.4)
+    }) +
     geom_line(data = newdf,
               aes(avg_pseudotime, pred, color = exp),
               linewidth = 1) +
+    scale_color_manual(values = pal) +
     
     # ── Phase color bars ──────────────────────────────────────────────────────
     geom_rect(
@@ -298,6 +430,14 @@ plot_gene <- function(gene, binned_files) {
     
     ggtitle(gene, subtitle = type) +
     theme(plot.margin = margin(t = 20, r = 10, b = 30, l = 10))
+  
+  if (type == 'all') {
+    p <- p + 
+      geom_vline(xintercept = 0, linetype="dotted", 
+                 color = "black", size=1.5)
+  }
+  p
+  
 }
 
 
@@ -305,6 +445,9 @@ get_gam_predictions <- function(curr_gene, meta_binned, binned_mat, type) {
   df <- meta_binned
   df$gene_counts <- binned_mat[curr_gene, ]
   df$exp <- factor(df$exp)
+  if ('patient_id' %in% colnames(df)) {
+    df$patient_id <- factor(df$patient_id)
+  }
   
   fit <- fit_GAM(df, type, family_function, k)
   
@@ -315,15 +458,23 @@ get_gam_predictions <- function(curr_gene, meta_binned, binned_mat, type) {
                          length.out = 200),
     exp = levels(df$exp)
   )
+  if ("patient_id" %in% names(fit$model)) {
+    newdf$patient_id <- df$patient_id[1]
+    newdf$patient_id <- factor(newdf$patient_id)
+  }
   
-  newdf$pred <- predict(fit, newdata = newdf, type = "response")
+  # Exclude the patient random-effect term so predictions reflect population-level fit
+  exclude_terms <- if ("patient_id" %in% names(fit$model)) "s(patient_id)" else NULL
+  
+  newdf$pred <- predict(fit, newdata = newdf, exclude = exclude_terms)
+  
   newdf$gene <- curr_gene
   df$gene <- curr_gene
   
   list(obs = df, pred = newdf)
 }
 
-plot_multi_genes <- function(top_genes, metrics, binned_files, type) {
+plot_multi_genes <- function(top_genes, binned_files, type, legend=TRUE, palette=NA, colour_by_patient=F) {
   binned_mat  <- binned_files$binned_mat
   meta_binned <- binned_files$binned_meta
   
@@ -338,13 +489,9 @@ plot_multi_genes <- function(top_genes, metrics, binned_files, type) {
   pred_df$gene <- factor(pred_df$gene, levels = top_genes)
   
   # ── Phase definitions ──────────────────────────────────────────────────────
-  if (type == "dormancy") {
-    phase_colors  <- c(Light = "lightgrey", Mid = "darkgrey", Deep = "black")
-    phase_regions <- list(Light = c(-0.4, 0), Mid = c(-0.6, -0.4), Deep = c(-1, -0.6))
-  } else if (type == "cell_cycle") {
-    phase_colors  <- c(G1 = "#1f77b4", S = "#ff7f0e", G2M = "#2ca02c")
-    phase_regions <- list(G1 = c(0, 0.4), S = c(0.4, 0.75), G2M = c(0.75, 1))
-  }
+  phase <- get_phase(type)
+  phase_colors <- phase$phase_colors
+  phase_regions <- phase$phase_regions
   
   # ── Per-gene ymax table ────────────────────────────────────────────────────
   gene_ymax <- obs_df |>
@@ -376,18 +523,42 @@ plot_multi_genes <- function(top_genes, metrics, binned_files, type) {
       y_label = ymax * 1.05
     )
   
+  if (identical(palette, NA)) {
+    pal <- default_palettes[['exp']]
+    levels_needed <- sort(unique(as.character(obs_df[['exp']])))
+    pal <- setNames(pal[seq_along(levels_needed)], levels_needed)
+    
+    if (colour_by_patient){
+      patient_pal <- default_palettes[['patient_id']]
+      levels_needed <- sort(unique(as.character(obs_df[['patient_id']])))
+      patient_pal <- setNames(patient_pal[seq_along(levels_needed)], levels_needed)
+      pal <- c(pal, patient_pal)
+    }
+  } else {
+    pal <- palette 
+  }
+  
   # ── Plot ───────────────────────────────────────────────────────────────────
-  ggplot() +
-    geom_point(
-      data = obs_df,
-      aes(x = avg_pseudotime, y = gene_counts, color = exp),
-      alpha = 0.4, size = 0.1
-    ) +
+  p <- ggplot() +
+    (if (colour_by_patient) {
+      geom_point(
+        data = obs_df,
+        aes(x = avg_pseudotime, y = gene_counts, color = patient_id),
+        alpha = 0.4, size = 0.3
+      ) 
+    } else {
+      geom_point(
+        data = obs_df,
+        aes(x = avg_pseudotime, y = gene_counts, color = exp),
+        alpha = 0.4, size = 0.3
+      )
+    }) +
     geom_line(
       data = pred_df,
       aes(x = avg_pseudotime, y = pred, color = exp),
       linewidth = 1
     ) +
+    scale_color_manual(values = pal) +
     geom_rect(
       data = rect_df,
       aes(xmin = xmin, xmax = xmax, ymin = ymin_bar, ymax = ymax_bar),
@@ -399,7 +570,7 @@ plot_multi_genes <- function(top_genes, metrics, binned_files, type) {
       data = text_df,
       aes(x = x, y = y_label, label = label),
       inherit.aes = FALSE,
-      fontface = "bold", size = 2.5, vjust = 0
+      fontface = "bold", size = 2, vjust = 0
     ) +
     facet_wrap(~gene, scales = "free_y") +
     coord_cartesian(clip = "off") +
@@ -407,9 +578,24 @@ plot_multi_genes <- function(top_genes, metrics, binned_files, type) {
     theme_minimal() +
     labs(x = "Average Pseudotime", y = "Expression", color = "Experiment") +
     theme(
-      strip.text   = element_text(size = 10),
+      text = element_text(size = 8),
+      strip.text   = element_text(size = 8),
       plot.margin  = margin(t = 20, r = 10, b = 10, l = 10)
+    ) 
+
+  
+  if (!legend) {
+    p <- p + theme(legend.position = "none")
+  } else {
+    p <- p + theme(
+      legend.position = "right",
+      legend.title = element_text(size = 10),
+      legend.text = element_text(size = 9),
+      legend.key.size = unit(0.5, "cm")
     )
+  }
+  
+  p
 }
 
 
@@ -435,3 +621,122 @@ get_gene_set <- function(files, gene_sets){
   return(list(score_mat = score_mat, gene_sets = names(gene_sets)))
 }
 
+
+
+plot_gene_cc_dorm <- function(gene, binned_files_cc, binned_files_dorm, legend=F, colour_by_patient=TRUE) {
+  
+  make_panel <- function(binned_files, show_title = TRUE, position = "top", legend=F, ymax) {
+    binned_mat  <- binned_files$binned_mat
+    binned_meta <- binned_files$binned_meta
+    type        <- binned_files$type
+    
+    gam_pred <- get_gam_predictions(gene, binned_meta, binned_mat, type)
+    newdf <- gam_pred$pred
+    df <- gam_pred$obs
+    
+    # bar/label positions now based on the SHARED ymax
+    bar_y    <- ymax * 1.02
+    bar_h    <- ymax * 0.02
+    label_y  <- ymax * 1.045
+    
+    phase <- get_phase(type)
+    phase_colors <- phase$phase_colors
+    phase_regions <- phase$phase_regions
+    
+    rect_df <- do.call(rbind, lapply(names(phase_regions), function(ph) {
+      data.frame(
+        xmin = phase_regions[[ph]][1],
+        xmax = phase_regions[[ph]][2],
+        ymin = bar_y,
+        ymax = bar_y + bar_h,
+        fill = phase_colors[ph],
+        stringsAsFactors = FALSE
+      )
+    }))
+    
+    text_df <- do.call(rbind, lapply(names(phase_regions), function(ph) {
+      data.frame(
+        x = mean(phase_regions[[ph]]),
+        y = label_y,
+        label = ph,
+        stringsAsFactors = FALSE
+      )
+    }))
+    
+    p <- ggplot(df, aes(avg_pseudotime, gene_counts, color = exp)) +
+      (if (colour_by_patient) {
+        geom_point(alpha = 0.4, aes(color = patient_id))
+      } else {
+        geom_point(alpha = 0.4)
+      }) +
+      geom_line(data = newdf, aes(avg_pseudotime, pred, color = exp), linewidth = 1) +
+      geom_rect(
+        data = rect_df,
+        aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
+        fill = rect_df$fill, color = NA, inherit.aes = FALSE
+      ) +
+      geom_text(
+        data = text_df,
+        aes(x = x, y = y, label = label),
+        inherit.aes = FALSE, fontface = "bold", size = 3.5, vjust = 0
+      ) +
+      coord_cartesian(clip = "off", ylim = c(NA, label_y * 1.02)) +
+      scale_y_continuous(limits = c(0, NA), expand = expansion(mult = c(0.05, 0))) +
+      theme_minimal() 
+    
+    if (show_title) {
+      p <- p + ggtitle(gene, subtitle = type)
+    } else {
+      p <- p + labs(title = NULL, subtitle = type)
+    }
+    
+    if (position == "top") {
+      p <- p + theme(plot.margin = margin(t = 20, r = 10, b = 5, l = 10))
+    } else {
+      p <- p + theme(plot.margin = margin(t = 5, r = 10, b = 30, l = 10))
+    }
+    
+    if (!legend) {
+      p <- p + theme(legend.position = "none")
+    } else {
+      p <- p + theme(
+        legend.position = "right",
+        legend.title = element_text(size = 10),
+        legend.text = element_text(size = 9),
+        legend.key.size = unit(0.5, "cm")
+      )
+    }
+    
+    p
+  }
+  
+  if (colour_by_patient & ((!'patient_id' %in% colnames(binned_files_cc$binned_meta)) |  (!'patient_id' %in% colnames(binned_files_dorm$binned_meta)))) {
+    print('WARNING: patient_id column not found in binned_files')
+    colour_by_patient = FALSE
+  }
+  
+  # --- compute shared ymax across BOTH datasets ---
+  ymax_cc   <- max(binned_files_cc$binned_mat[gene, ],   na.rm = TRUE)
+  ymax_dorm <- max(binned_files_dorm$binned_mat[gene, ], na.rm = TRUE)
+  ymax_shared <- max(ymax_cc, ymax_dorm)
+  
+  p_cc   <- make_panel(binned_files_cc,   show_title = TRUE,  position = "top",    legend = legend, ymax = ymax_shared)
+  p_dorm <- make_panel(binned_files_dorm, show_title = FALSE, position = "bottom", legend = legend, ymax = ymax_shared)
+  
+  patchwork::wrap_plots(p_cc, p_dorm, ncol = 1) +
+    patchwork::plot_layout(guides = "collect")
+}
+
+get_phase <- function(type) {
+  if (type == 'dormancy') {
+    phase_colors <- c(Light = 'lightgrey', Mid = 'darkgrey', Deep = 'black')
+    phase_regions <- list(Light = c(-0.4, 0), Mid = c(-0.6, -0.4), Deep = c(-1, -0.6))
+  } else if (type == 'cell_cycle') {
+    phase_colors <- c(G1 = '#1f77b4', S = '#ff7f0e', G2M = '#2ca02c')
+    phase_regions <- list(G1 = c(0, 0.4), S = c(0.4, 0.75), G2M = c(0.75, 1))
+  } else if (type == 'all') {
+    phase_colors  <- c(Light = "lightgrey", Mid = "darkgrey", Deep = "black", G1 = "#1f77b4", S = "#ff7f0e", G2M = "#2ca02c")
+    phase_regions <- list(Light = c(-0.4, 0), Mid = c(-0.6, -0.4), Deep = c(-1, -0.6), G1 = c(0, 0.4), S = c(0.4, 0.75), G2M = c(0.75, 1))
+  }
+  return(list(phase_colors=phase_colors, phase_regions=phase_regions))
+}
