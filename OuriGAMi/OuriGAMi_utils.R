@@ -324,6 +324,155 @@ run_GAM <- function(binned_files, type, genes, threads=16, family_function=gauss
   return(metrics)
 }
 
+fit_LM <- function(df) {
+  
+  base_terms <- "avg_pseudotime +"
+  
+  # Check if more than one exp condition
+  single_exp <- nlevels(df$exp) <= 1
+  if (!single_exp) {
+    exp_fixed <- "exp +"
+    exp_term <- "avg_pseudotime:exp +"
+  } else {
+    exp_fixed <- ""
+    exp_term <- ""
+  }
+  
+  # Check for whether to use patient as co-variate (fixed effect, since lm has no random effects)
+  if ("patient_id" %in% colnames(df)) {
+    patient_term <- "patient_id +"
+  } else {
+    patient_term <- ""
+  }
+  
+  # Dynamically build linear model formula
+  formula_str <- paste("gene_counts ~ ", exp_fixed, base_terms, exp_term, patient_term, sep = "")
+  formula_str <- substr(formula_str, 1, nchar(formula_str) - 2)
+  
+  form <- as.formula(formula_str)
+  
+  fit <- lm(form, data = df)
+  
+  return(fit)
+}
+
+parsing_LM <- function(fit, gene, type, meta){
+  
+  s <- summary(fit)
+  coefs <- s$coefficients
+  
+  R2 <- s$r.squared
+  
+  # --- Main effect: pooled slope + p-value across all cells ---
+  main <- tryCatch({
+    emt <- suppressMessages(
+      emmeans::emtrends(fit, ~ 1, var = "avg_pseudotime", weights = "proportional")
+    )
+    summary(emt, infer = c(TRUE, TRUE))
+  }, error = function(e) NULL)
+  
+  if (!is.null(main)) {
+    main_slope <- main$avg_pseudotime.trend[1]
+    main_p     <- main$p.value[1]
+  } else {
+    main_slope <- tryCatch(coefs["avg_pseudotime", "Estimate"], error = function(e) NA)
+    main_p     <- tryCatch(coefs["avg_pseudotime", "Pr(>|t|)"], error = function(e) NA)
+  }
+  
+  exp_cols <- list()
+  
+  if (length(unique(meta$exp)) > 1) {
+    
+    # --- Per-exp slope + p-value (tests each group's own slope vs 0) ---
+    emt_g <- tryCatch(
+      suppressMessages(
+        emmeans::emtrends(fit, "exp", var = "avg_pseudotime")
+      ),
+      error = function(e) NULL
+    )
+    if (!is.null(emt_g)) {
+      emt_df <- summary(emt_g, infer = c(TRUE, TRUE))
+      for (i in seq_len(nrow(emt_df))) {
+        curr_exp <- as.character(emt_df$exp[i])
+        exp_cols[[paste0(curr_exp, "_slope")]] <- emt_df$avg_pseudotime.trend[i]
+        exp_cols[[paste0(curr_exp, "_p")]]      <- emt_df$p.value[i]
+      }
+    }
+    
+    # --- Baseline (intercept) contrast vs reference exp ---
+    for (curr_exp in levels(meta$exp)) {
+      term <- paste0("exp", curr_exp)
+      exp_cols[[paste0(curr_exp, "_contrast_p")]] <- tryCatch(
+        coefs[term, "Pr(>|t|)"],
+        error = function(e) NA
+      )
+    }
+  }
+  
+  # --- Patient: overall effect across all patient levels ---
+  if ("patient_id" %in% colnames(meta)) {
+    exp_cols[["patient_p"]] <- tryCatch({
+      fit_no_patient <- update(fit, . ~ . - patient_id)
+      cmp <- anova(fit_no_patient, fit)
+      cmp$`Pr(>F)`[2]
+    }, error = function(e) NA)
+  }
+  
+  metrics <- tibble(
+    gene = gene,
+    pseudotime = type,
+    R2 = R2,
+    main_p = main_p,
+    main_slope = main_slope,
+    !!!exp_cols
+  )
+  
+  return(metrics)
+}
+
+run_LM <- function(binned_files, type, genes, threads=16, ref_exp=NULL){
+  on.exit(plan(sequential), add = TRUE)
+  binned_mat <- binned_files$binned_mat
+  binned_meta <- binned_files$binned_meta
+  
+  if (length(unique(binned_meta$exp)) == 1){
+    ref_exp=NULL
+  }
+  
+  plan("multisession", workers = threads)
+  
+  gene_counts_list <- setNames(
+    lapply(genes, function(g) binned_mat[g, ]),
+    genes
+  )
+  
+  metrics <- with_progress({
+    p <- progressor(steps = length(genes))
+    
+    future_map2(genes, gene_counts_list, function(gene, count) {
+      p()
+      tryCatch({
+        df <- binned_meta
+        df$gene_counts <- count
+        df$exp <- factor(df$exp)
+        if ('patient_id' %in% colnames(df)) {
+          df$patient_id <- factor(df$patient_id)
+        }
+        if (!is.null(ref_exp)){
+          df$exp <- relevel(df$exp, ref = ref_exp)
+        }
+        fit <- fit_LM(df)
+        parsing_LM(fit, gene, type, binned_meta)
+      }, error = function(e) {
+        tibble(gene = gene, error=conditionMessage(e))
+      })
+    }) %>%
+      dplyr::bind_rows()
+  })
+  
+  return(metrics)
+}
+
 default_palette_exp <- c(
   "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
   "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"
@@ -342,38 +491,92 @@ default_palettes <- list(
   patient_id = default_palette_patient
 )
 
-plot_gene <- function(gene, binned_files, colour_by_patient=F, palette=NA) {
-  binned_mat <- binned_files$binned_mat
+get_lm_predictions <- function(curr_gene, meta_binned, binned_mat, type) {
+  df <- meta_binned
+  df$gene_counts <- binned_mat[curr_gene, ]
+  df$exp <- factor(df$exp)
+  if ('patient_id' %in% colnames(df)) {
+    df$patient_id <- factor(df$patient_id)
+  }
+  
+  fit <- fit_LM(df)
+  
+  newdf <- expand.grid(
+    avg_pseudotime = seq(min(df$avg_pseudotime),
+                         max(df$avg_pseudotime),
+                         length.out = 200),
+    exp = levels(df$exp)
+  )
+  
+  if ("patient_id" %in% colnames(df)) {
+    # Pick one reference patient PER exp group (nested design-safe)
+    ref_patients <- df |>
+      dplyr::distinct(exp, patient_id) |>
+      dplyr::group_by(exp) |>
+      dplyr::slice(1) |>
+      dplyr::ungroup()
+    
+    newdf <- newdf |>
+      dplyr::left_join(ref_patients, by = "exp")
+    
+    newdf$patient_id <- factor(newdf$patient_id, levels = levels(df$patient_id))
+  }
+  
+  newdf$pred <- predict(fit, newdata = newdf)
+  
+  newdf$gene <- curr_gene
+  df$gene <- curr_gene
+  
+  list(obs = df, pred = newdf)
+}
+
+plot_gene <- function(gene, binned_files, model = "gam", patient_shape = FALSE, palette = NA, point_size=1.5, point_alpha=0.5) {
+  binned_mat  <- binned_files$binned_mat
   binned_meta <- binned_files$binned_meta
   type <- binned_files$type
   
-  gam_pred <- get_gam_predictions(gene, binned_meta, binned_mat, type)
-  newdf <- gam_pred$pred
-  df <- gam_pred$obs
+  # --- Get predictions depending on model type ---
+  model <- match.arg(model, c("gam", "lm"))
+  
+  pred_out <- if (model == "gam") {
+    get_gam_predictions(gene, binned_meta, binned_mat, type)
+  } else {
+    get_lm_predictions(gene, binned_meta, binned_mat, type)
+  }
+  
+  newdf <- pred_out$pred
+  df    <- pred_out$obs
   
   ymax <- max(df$gene_counts, na.rm = TRUE)
-  bar_y    <- ymax * 1.02   # bottom of color bars
-  bar_h    <- ymax * 0.02   # height of color bars
-  label_y  <- ymax * 1.045  # y position of phase labels
+  bar_y    <- ymax * 1.02
+  bar_h    <- ymax * 0.02
+  label_y  <- ymax * 1.045
   
   # Phase definitions
   phase <- get_phase(type)
-  phase_colors <- phase$phase_colors
+  phase_colors  <- phase$phase_colors
   phase_regions <- phase$phase_regions
   
+  # --- Palette: only exp needs a color palette now ---
   if (identical(palette, NA)) {
     pal <- default_palettes[['exp']]
     levels_needed <- sort(unique(as.character(df[['exp']])))
     pal <- setNames(pal[seq_along(levels_needed)], levels_needed)
-    
-    if (colour_by_patient){
-      patient_pal <- default_palettes[['patient_id']]
-      levels_needed <- sort(unique(as.character(df[['patient_id']])))
-      patient_pal <- setNames(patient_pal[seq_along(levels_needed)], levels_needed)
-      pal <- c(pal, patient_pal)
-    }
   } else {
-    pal <- palette 
+    pal <- palette
+  }
+  
+  # --- Shape palette for patient_id, if requested ---
+  shape_vals <- NULL
+  if (patient_shape && "patient_id" %in% colnames(df)) {
+    df$patient_id <- factor(df$patient_id)
+    n_patients <- nlevels(df$patient_id)
+    # Cycle through a reasonable set of distinguishable shapes
+    shape_pool <- c(16, 17, 15, 3, 7, 8, 1, 2, 0, 5, 6, 4)
+    shape_vals <- setNames(
+      rep(shape_pool, length.out = n_patients),
+      levels(df$patient_id)
+    )
   }
   
   # Build annotation data frames
@@ -397,19 +600,19 @@ plot_gene <- function(gene, binned_files, colour_by_patient=F, palette=NA) {
     )
   }))
   
-  
   p <- ggplot(df, aes(avg_pseudotime, gene_counts, color = exp)) +
-    (if (colour_by_patient) {
-      geom_point(alpha = 0.4, aes(color = patient_id))
+    (if (patient_shape) {
+      geom_point(alpha = point_alpha, size = point_size, aes(shape = patient_id))
     } else {
-      geom_point(alpha = 0.4)
+      geom_point(alpha = point_alpha, size = point_size)
     }) +
     geom_line(data = newdf,
               aes(avg_pseudotime, pred, color = exp),
               linewidth = 1) +
     scale_color_manual(values = pal) +
+    (if (patient_shape) scale_shape_manual(values = shape_vals) else NULL) +
     
-    # ── Phase color bars ──────────────────────────────────────────────────────
+    # ── Phase color bars ──────────────────────────────────────────────
     geom_rect(
       data = rect_df,
       aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
@@ -424,20 +627,18 @@ plot_gene <- function(gene, binned_files, colour_by_patient=F, palette=NA) {
       fontface = "bold", size = 3.5, vjust = 0
     ) +
     
-    # ── Expand plot limits so bars and labels aren't clipped ─────────────────
     coord_cartesian(clip = "off") +
     scale_y_continuous(expand = expansion(mult = c(0.05, 0.12))) +
     
-    ggtitle(gene, subtitle = type) +
+    ggtitle(gene, subtitle = paste(type, "-", toupper(model))) +
     theme(plot.margin = margin(t = 20, r = 10, b = 30, l = 10))
   
   if (type == 'all') {
-    p <- p + 
-      geom_vline(xintercept = 0, linetype="dotted", 
-                 color = "black", size=1.5)
+    p <- p +
+      geom_vline(xintercept = 0, linetype = "dotted",
+                 color = "black", linewidth = 1.5)
   }
   p
-  
 }
 
 
@@ -474,12 +675,20 @@ get_gam_predictions <- function(curr_gene, meta_binned, binned_mat, type) {
   list(obs = df, pred = newdf)
 }
 
-plot_multi_genes <- function(top_genes, binned_files, type, legend=TRUE, palette=NA, colour_by_patient=F) {
+plot_multi_genes <- function(top_genes, binned_files, type, model = "gam",
+                             legend = TRUE, palette = NA, patient_shape = FALSE, 
+                             point_size=1.5, point_alpha=0.5) {
   binned_mat  <- binned_files$binned_mat
   meta_binned <- binned_files$binned_meta
   
+  model <- match.arg(model, c("gam", "lm"))
+  
   all_data <- map(top_genes, function(gene) {
-    get_gam_predictions(gene, meta_binned, binned_mat, type)
+    if (model == "gam") {
+      get_gam_predictions(gene, meta_binned, binned_mat, type)
+    } else {
+      get_lm_predictions(gene, meta_binned, binned_mat, type)
+    }
   })
   
   obs_df  <- map_dfr(all_data, "obs")
@@ -490,7 +699,7 @@ plot_multi_genes <- function(top_genes, binned_files, type, legend=TRUE, palette
   
   # ── Phase definitions ──────────────────────────────────────────────────────
   phase <- get_phase(type)
-  phase_colors <- phase$phase_colors
+  phase_colors  <- phase$phase_colors
   phase_regions <- phase$phase_regions
   
   # ── Per-gene ymax table ────────────────────────────────────────────────────
@@ -509,7 +718,6 @@ plot_multi_genes <- function(top_genes, binned_files, type, legend=TRUE, palette
     )
   }))
   
-  # Cross-join phases × genes, then scale y positions per gene
   rect_df <- merge(phase_base, gene_ymax) |>
     mutate(
       ymin_bar = ymax * 1.02,
@@ -523,34 +731,49 @@ plot_multi_genes <- function(top_genes, binned_files, type, legend=TRUE, palette
       y_label = ymax * 1.05
     )
   
+  # ── Color palette (exp only — patient no longer uses color) ────────────────
   if (identical(palette, NA)) {
     pal <- default_palettes[['exp']]
     levels_needed <- sort(unique(as.character(obs_df[['exp']])))
     pal <- setNames(pal[seq_along(levels_needed)], levels_needed)
-    
-    if (colour_by_patient){
-      patient_pal <- default_palettes[['patient_id']]
-      levels_needed <- sort(unique(as.character(obs_df[['patient_id']])))
-      patient_pal <- setNames(patient_pal[seq_along(levels_needed)], levels_needed)
-      pal <- c(pal, patient_pal)
-    }
   } else {
-    pal <- palette 
+    pal <- palette
   }
   
-  # ── Plot ───────────────────────────────────────────────────────────────────
+  # ── Shape palette for patient_id, if requested ─────────────────────────────
+  shape_vals <- NULL
+  if (patient_shape && "patient_id" %in% colnames(obs_df)) {
+    obs_df$patient_id <- factor(obs_df$patient_id)
+    n_patients <- nlevels(obs_df$patient_id)
+    
+    shape_pool <- c(16, 17, 15, 3, 7, 8, 1, 2, 0, 5, 6, 4)
+    
+    if (n_patients > length(shape_pool)) {
+      warning(sprintf(
+        "patient_shape: %d patients but only %d distinguishable shapes available — shapes will repeat and patients may be visually indistinguishable. Consider faceting by patient instead.",
+        n_patients, length(shape_pool)
+      ))
+    }
+    
+    shape_vals <- setNames(
+      rep(shape_pool, length.out = n_patients),
+      levels(obs_df$patient_id)
+    )
+  }
+  
+  # ── Plot ─────────────────────────────────────────────────────────────────
   p <- ggplot() +
-    (if (colour_by_patient) {
+    (if (patient_shape) {
       geom_point(
         data = obs_df,
-        aes(x = avg_pseudotime, y = gene_counts, color = patient_id),
-        alpha = 0.4, size = 0.3
-      ) 
+        aes(x = avg_pseudotime, y = gene_counts, color = exp, shape = patient_id),
+        alpha = point_alpha, size = point_size
+      )
     } else {
       geom_point(
         data = obs_df,
         aes(x = avg_pseudotime, y = gene_counts, color = exp),
-        alpha = 0.4, size = 0.3
+        alpha = point_alpha, size = point_size
       )
     }) +
     geom_line(
@@ -559,6 +782,7 @@ plot_multi_genes <- function(top_genes, binned_files, type, legend=TRUE, palette
       linewidth = 1
     ) +
     scale_color_manual(values = pal) +
+    (if (patient_shape) scale_shape_manual(values = shape_vals) else NULL) +
     geom_rect(
       data = rect_df,
       aes(xmin = xmin, xmax = xmax, ymin = ymin_bar, ymax = ymax_bar),
@@ -576,13 +800,12 @@ plot_multi_genes <- function(top_genes, binned_files, type, legend=TRUE, palette
     coord_cartesian(clip = "off") +
     scale_y_continuous(expand = expansion(mult = c(0.05, 0.12))) +
     theme_minimal() +
-    labs(x = "Average Pseudotime", y = "Expression", color = "Experiment") +
+    labs(x = "Average Pseudotime", y = "Expression", color = "Experiment", shape = "Patient") +
     theme(
       text = element_text(size = 8),
       strip.text   = element_text(size = 8),
       plot.margin  = margin(t = 20, r = 10, b = 10, l = 10)
-    ) 
-
+    )
   
   if (!legend) {
     p <- p + theme(legend.position = "none")
@@ -597,7 +820,6 @@ plot_multi_genes <- function(top_genes, binned_files, type, legend=TRUE, palette
   
   p
 }
-
 
 score_gene_set <- function(mat, gene_set, set_name) {
   genes <- intersect(rownames(mat), gene_set)
@@ -740,3 +962,4 @@ get_phase <- function(type) {
   }
   return(list(phase_colors=phase_colors, phase_regions=phase_regions))
 }
+
