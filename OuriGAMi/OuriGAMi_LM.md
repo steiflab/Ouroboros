@@ -1,8 +1,9 @@
-OuriGAMi_LM
+OuriGAMi (Linear Model)
 ================
 
-This Rmd runs OuriGAMi, a tool which uses a generalized additive model
-to identify genes that are correlated with dormancy pseudotime and cell
+This Rmd runs the linear model (lm) version of OuriGAMi. This is a simpler and faster alternative to the GAM version OuriGAMi. 
+This markdown file goes through how to use OuriGAMI
+to identify genes that are linearly correlated with dormancy pseudotime and cell
 cycle pseudotime. OuriGAMi requires path to adata, ouroborous pseudotime
 result, and metadata file (file with cell_id to condition).
 
@@ -133,7 +134,7 @@ files <- read_files(sce, meta, obo_path, genes)
 
 ## Get gene score (optional)
 
-Rather than running GAM model gene expression vs pseudotime, we can run
+Rather than running linear model gene expression vs pseudotime, we can run
 gene set score vs pseudotime. This will require named list where name is
 gene set name and vector is gene name. Set HVG = 0 and n_hvg = 0
 
@@ -147,13 +148,9 @@ files$expr_mat <- gene_set_mat$score_mat
 files$genes <- gene_set_mat$gene_sets
 ```
 
-## GAM paramters
+## LM paramters
 
-GAM parameters can be specified below. The main parameter is k which
-controls the smoothness or waviness of the model. The family function
-should be set to gaussian() for log normalized or gene scores and nb()
-(negative binomial) should be used for raw counts.
-
+Parameters for the linear model can be specified below. The main parameter is the reference_exp.
 ``` r
 threads=23
 BIN_SIZE <- 30
@@ -163,7 +160,7 @@ reference_exp <- 'start' # Reference condition (Must be one of the condition in 
 
 ## Dormancy Depth
 
-This runs GAM model for every genes in files\$genes vs dormancy
+This runs linear model for every genes in files\$genes vs dormancy
 pseudotime. This will take a while to run, decrease number of genes or
 increase threads to speed up.
 
@@ -194,9 +191,8 @@ dormancy_metric
 
 ## Cell Cycle Pseudotime
 
-This runs GAM model for every genes in files\$genes vs cell cycle and
-dormancy pseudotime. cyclic_cubic can be set to TRUE to have model wrap
-around (G1 starts where G2M ends).
+This runs linear model model for every genes in files\$genes vs cell cycle and
+dormancy pseudotime. 
 
 ``` r
 type <- 'cell_cycle'
