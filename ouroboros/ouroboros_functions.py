@@ -203,13 +203,6 @@ def ouroboros_embed(matrix, data, data_type, outdir = '.'):
     pseud = dormancy_depth(z_mean_df, ref_embed, retrained = False)
     z_mean_df = z_mean_df.merge(pseud, how = 'left', left_index = True, right_index = True)
     
-    z_mean_df['G0_classification'] = np.where(
-            z_mean_df['dormancy_pseudotime'] > -0.6, 'quiescence',
-            np.where(
-                z_mean_df['dormancy_pseudotime'] < -0.6, 'senescence',
-                np.nan
-            )
-        ) 
     
     plot_sphere(z_mean_df, colour_by = 'KNN_phase', ref = ref_embed, marker_size = 2, cycle_pole = reference_CC_pole_point, savefig = f'{outdir}/ouroboros_KNN_sphere.html')
     return z_mean_df
