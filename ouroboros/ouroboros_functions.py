@@ -13,8 +13,6 @@ BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 from sklearn.decomposition import PCA
 
-from kneed import KneeLocator
-from scipy.interpolate import UnivariateSpline
 import tensorflow as tf
 import random
 
@@ -1818,6 +1816,9 @@ def plot_robinson_projection(
 
 
 def get_wetchner_adata():
+    """
+    Depreciated: Previously used Wetchner dataset to QC retrained model
+    """
     adata_file = DATA_DIR / "wetchner.h5ad"
     if not adata_file.exists():
         url = "https://zenodo.org/record/16818988/files/wetchner.h5ad?download=1"
@@ -1836,51 +1837,58 @@ def qc_and_threshold(model, trainer, z_df, new_feature_set, ref_embed, outdir, s
     """
 
     ## Process Wetchner dataset
-    discrete = get_wetchner_adata()
-    discrete.X = discrete.layers['raw_counts'].toarray()
-    z_mean_df = embed_in_retrained_sphere(discrete, model, new_feature_set)
-    z_mean_df = KNN_predict(ref_embed, z_mean_df)    
-    z_mean_df = calculate_cell_cycle_pseudotime(z_mean_df, ref_embed,  phase_category = 'KNN_phase')
-    pseud, _ = dormancy_depth(z_mean_df, ref_embed, retrained = True)
-    z_mean_df = z_mean_df.merge(pseud, how = 'left', left_index = True, right_index = True)
-    z_mean_df = z_mean_df.merge(discrete.obs[['rep', 'treatment']], left_index=True, right_index=True)
+    # Depreciated: previously used wetchner dataset to QC change in deep dormancy threshold
     
-    if debug:
-        plt.hist(z_mean_df['dormancy_pseudotime'])
-        plt.savefig(f"{outdir}/wetchner.png")
-        plt.close()
+    #discrete = get_wetchner_adata()
+    #discrete.X = discrete.layers['raw_counts'].toarray()
+    #z_mean_df = embed_in_retrained_sphere(discrete, model, new_feature_set)
+    #z_mean_df = KNN_predict(ref_embed, z_mean_df)    
+    #z_mean_df = calculate_cell_cycle_pseudotime(z_mean_df, ref_embed,  phase_category = 'KNN_phase')
+    #pseud, _ = dormancy_depth(z_mean_df, ref_embed, retrained = True)
+    #z_mean_df = z_mean_df.merge(pseud, how = 'left', left_index = True, right_index = True)
+    #z_mean_df = z_mean_df.merge(discrete.obs[['rep', 'treatment']], left_index=True, right_index=True)
+    
+    #if debug:
+    #    plt.hist(z_mean_df['dormancy_pseudotime'])
+    #    plt.savefig(f"{outdir}/wetchner.png")
+    #    plt.close()
 
-    z_mean_df['pseudotime'] = np.where(z_mean_df['dormancy_pseudotime'].isna(), z_mean_df['cell_cycle_pseudotime'], z_mean_df['dormancy_pseudotime'])
+    #z_mean_df['pseudotime'] = np.where(z_mean_df['dormancy_pseudotime'].isna(), z_mean_df['cell_cycle_pseudotime'], z_mean_df['dormancy_pseudotime'])
 
     ## Process training dataset
-    training_embed = ref_embed.copy()
-    cc_df = calculate_cell_cycle_pseudotime(training_embed, ref_embed,  phase_category = 'phase')
-    cc_df = cc_df[['cell_cycle_pseudotime']]
-    training_embed = training_embed.merge(cc_df, how = 'left', left_index = True, right_index = True)
-    pseud, ref_pseud = dormancy_depth(training_embed, ref_embed, retrained = True)
-    training_embed = training_embed.merge(pseud, how = 'left', left_index = True, right_index = True)
+    #training_embed = ref_embed.copy()
+    #cc_df = calculate_cell_cycle_pseudotime(training_embed, ref_embed,  phase_category = 'phase')
+    #cc_df = cc_df[['cell_cycle_pseudotime']]
+    #training_embed = training_embed.merge(cc_df, how = 'left', left_index = True, right_index = True)
+    #pseud, ref_pseud = dormancy_depth(training_embed, ref_embed, retrained = True)
+    #training_embed = training_embed.merge(pseud, how = 'left', left_index = True, right_index = True)
     
-    training_embed['pseudotime'] = np.where(training_embed['dormancy_pseudotime'].isna(), training_embed['cell_cycle_pseudotime'], training_embed['dormancy_pseudotime'])
+    #training_embed['pseudotime'] = np.where(training_embed['dormancy_pseudotime'].isna(), training_embed['cell_cycle_pseudotime'], training_embed['dormancy_pseudotime'])
 
     ### Find Threshold
-    threshold = find_threshold(z_mean_df)
-    z_df = z_df.copy()
+    #threshold = find_threshold(z_mean_df)
+    #z_df = z_df.copy()
 
-    z_df['G0_classification'] = np.where(
-        z_df['dormancy_pseudotime'] > threshold, 'quiescence',
-        np.where(
-            z_df['dormancy_pseudotime'] < threshold, 'senescence',
-            np.nan
-        )
-    ) 
+    #z_df['G0_classification'] = np.where(
+    #    z_df['dormancy_pseudotime'] > threshold, 'quiescence',
+    #    np.where(
+    #        z_df['dormancy_pseudotime'] < threshold, 'senescence',
+    #        np.nan
+    #    )
+    #) 
 
     ### QC
-    qc = quality_control(trainer, z_mean_df, training_embed, new_feature_set, threshold, seed, outdir)
+    qc = quality_control(trainer, new_feature_set, seed, outdir)
     qc.to_csv(f"{outdir}/qc.csv", sep=',')
 
     return z_df
 
 def find_threshold(wetchner_df):
+    """
+    Depreciated function for finding inflection point of Wetchner dataset to QC dataset
+    """
+    from kneed import KneeLocator
+    from scipy.interpolate import UnivariateSpline
     num_bins = 30
     senescence_df = wetchner_df[wetchner_df['treatment'].isin(['IR-induced senescence (10 Gy)', 'Replicative senescence (PDL 57)', 'Etoposide-induced senescent (50 microM)'])]
 
@@ -1910,14 +1918,14 @@ def find_threshold(wetchner_df):
     
 
 
-def quality_control(trainer, wetchner_df, training_df, new_feature_set, threshold, seed, outdir):
+def quality_control(trainer, new_feature_set, seed, outdir):
     # Recall using Wechner dataset
-    wetchner_df['pseudotime'] = np.where(wetchner_df['dormancy_pseudotime'].isna(), wetchner_df['cell_cycle_pseudotime'], wetchner_df['dormancy_pseudotime'])
-    senescence_df = wetchner_df[wetchner_df['treatment'].isin(['IR-induced senescence (10 Gy)', 'Replicative senescence (PDL 57)', 'Etoposide-induced senescent (50 microM)'])]
+    #wetchner_df['pseudotime'] = np.where(wetchner_df['dormancy_pseudotime'].isna(), wetchner_df['cell_cycle_pseudotime'], wetchner_df['dormancy_pseudotime'])
+    #senescence_df = wetchner_df[wetchner_df['treatment'].isin(['IR-induced senescence (10 Gy)', 'Replicative senescence (PDL 57)', 'Etoposide-induced senescent (50 microM)'])]
 
-    senescene = senescence_df[senescence_df['pseudotime'] < -0.6].shape[0]
-    true_senescence = senescence_df.shape[0]
-    senescence_recall = senescene / true_senescence
+    #senescene = senescence_df[senescence_df['pseudotime'] < -0.6].shape[0]
+    #true_senescence = senescence_df.shape[0]
+    #senescence_recall = senescene / true_senescence
 
     # Model log likelihood
     log_likihood = trainer.status['log_likelihood'][-1] 
@@ -1944,29 +1952,29 @@ def quality_control(trainer, wetchner_df, training_df, new_feature_set, threshol
 
 
     # Scenscenece threshold Diff
-    threshold_diff = abs(-0.6 - threshold)
+    #threshold_diff = abs(-0.6 - threshold)
 
     # Scenscence gene expression score
-    wetchner_training = pd.concat([wetchner_df, training_df], axis=0)
-    senescence_score = pd.read_csv('/projects/steiflab/scratch/glchang/Ouroboros_paper/senescence.csv')
-    wetchner_training = wetchner_training.merge(senescence_score, right_on="cell_id", left_index = True)
+    #wetchner_training = pd.concat([wetchner_df, training_df], axis=0)
+    #senescence_score = pd.read_csv('/projects/steiflab/scratch/glchang/Ouroboros_paper/senescence.csv')
+    #wetchner_training = wetchner_training.merge(senescence_score, right_on="cell_id", left_index = True)
 
-    wetchner_training = wetchner_training[~wetchner_training['dormancy_pseudotime'].isna()]
+    #wetchner_training = wetchner_training[~wetchner_training['dormancy_pseudotime'].isna()]
     
-    senmayo_corr = wetchner_training['dormancy_pseudotime'].corr(wetchner_training['senmayo'], method='spearman')
-    hernandez_segura_corr = wetchner_training['dormancy_pseudotime'].corr(wetchner_training['core_up_sen_genes'], method='spearman')
+    #senmayo_corr = wetchner_training['dormancy_pseudotime'].corr(wetchner_training['senmayo'], method='spearman')
+    #hernandez_segura_corr = wetchner_training['dormancy_pseudotime'].corr(wetchner_training['core_up_sen_genes'], method='spearman')
 
    
     qc_df = pd.DataFrame({
         'seed': [seed],
-        'wetchner_senescence_recall': [senescence_recall],
+        #'wetchner_senescence_recall': [senescence_recall],
         'log_likihood': [log_likihood],
         'kl_divergenet': [kl_divergenet],
         'missing_gene': [missing_gene], 
         'proportion_missing_gene': [proportion_missing_gene],
-        'threshold_diff': [threshold_diff],
-        'senmayo_corr': [senmayo_corr],
-        'hernandez_segura_corr': [hernandez_segura_corr],
+        #'threshold_diff': [threshold_diff],
+        #'senmayo_corr': [senmayo_corr],
+        #'hernandez_segura_corr': [hernandez_segura_corr],
         **shap_loss
     })
     return qc_df
