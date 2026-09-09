@@ -1938,8 +1938,8 @@ def quality_control(trainer, new_feature_set, seed, outdir):
     proportion_missing_gene = missing_gene / len(feature_set)
 
     # SHAP score loss
-    shap_score = pd.read_csv("/projects/steiflab/research/hmacdonald/total_RNA/Ouroboros_paper/model/feature_selection/output/mean_shap_values.csv")
-
+    shap_score =  pd.read_csv(DATA_DIR / "mean_shap_values.csv")
+    
     shap_loss = {}
     for cell_cycle in ['G0', 'G1', 'G1-G0 transition', 'G2M', 'S']:
         curr_cell_cycle = shap_score[shap_score['Class'] == cell_cycle]
