@@ -1879,7 +1879,7 @@ def qc_and_threshold(model, trainer, z_df, new_feature_set, ref_embed, outdir, s
 
     ### QC
     qc = quality_control(trainer, new_feature_set, seed, outdir)
-    qc.to_csv(f"{outdir}/qc.csv", sep=',')
+    qc.T.to_csv(f"{outdir}/qc.csv", header=False)
 
     return z_df
 
