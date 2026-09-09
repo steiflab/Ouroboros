@@ -386,33 +386,31 @@ def find_cyc_center(z_df, ref_embed, phase_category = 'phase', _method = "ref"):
     return great_circle, top_center
 
 
-def find_cycle_pole(z_df, ref_embed, phase_category = 'KNN_phase'):
-    """ Find a point on the sphere's surface that represents the centre of the cycling cells
-    z_df: embedded points including cycling cells to find the centre of
-    ref_embed: reference embedded points 
-    phase_category: name of the columns with phase labels to parse (needs to have G1/S/G2M)"""
-    cyc = z_df[z_df[phase_category].isin(['G2M', 'S', 'G1'])]
+def find_cycle_pole(ref_embed):
+    """Find a point on the sphere's surface that represents the centre of the cycling cells."""
+
+    # Use reference embedding to define the cycling pole
+    cyc = ref_embed[ref_embed['phase'].isin(['G2M', 'S', 'G1'])]
     points = cyc[['dim1', 'dim2', 'dim3']].values
+
     # Fit the great circle
     great_circle, normal_vector = fit_great_circle(points)
     top_center = normal_vector / np.linalg.norm(normal_vector)
 
-    # Little test to make sure top point is in the middle of cycling cells and not G0 cells
-    cyc = ref_embed[ref_embed['phase'].isin(['G2M', 'S', 'G1'])]
-    points = cyc[['dim1', 'dim2', 'dim3']].values
-
-    ## Get centroid of G1, S, G2M cells
+    # Determine orientation using cycling vs G0 reference cells
     cyc_centroid = np.mean(points, axis=0)
-    ## Get centroid of G0 cells
+
     g0 = ref_embed[ref_embed['phase'] == 'G0']
     g0_points = g0[['dim1', 'dim2', 'dim3']].values
     g0_centroid = np.mean(g0_points, axis=0)
-    ## Compute dot products
+
     dot_cyc = np.dot(top_center, cyc_centroid)
     dot_g0 = np.dot(top_center, g0_centroid)
-    ## If top_center aligns more with G0, flip it
+
+    # If top_center aligns more with G0, flip it
     if dot_g0 > dot_cyc:
         top_center = -top_center
+
     return top_center
 
 
