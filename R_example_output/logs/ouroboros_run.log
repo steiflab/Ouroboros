@@ -1,0 +1,39 @@
+2026-09-10 19:05:03,509 - WARNING - Key training genes seem to be missing from your dataset
+
+              Missing genes include: ['BUB1', 'H1-3', 'KIF4A', 'SNCG', 'ZNF469', 'SH3RF2', 'H4C8', 'RHOV', 'IGFBP5', 'TTK', 'CXCL12', 'CXXC4', 'F10', 'CLTRN', 'KIF20A', 'BUB1B', 'CLIP3', 'ISL1', 'SGO1', 'PYY', 'SGO2', 'CDC25C', 'E2F8', 'LRRC4C', 'H1-5', 'PCDH18', 'H1-1', 'MASP1', 'KIF18B', 'COL3A1', 'DTL', 'SGIP1', 'CD24', 'EXO1', 'HJURP', 'IQGAP3', 'SOX6', 'RAPSN', 'CDCA3', 'IGF2', 'HEPACAM2', 'ANKRD1', 'DIAPH3', 'H2AC20', 'PIMREG', 'VWA5B2', 'APOE', 'GAS2L3', 'SPON1', 'PCSK1', 'LUM', 'NRARP', 'FLRT1', 'SULF1', 'TNFRSF11B', 'KRT17', 'KIF14', 'OSBPL6', 'L1CAM', 'ERCC6L', 'STIL', 'NEURL1B', 'DLGAP5', 'CLDN9', 'MELK', 'TICRR', 'DNMT3B', 'NR5A2', 'CRYBA2', 'FAM83D', 'PALMD', 'CLDN6', 'NECAB2', 'H1-4', 'DEPDC1', 'AMBP', 'H2BC11', 'KNL1', 'FGFR3', 'HOXB5', 'CDCA2', 'BRIP1', 'IRAG1', 'PLCXD3', 'MGARP']
+              For higher accuracy consider including these genes in the matrix and running Ouroboros again.
+              Retraining model without them......
+2026-09-10 19:05:03,712 - WARNING - From /projects/steiflab/research/hmacdonald/applications/Ouroboros/ouroboros/ouroboros_functions.py:1896: The name tf.set_random_seed is deprecated. Please use tf.compat.v1.set_random_seed instead.
+
+2026-09-10 19:05:03,731 - WARNING - From /projects/steiflab/research/hmacdonald/applications/Ouroboros/ouroboros/ouroboros_functions.py:253: The name tf.reset_default_graph is deprecated. Please use tf.compat.v1.reset_default_graph instead.
+
+2026-09-10 19:05:05,614 - WARNING - 
+The TensorFlow contrib module will not be included in TensorFlow 2.0.
+For more information, please see:
+  * https://github.com/tensorflow/community/blob/master/rfcs/20180907-contrib-sunset.md
+  * https://github.com/tensorflow/addons
+  * https://github.com/tensorflow/io (for I/O related ops)
+If you depend on functionality not listed there, please file an issue.
+
+2026-09-10 19:05:05,633 - WARNING - From /projects/steiflab/research/hmacdonald/applications/python/miniconda3/envs/ouroboros_env/lib/python3.6/site-packages/tensorflow/python/ops/init_ops.py:1251: calling VarianceScaling.__init__ (from tensorflow.python.ops.init_ops) with dtype is deprecated and will be removed in a future version.
+Instructions for updating:
+Call initializer instance with the dtype argument instead of passing it to the constructor
+2026-09-10 19:05:06,077 - WARNING - From /projects/steiflab/research/hmacdonald/applications/python/miniconda3/envs/ouroboros_env/lib/python3.6/site-packages/tensorflow/python/ops/math_ops.py:2403: add_dispatch_support.<locals>.wrapper (from tensorflow.python.ops.array_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use tf.where in 2.0, which has the same broadcast rule as np.where
+2026-09-10 19:05:06,818 - WARNING - From /projects/steiflab/research/hmacdonald/applications/python/miniconda3/envs/ouroboros_env/lib/python3.6/site-packages/scPhere-0.1.0-py3.6.egg/scphere/ops/ive.py:23: py_func (from tensorflow.python.ops.script_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+tf.py_func is deprecated in TF V2. Instead, there are two
+    options available in V2.
+    - tf.py_function takes a python function which manipulates tf eager
+    tensors instead of numpy arrays. It's easy to convert a tf eager tensor to
+    an ndarray (just call tensor.numpy()) but having access to eager tensors
+    means `tf.py_function`s can use accelerators such as GPUs as well as
+    being differentiable using a gradient tape.
+    - tf.numpy_function maintains the semantics of the deprecated tf.py_func
+    (it is not differentiable, and manipulates numpy arrays). It drops the
+    stateful argument making all functions stateful.
+    
+2026-09-10 19:07:03,108 - INFO - Note: detected 144 virtual cores but NumExpr set to maximum of 64, check "NUMEXPR_MAX_THREADS" environment variable.
+2026-09-10 19:07:03,109 - INFO - Note: NumExpr detected 144 cores but "NUMEXPR_MAX_THREADS" not set, so enforcing safe limit of 8.
+2026-09-10 19:07:03,109 - INFO - NumExpr defaulting to 8 threads.

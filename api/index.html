@@ -1,125 +1,39 @@
-<!doctype html>
-<html data-bs-theme="">
-    <head>
-                <title>API Reference (importable functions and descriptions) - Ouroboros</title>
 
-            <meta charset="utf-8">
-            <meta http-equiv="X-UA-Compatible" content="IE=edge">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!DOCTYPE html>
+<html>
+<head>
+  
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 
-            
-            
-            
+    <title>API Reference &mdash; Ouroboros</title>
 
-            
-                <link  rel="icon" type="image/x-icon" href="../assets/img/favicon.ico">
-            
-            <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Mono:400,700">
-            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="shortcut icon" href="../img/favicon.ico">
+    <link rel="stylesheet" href="../css/alabaster.css" type="text/css">
+    <link rel="stylesheet" href="../css/alabaster-overrides.css" type="text/css">
 
-            <link rel="stylesheet" href="../assets/css/bootstrap.min.css">
-            <link rel="stylesheet" href="../assets/css/root.min.css">
-            <link rel="stylesheet" href="../assets/css/main.min.css">
-            <link rel="stylesheet" href="../assets/css/media.min.css">
-            <link rel="stylesheet" href="../assets/css/mkdocstrings.min.css">
-                <script src="../search/main.js"></script>
-
-            
-                
-            
-    </head>
-
-    <body>
-        <div class="container py-3">
-            <header>
-                    <!-- block header -->
-<nav class="navbar navbar-expand-xl border-bottom">
-    <div class="container-fluid">
-        
-
-        
-            <span class=" fs-4 title-color site-name" id="component-site-name" style="text-transform: uppercase;">Ouroboros</span>
-        
-
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsMenu"
-            aria-controls="navbarsMenu" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <div class="collapse navbar-collapse flex-column ml-auto" id="navbarsMenu">
-            <ul class="navbar-nav">
-
-                <!-- block menu -->
-                <li class="nav-item">
-                    <!-- block menu -->
     
-        <li class="nav-item" id="component-menu">
-            <ul class="navbar-nav">
-                        <li class="nav-item">
-                            <a class="
-                            nav-link text-gray text-decoration-none" href="..">[Home]</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="
-                            nav-link text-gray text-decoration-none" href="../usage/">[CLI Usage]</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class=" active 
-                            nav-link text-gray text-decoration-none" href="./">[API Reference (importable functions and descriptions)]</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="
-                            nav-link text-gray text-decoration-none" href="../python_tutorial/">[Ouroboros with Scanpy]</a>
-                        </li>
-            </ul>
-        </li>
-<!-- endblock -->
-                </li>
-                <!-- endblock -->
+      <link href="../css/extra_css.css" rel="stylesheet">
+    
 
-                <!-- block search -->
-                <li class="nav-item">
-                    <a class="collapsed" data-bs-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">
-                        <div class="md-search-icon">
-                            <i class="fa fa-search" aria-hidden="true"></i>
-                        </div>
-                    </a>
-                </li>
-                <!--  endblock -->
+    
+      <script src="../search/main.js"></script>
+    
 
-                <!-- block source -->
-                <li class="nav-item">
-                    
-                </li>
-                <!--  endblock -->
-            </ul>
-        </div>
-    </div>
-</nav>
-<!--  endblock -->
-            </header>
+    
 
-            <main><!-- block search -->
-<div class="collapse" id="collapseExample">
-    <div role="search" class="search-box">
-        <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
-            <input type="text" name="q" class="search-query"
-            placeholder="Search docs" title="Type search term here" />
-        </form>
-    </div>
-</div>
-<!-- endblock -->
+    <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
-                
-                        <!-- block content -->
-<section class="container post" id="component-content">
-    <article>
-        <header>
-            
-                <h1 class=" title" id="component-title">API Reference (importable functions and descriptions)</h1>
-            
-        </header>
-        <p><h1 id="api-reference">API Reference</h1>
+    
+  
+</head>
+<body>
+
+  <div class="document">
+    <div class="documentwrapper">
+      <div class="bodywrapper">
+        <div class="body" role="main">
+          
+            <h1 id="api-reference">API Reference</h1>
 <p>This page documents the main functions available when importing <code>ouroboros</code> as a Python package.</p>
 <hr />
 <h2 id="run_ouroborosdata-data_type-specieshuman-outdir"><code>run_ouroboros(data, data_type, species='human', outdir='.')</code></h2>
@@ -180,9 +94,42 @@ Runs the full Ouroboros pipeline on either <code>.h5ad</code> or <code>.csv</cod
 </tbody>
 </table>
 <hr />
+<h2 id="read_in_features"><code>read_in_features()</code></h2>
+<p><strong>Description:</strong> Reads in all Ouroboros feature genes. No input necessary. Returns a list of genes.  </p>
+<hr />
+<h2 id="read_in_refembed"><code>read_in_refembed()</code></h2>
+<p><strong>Description:</strong> Reads in the reference dataset VAE latent space embedding dataframe. Only meaningful if VAE has not been retrained. Returns a pandas dataframe.  </p>
+<hr />
+<h2 id="find_cycle_polez_df-ref_embed"><code>find_cycle_pole(z_df, ref_embed)</code></h2>
+<p><strong>Description:</strong> If you retrained the VAE because you had missing genes, your cycle_pole will be in a different spot - run find_cycle_pole() to find it's new coordinates. </p>
+<p><strong>Example usage:</strong></p>
+<pre><code class="language-python">find_cycle_pole(    
+    z_df: pd.DataFrame,
+    ref_embed: pd.DataFrame = None,
+)
+</code></pre>
+<p><strong>Parameters:</strong>
+| Parameter     | Type            | Description                                                                                                                                                         |
+| ------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <code>z_df</code>        | <code>DataFrame</code>     | The test cell dataframe with 3D spherical coordinates (<code>dim1</code>, <code>dim2</code>, <code>dim3</code>) and metadata columns such as phase labels or pseudotime.                             |
+| <code>ref_embed</code>         | <code>DataFrame</code>     | Reference dataset embeddings, with columns <code>dim1</code>, <code>dim2</code>, <code>dim3</code>, and <code>phase</code>.                                                                            |</p>
+<hr />
 <h2 id="plot_spherez_df-colour_by-knn_phase-palette-none-ref-none-velocity-none-marker_size-2-cycle_pole-086202236-024824865-044191636-savefig-none-show-false"><code>plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, velocity = None, marker_size = 2, cycle_pole = [0.86202236, 0.24824865, 0.44191636], savefig = None, show = False)</code></h2>
 <p><strong>Description:</strong><br />
 Generates an interactive 3D spherical projection of the Ouroboros latent space.</p>
+<p><strong>Example usage</strong></p>
+<pre><code class="language-python">plot_sphere(
+    z_df: pd.DataFrame,
+    colour_by: str = 'KNN_phase',
+    palette: dict | str = None,
+    ref: pd.DataFrame = None,
+    velocity: pd.DataFrame = None,
+    marker_size: int = 2,
+    cycle_pole: list[float] = reference_CC_pole_point,
+    savefig: str = None,
+    show: bool = False
+)
+</code></pre>
 <p><strong>Parameters:</strong></p>
 <table>
 <thead>
@@ -241,72 +188,480 @@ Generates an interactive 3D spherical projection of the Ouroboros latent space.<
 </tbody>
 </table>
 <hr />
+<h2 id="def-plot_gene_spherez_df-adata-gene_name-layernone-refnone-velocitynone-showfalse-outpathnone-cycle_polereference_cc_pole_point"><code>def plot_gene_sphere(z_df, adata, gene_name, layer=None, ref=None, velocity=None, show=False, outpath=None, cycle_pole=reference_CC_pole_point)</code></h2>
+<p><strong>Description:</strong><br />
+Generates an interactive 3D spherical projection of the Ouroboros latent space, coloured by the expression of a given gene.</p>
+<p><strong>Example usage</strong></p>
+<pre><code class="language-python">plot_gene_sphere(
+    z_df: pd.DataFrame,
+    adata: anndata.AnnData,
+    gene_name: str,
+    layer: str = None,
+    ref: pd.DataFrame = None,
+    ref_color: str = 'putative_phase_transition',
+    ref_pal: dict = phase_pal_transition,
+    velocity: pd.DataFrame = None,
+    show: bool = False,
+    outpath: str = None,
+    cycle_pole: list[float] = reference_CC_pole_point
+)
+</code></pre>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>z_df</code></td>
+<td><code>DataFrame</code></td>
+<td>DataFrame containing embedded cell coordinates (<code>dim1</code>, <code>dim2</code>, <code>dim3</code>) and metadata columns.</td>
+</tr>
+<tr>
+<td><code>adata</code></td>
+<td><code>AnnData</code></td>
+<td>The original single-cell data object containing expression values.</td>
+</tr>
+<tr>
+<td><code>gene_name</code></td>
+<td><code>str</code></td>
+<td>Gene to plot. Must exist in <code>adata.var_names</code>.</td>
+</tr>
+<tr>
+<td><code>layer</code></td>
+<td><code>str</code>, optional</td>
+<td>Name of the <code>.layers</code> slot in <code>adata</code> to use (e.g. <code>"log_counts"</code>). Defaults to <code>.X</code>.</td>
+</tr>
+<tr>
+<td><code>ref</code></td>
+<td><code>DataFrame</code>, optional</td>
+<td>Optional reference cells with <code>dim1</code>, <code>dim2</code>, <code>dim3</code>, and metadata like phase.</td>
+</tr>
+<tr>
+<td><code>velocity</code></td>
+<td><code>DataFrame</code>, optional</td>
+<td>Optional velocity vectors (same shape as <code>z_df</code>) with <code>dim1</code>, <code>dim2</code>, <code>dim3</code>.  See plot_velocity for more information.</td>
+</tr>
+<tr>
+<td><code>show</code></td>
+<td><code>bool</code>, default <code>False</code></td>
+<td>Whether to display the plot interactively in a Jupyter notebook.</td>
+</tr>
+<tr>
+<td><code>outpath</code></td>
+<td><code>str</code>, optional</td>
+<td>If provided, saves the interactive Plotly figure as HTML.</td>
+</tr>
+<tr>
+<td><code>cycle_pole</code></td>
+<td><code>list[float]</code></td>
+<td>A 3D point marking the known cell cycle pole for axis. If you did not retrain model, the reference is correct and you do not need to supply it. If you did retrain the model, you can either provide 'None' and not plot it, or use find_cycle_pole to identify</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="rotate_northz_df-reference_cc_pole_point-086202236-024824865-044191636"><code>rotate_north(z_df, reference_CC_pole_point = [0.86202236, 0.24824865, 0.44191636])</code></h2>
+<p><strong>Description:</strong> Rotate all points in the sphere such that the north point of the cycle pole becomes true north at [0,0,1]</p>
+<p><strong>Example usage:</strong></p>
+<pre><code class="language-python">rotate_north(
+    z_df: pd.DataFrame,
+    reference_CC_pole_point: list[float] = [0.86202236, 0.24824865, 0.44191636]
+) 
+</code></pre>
+<p><strong>Parameters::</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>z_df</code></td>
+<td><code>DataFrame</code></td>
+<td>Input dataframe containing spherical coordinates (<code>dim1</code>, <code>dim2</code>, <code>dim3</code>) for each cell.</td>
+</tr>
+<tr>
+<td><code>reference_CC_pole_point</code></td>
+<td><code>list[float]</code>, optional</td>
+<td>3D vector indicating the "pole" direction to rotate. Default is the original Ouroboros cycle pole.</td>
+</tr>
+</tbody>
+</table>
+<p>This function returns: </p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DataFrame</code></td>
+<td>A copy of <code>z_df</code> with rotated <code>dim1</code>, <code>dim2</code>, <code>dim3</code> values so that the pole points to <code>[0, 0, 0]</code>.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="sphere_snapshotlat-lon-z_df-colour_byknn_phase-palettenone-radius-12-ref_embed-none-vel_df-none-save_as_pngtrue-cycle_pole-0-0-1"><code>sphere_snapshot(lat, lon,  z_df, colour_by='KNN_phase', palette=None, radius = 1.2, ref_embed = None, vel_df = None, save_as_png=True, cycle_pole = [0, 0, 1])</code></h2>
+<p><strong>Description:</strong> Produces a png of the sphere at a given latitude and longtiude and writes it to a given output path. </p>
+<p><strong>Example usage:</strong></p>
+<pre><code class="language-python">sphere_snapshot(
+    lat: int,
+    long: int, 
+    z_df: pd.DataFrame,
+    colour_by: str, 
+    radius: float, 
+    gene_name: str,
+    layer: str = None,
+    ref_embed: pd.DataFrame = None,
+    vel_df: pd.DataFrame = None,
+    save_as_png: str # ex. /path/to/output/png
+    cycle_pole: list[float] = [0,0,1]
+)
+</code></pre>
+<p><strong>Parameters:</strong>
+| Parameter     | Type                      | Description                                                                                                                               |
+| ------------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| <code>lat</code>         | <code>int</code>                     | Latitude angle (in degrees) to position the camera viewpoint. Must be in <code>[-90, 90]</code>.                                                     |
+| <code>lon</code>         | <code>int</code>                     | Longitude angle (in degrees) to position the camera viewpoint. Must be in <code>[0, 360]</code>.                                                     |
+| <code>z_df</code>        | <code>DataFrame</code>               | DataFrame containing spherical embedding coordinates (<code>dim1</code>, <code>dim2</code>, <code>dim3</code>) and metadata.                                               |
+| <code>colour_by</code>   | <code>str</code>                     | Column in <code>z_df</code> to color points by (e.g., <code>'KNN_phase'</code>, <code>'cell_cycle_pseudotime'</code>).                                                     |
+| <code>radius</code>      | <code>float</code>, optional         | Distance from the sphere center to the virtual camera. Controls zoom level.                                                               |
+| <code>palette</code>     | <code>dict</code> or <code>str</code>, optional | Color palette. Use a dictionary for categorical values or a colormap name (e.g., <code>'mako'</code>) for continuous values.                         |
+| <code>ref_embed</code>   | <code>DataFrame</code>, optional     | Optional reference dataset with <code>dim1</code>, <code>dim2</code>, <code>dim3</code>, and metadata columns (e.g., <code>phase</code>). Used for transparent background points.     |
+| <code>vel_df</code>      | <code>DataFrame</code>, optional     | Optional velocity vectors with columns <code>dim1</code>, <code>dim2</code>, <code>dim3</code>. Drawn as arrows and cones.                                                 |
+| <code>save_as_png</code> | <code>str</code>, optional           | Path to save the image as a PNG. If <code>None</code>, the image is not saved.                                                                       |
+| <code>showlegend</code>  | <code>bool</code>, default <code>False</code>   | Whether to display the legend in the plot.                                                                                                |
+| <code>cycle_pole</code>  | <code>list[float]</code>, optional   | 3D vector indicating the cell cycle pole. Defaults to <code>[0, 0, 1]</code>. If you haven't rotated the sphere the cycle pole will be off. |</p>
+<hr />
 <h2 id="convert_to_human_genesdata"><code>convert_to_human_genes(data)</code></h2>
 <p><strong>Description:</strong><br />
-Converts mouse gene symbols in <code>.h5ad</code> or <code>.csv</code> input to human orthologs (HUGO format), for compatibility with the pretrained model.</p>
+Converts mouse gene symbols in <code>Anndata</code> or <code>pandas df</code> input to human orthologs (HUGO format). Used internally in Ouroboros but included here in case you need it for other applications. Returns either an h5ad or df depending on input. </p>
 <hr />
-<h2 id="check_featuresdata"><code>check_features(data)</code></h2>
-<p><strong>Description:</strong><br />
-Returns a list of missing genes from the expected Ouroboros feature set in your dataset.</p>
+<h2 id="plot_robinson_projectionz_df-colour_by-velocity_dfnone-palettenone-ref_dfnone-central_longitude80-title-alpha07-scale10-save_fignone-rasterizetrue-showtrue"><code>plot_robinson_projection(z_df, colour_by, velocity_df=None, palette=None, ref_df=None, central_longitude=80, title="", alpha=0.7, scale=10, save_fig=None, rasterize=True, show=True)</code></h2>
+<p><strong>Description:</strong>
+Projects 3D spherical coordinates onto a 2D Robinson map with flexible coloring by categorical or continuous metadata. Cartesian coordinates (<code>dim1</code>, <code>dim2</code>, <code>dim3</code>) are converted to longitude/latitude and drawn on a Robinson projection; coloring is auto-detected as continuous or categorical, NA values are shown in grey, and an optional reference set can be drawn as faint background points. Used for interpreting global cell state structure or transitions in a biologically interpretable planar projection. </p>
+<p><strong>Example usage:</strong></p>
+<pre><code class="language-python">plot_robinson_projection(
+    z_df=embedding_df,
+    colour_by='cell_cycle_pseudotime',
+    velocity_df=velocity_df,
+    palette='rocket_r',
+    ref_df=reference_df,
+    title=&quot;Differentiation Trajectory&quot;,
+    scale=15,
+    save_fig=&quot;robinson.png&quot;
+)
+</code></pre>
+<p><strong>Parameters:</strong>
+| Parameter           | Type                      | Description                                                                                                                                             |
+| ------------------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <code>z_df</code>              | <code>DataFrame</code>               | DataFrame containing 3D spherical embedding coordinates (<code>dim1</code>, <code>dim2</code>, <code>dim3</code>) and associated metadata for coloring.                                  |
+| <code>colour_by</code>         | <code>str</code>                     | Column in <code>z_df</code> to color by. Automatically handled as categorical (e.g., <code>'KNN_phase'</code>) or continuous (e.g., <code>'cell_cycle_pseudotime'</code>).              |
+| <code>velocity_df</code>       | <code>DataFrame</code>, optional     | Optional RNA velocity DataFrame with <code>dim1</code>, <code>dim2</code> columns representing directional flow vectors, drawn as quiver arrows.                              |
+| <code>palette</code>           | <code>dict</code> or <code>str</code>, optional | Custom palette: a dict mapping labels to colors for categorical data, or a colormap name (e.g., <code>'mako'</code>, <code>'viridis'</code>) for continuous data. If <code>None</code>, a colormap is auto-selected (<code>rocket_r</code> for <code>cell_cycle_pseudotime</code>, <code>mako</code> for <code>dormancy_pseudotime</code>, else <code>viridis</code>; <code>tab20</code>/<code>phase_pal_transition</code> for categorical). |
+| <code>ref_df</code>            | <code>DataFrame</code>, optional     | Optional reference DataFrame with <code>dim1</code>, <code>dim2</code>, <code>dim3</code> and a <code>phase</code> column. Plotted as faint background points colored by phase.                    |
+| <code>central_longitude</code> | <code>int</code>, default <code>80</code>       | Longitude (in degrees) to center the Robinson projection.                                                                                              |
+| <code>title</code>             | <code>str</code>, optional           | Title of the plot.                                                                                                                                     |
+| <code>alpha</code>             | <code>float</code>, default <code>0.7</code>    | Transparency of the primary data points.                                                                                                               |
+| <code>scale</code>             | <code>float</code>, default <code>10</code>     | Scale of the velocity vector arrows (larger values produce shorter arrows).                                                                            |
+| <code>save_fig</code>          | <code>str</code>, optional           | File path to save the figure to (300 dpi, tight bounding box). If <code>None</code>, the figure is not saved.                                                     |
+| <code>rasterize</code>         | <code>bool</code>, default <code>True</code>    | Whether to rasterize the scatter and quiver layers, keeping file sizes small when plotting many points while leaving axes/text as vectors.             |
+| <code>show</code>              | <code>bool</code>, default <code>True</code>    | Whether to display the figure with <code>plt.show()</code>.                                                                                                       |</p>
 <hr />
-<h2 id="ouroboros_retraindata"><code>ouroboros_retrain(data)</code></h2>
-<p><strong>Description:</strong><br />
-Retrains the Ouroboros VAE on your dataset if key feature genes are missing. Returns a new model, embeddings, and reordered feature list.</p>
-<hr />
-<p>📘 For full tutorials, see the <a href="../python_tutorial/">Python Tutorial</a>.</p></p>
-    </article>
-</section>
-<!-- endblock -->
-                
-                
-            </main>
-
+<h2 id="plot_robinson_projection_with_velocityz_df-colour_by-velocity_dfnone-palettenone-ref_dfnone-central_longitude80-title-alpha07-scale10"><code>plot_robinson_projection_with_velocity(z_df, colour_by, velocity_df=None, palette=None, ref_df=None, central_longitude=80, title="", alpha=0.7, scale=10)</code></h2>
+<p><strong>Description:</strong>
+Projects 3D spherical coordinates onto a 2D Robinson map with optional RNA velocity overlays and flexible coloring by categorical or continuous metadata. NA values are shown in grey. Used for interpreting global cell state structure or transitions in a biologically interpretable planar projection.</p>
+<p><strong>Example usage:</strong>
+<code>`python
+plot_robinson_projection_with_velocity(
+    z_df=embedding_df,
+    colour_by='cell_cycle_pseudotime',
+    velocity_df=velocity_df,
+    palette='rocket_r',
+    ref_df=reference_df,
+    title="Differentiation Trajectory",
+    scale=15
+)</code>
+<code>**Parameters:**
+| Parameter           | Type                      | Description                                                                                                                          |
+| ------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+|</code>z_df<code>|</code>DataFrame<code>| DataFrame containing 3D spherical embedding coordinates (</code>dim1<code>,</code>dim2<code>,</code>dim3<code>) and associated metadata for coloring.               |
+|</code>colour_by<code>|</code>str<code>| Column in</code>z_df<code>to color by. Supports both categorical (e.g.,</code>'KNN_phase'<code>) and continuous (e.g.,</code>'cell_cycle_pseudotime'<code>) data. |
+|</code>velocity_df<code>|</code>DataFrame<code>, optional     | Optional RNA velocity DataFrame with</code>dim1<code>,</code>dim2<code>columns representing directional flow vectors in spherical projection.           |
+|</code>palette<code>|</code>dict<code>or</code>str<code>, optional | Custom palette. Dictionary for categorical data, or colormap name (e.g.,</code>'mako'<code>,</code>'viridis'<code>) for continuous variables.            |
+|</code>ref_df<code>|</code>DataFrame<code>, optional     | Optional reference DataFrame with</code>dim1<code>,</code>dim2<code>,</code>dim3<code>and</code>putative_phase_transition<code>columns. Plots as faint background points.  |
+|</code>central_longitude<code>|</code>int<code>, default</code>80<code>| Longitude (in degrees) to center the Robinson projection.                                                                            |
+|</code>title<code>|</code>str<code>, optional           | Title of the plot.                                                                                                                   |
+|</code>alpha<code>|</code>float<code>, default</code>0.7<code>| Transparency of the primary data points.                                                                                             |
+|</code>scale<code>|</code>float<code>, default</code>10`     | Scale of the velocity vector arrows.                                                                                                 |</p>
+<p>📘 For full tutorials, see the <a href="../python_tutorial/">Python Tutorial</a>.</p>
             
-                    <!-- block preview -->
-    <div class="preview row row-cols-md-3 text-center pt-md-3" id="component-preview">
-        <div class="col themed-grid-col">
-            <a rel="prev" href="../usage/" class="nav-link">
-                <i class="fa fa-arrow-left"></i> Previous
-            </a>
+          
         </div>
-        <div class="col themed-grid-col"></div>
-        <div class="col themed-grid-col">
-            <a rel="next" href="../python_tutorial/" class="nav-link">
-                Next <i class="fa fa-arrow-right"></i>
-            </a>
-        </div>
+      </div>
     </div>
-<!-- endblock -->
+    <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebarwrapper">
+        
+          
+            
+  <p class="logo">
+    <a href="..">
+      <img class="logo" src="../media/spinner.gif" title="Ouroboros">
+    </a>
+  </p>
+  
+    <h1 class="logo">Ouroboros</h1>
+  
+
+
+
+          
             
 
+
+
+
+
+<h3>Navigation</h3>
+
+<nav>
+  <ul>
+  
+    
+      <li>
+        <a href="">Home</a>
+      </li>
+      
+    
+  
+    
+      <li>
+        <a href="usage/">CLI Usage</a>
+      </li>
+      
+    
+  
+    
+      <li>
+        <a href="api/">API Reference</a>
+      </li>
+      
+        
+  
+    <ul>
+    
+      <li><a href="#run_ouroborosdata-data_type-specieshuman-outdir">run_ouroboros(data, data_type, species='human', outdir='.')</a></li>
+      <ul>
+    
+  </ul>
+    
+      <li><a href="#check_genesadata">check_genes(adata)</a></li>
+      <ul>
+    
+  </ul>
+    
+      <li><a href="#read_in_features">read_in_features()</a></li>
+      <ul>
+    
+  </ul>
+    
+      <li><a href="#read_in_refembed">read_in_refembed()</a></li>
+      <ul>
+    
+  </ul>
+    
+      <li><a href="#find_cycle_polez_df-ref_embed">find_cycle_pole(z_df, ref_embed)</a></li>
+      <ul>
+    
+  </ul>
+    
+      <li><a href="#plot_spherez_df-colour_by-knn_phase-palette-none-ref-none-velocity-none-marker_size-2-cycle_pole-086202236-024824865-044191636-savefig-none-show-false">plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, velocity = None, marker_size = 2, cycle_pole = [0.86202236, 0.24824865, 0.44191636], savefig = None, show = False)</a></li>
+      <ul>
+    
+  </ul>
+    
+      <li><a href="#def-plot_gene_spherez_df-adata-gene_name-layernone-refnone-velocitynone-showfalse-outpathnone-cycle_polereference_cc_pole_point">def plot_gene_sphere(z_df, adata, gene_name, layer=None, ref=None, velocity=None, show=False, outpath=None, cycle_pole=reference_CC_pole_point)</a></li>
+      <ul>
+    
+  </ul>
+    
+      <li><a href="#rotate_northz_df-reference_cc_pole_point-086202236-024824865-044191636">rotate_north(z_df, reference_CC_pole_point = [0.86202236, 0.24824865, 0.44191636])</a></li>
+      <ul>
+    
+  </ul>
+    
+      <li><a href="#sphere_snapshotlat-lon-z_df-colour_byknn_phase-palettenone-radius-12-ref_embed-none-vel_df-none-save_as_pngtrue-cycle_pole-0-0-1">sphere_snapshot(lat, lon, z_df, colour_by='KNN_phase', palette=None, radius = 1.2, ref_embed = None, vel_df = None, save_as_png=True, cycle_pole = [0, 0, 1])</a></li>
+      <ul>
+    
+  </ul>
+    
+      <li><a href="#convert_to_human_genesdata">convert_to_human_genes(data)</a></li>
+      <ul>
+    
+  </ul>
+    
+      <li><a href="#plot_robinson_projectionz_df-colour_by-velocity_dfnone-palettenone-ref_dfnone-central_longitude80-title-alpha07-scale10-save_fignone-rasterizetrue-showtrue">plot_robinson_projection(z_df, colour_by, velocity_df=None, palette=None, ref_df=None, central_longitude=80, title="", alpha=0.7, scale=10, save_fig=None, rasterize=True, show=True)</a></li>
+      <ul>
+    
+  </ul>
+    
+      <li><a href="#plot_robinson_projection_with_velocityz_df-colour_by-velocity_dfnone-palettenone-ref_dfnone-central_longitude80-title-alpha07-scale10">plot_robinson_projection_with_velocity(z_df, colour_by, velocity_df=None, palette=None, ref_df=None, central_longitude=80, title="", alpha=0.7, scale=10)</a></li>
+      <ul>
+    
+  </ul>
+    
+  </ul>
+  
+      
+    
+  
+    
+      <li>
+        <a href="python_tutorial/">Scanpy (python) tutorial</a>
+      </li>
+      
+    
+  
+    
+      <li>
+        <a href="velocity_in_sphere_tutorial/">RNA velocity in the Ouroboros Sphere</a>
+      </li>
+      
+    
+  
+    
+      <li>
+        <a href="R_tutorial/">Seurat (R) tutorial</a>
+      </li>
+      
+    
+  
+  </ul>
+
+  
+</nav>
+          
             
-                    <!-- block footer -->
-<footer class="pt-4 my-md-5 pt-md-5 border-top" id="component-footer">
-    <div class="row">
-        <div class="col-12 col-md">
-                <!-- block copyright -->
 
-    <small class="d-block mb-3">
-        Made with
-        <a href="https://github.com/FernandoCelmer/mkdocs-simple-blog" target="_blank" rel="noopener">
-            Simple Blog for MkDocs
-        </a>
-    </small>
 
-<!-- endblock -->
-        </div>
+
+<h3>Table Of Contents</h3>
+
+<nav>
+  
+  
+    <ul>
+    
+      <li><a href="#run_ouroborosdata-data_type-specieshuman-outdir">run_ouroboros(data, data_type, species='human', outdir='.')</a></li>
+      <ul>
+    
+  </ul>
+    
+      <li><a href="#check_genesadata">check_genes(adata)</a></li>
+      <ul>
+    
+  </ul>
+    
+      <li><a href="#read_in_features">read_in_features()</a></li>
+      <ul>
+    
+  </ul>
+    
+      <li><a href="#read_in_refembed">read_in_refembed()</a></li>
+      <ul>
+    
+  </ul>
+    
+      <li><a href="#find_cycle_polez_df-ref_embed">find_cycle_pole(z_df, ref_embed)</a></li>
+      <ul>
+    
+  </ul>
+    
+      <li><a href="#plot_spherez_df-colour_by-knn_phase-palette-none-ref-none-velocity-none-marker_size-2-cycle_pole-086202236-024824865-044191636-savefig-none-show-false">plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, velocity = None, marker_size = 2, cycle_pole = [0.86202236, 0.24824865, 0.44191636], savefig = None, show = False)</a></li>
+      <ul>
+    
+  </ul>
+    
+      <li><a href="#def-plot_gene_spherez_df-adata-gene_name-layernone-refnone-velocitynone-showfalse-outpathnone-cycle_polereference_cc_pole_point">def plot_gene_sphere(z_df, adata, gene_name, layer=None, ref=None, velocity=None, show=False, outpath=None, cycle_pole=reference_CC_pole_point)</a></li>
+      <ul>
+    
+  </ul>
+    
+      <li><a href="#rotate_northz_df-reference_cc_pole_point-086202236-024824865-044191636">rotate_north(z_df, reference_CC_pole_point = [0.86202236, 0.24824865, 0.44191636])</a></li>
+      <ul>
+    
+  </ul>
+    
+      <li><a href="#sphere_snapshotlat-lon-z_df-colour_byknn_phase-palettenone-radius-12-ref_embed-none-vel_df-none-save_as_pngtrue-cycle_pole-0-0-1">sphere_snapshot(lat, lon, z_df, colour_by='KNN_phase', palette=None, radius = 1.2, ref_embed = None, vel_df = None, save_as_png=True, cycle_pole = [0, 0, 1])</a></li>
+      <ul>
+    
+  </ul>
+    
+      <li><a href="#convert_to_human_genesdata">convert_to_human_genes(data)</a></li>
+      <ul>
+    
+  </ul>
+    
+      <li><a href="#plot_robinson_projectionz_df-colour_by-velocity_dfnone-palettenone-ref_dfnone-central_longitude80-title-alpha07-scale10-save_fignone-rasterizetrue-showtrue">plot_robinson_projection(z_df, colour_by, velocity_df=None, palette=None, ref_df=None, central_longitude=80, title="", alpha=0.7, scale=10, save_fig=None, rasterize=True, show=True)</a></li>
+      <ul>
+    
+  </ul>
+    
+      <li><a href="#plot_robinson_projection_with_velocityz_df-colour_by-velocity_dfnone-palettenone-ref_dfnone-central_longitude80-title-alpha07-scale10">plot_robinson_projection_with_velocity(z_df, colour_by, velocity_df=None, palette=None, ref_df=None, central_longitude=80, title="", alpha=0.7, scale=10)</a></li>
+      <ul>
+    
+  </ul>
+    
+  </ul>
+  
+
+  
+</nav>
+          
+            <div id="searchbox" style="display: none;" role="search">
+  <h3>Quick search</h3>
+  <form class="search" action="../search.html" method="get">
+    <input name="q" type="text">
+    <input value="Go" type="submit">
+  </form>
+  <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+  </p>
+</div>
+<script type="text/javascript">
+  document.getElementById("searchbox").style.display = "block";
+</script>
+          
+        
+      </div>
     </div>
-</footer>
-<!-- endblock -->
-            
-        </div>
+    <div class="clearer"></div>
+  </div>
 
-            <script>var base_url = '..';</script>
-            <script src="../assets/js/jquery-3.3.1.slim.min.js""></script>
-            <script src="../assets/js/bootstrap.bundle.min.js""></script>
-            <script src="../assets/js/main.min.js""></script>
-                <script src="../search/main.js" defer></script>
+  
+    <div class="footer">
+      
+      
+        
+        Powered by <a href="http://www.mkdocs.org">mkdocs 1.6.1</a>
+        &amp; <a href="https://github.com/iamale/mkdocs-alabaster">mkdocs-alabaster</a>
+      
+    </div>
+  
 
-    </body>
-
+  <!--
+  MkDocs version      : 1.6.1
+  Docs Build Date UTC : 2026-09-11 02:25:39.201661+00:00
+  -->
+</body>
 </html>

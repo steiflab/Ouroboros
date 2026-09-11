@@ -1,125 +1,39 @@
-<!doctype html>
-<html data-bs-theme="">
-    <head>
-                <title>CLI Usage - Ouroboros</title>
 
-            <meta charset="utf-8">
-            <meta http-equiv="X-UA-Compatible" content="IE=edge">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!DOCTYPE html>
+<html>
+<head>
+  
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 
-            
-            
-            
+    <title>CLI Usage &mdash; Ouroboros</title>
 
-            
-                <link  rel="icon" type="image/x-icon" href="../assets/img/favicon.ico">
-            
-            <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Mono:400,700">
-            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="shortcut icon" href="../img/favicon.ico">
+    <link rel="stylesheet" href="../css/alabaster.css" type="text/css">
+    <link rel="stylesheet" href="../css/alabaster-overrides.css" type="text/css">
 
-            <link rel="stylesheet" href="../assets/css/bootstrap.min.css">
-            <link rel="stylesheet" href="../assets/css/root.min.css">
-            <link rel="stylesheet" href="../assets/css/main.min.css">
-            <link rel="stylesheet" href="../assets/css/media.min.css">
-            <link rel="stylesheet" href="../assets/css/mkdocstrings.min.css">
-                <script src="../search/main.js"></script>
-
-            
-                
-            
-    </head>
-
-    <body>
-        <div class="container py-3">
-            <header>
-                    <!-- block header -->
-<nav class="navbar navbar-expand-xl border-bottom">
-    <div class="container-fluid">
-        
-
-        
-            <span class=" fs-4 title-color site-name" id="component-site-name" style="text-transform: uppercase;">Ouroboros</span>
-        
-
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsMenu"
-            aria-controls="navbarsMenu" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <div class="collapse navbar-collapse flex-column ml-auto" id="navbarsMenu">
-            <ul class="navbar-nav">
-
-                <!-- block menu -->
-                <li class="nav-item">
-                    <!-- block menu -->
     
-        <li class="nav-item" id="component-menu">
-            <ul class="navbar-nav">
-                        <li class="nav-item">
-                            <a class="
-                            nav-link text-gray text-decoration-none" href="..">[Home]</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class=" active 
-                            nav-link text-gray text-decoration-none" href="./">[CLI Usage]</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="
-                            nav-link text-gray text-decoration-none" href="../api/">[API Reference (importable functions and descriptions)]</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="
-                            nav-link text-gray text-decoration-none" href="../python_tutorial/">[Ouroboros with Scanpy]</a>
-                        </li>
-            </ul>
-        </li>
-<!-- endblock -->
-                </li>
-                <!-- endblock -->
+      <link href="../css/extra_css.css" rel="stylesheet">
+    
 
-                <!-- block search -->
-                <li class="nav-item">
-                    <a class="collapsed" data-bs-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">
-                        <div class="md-search-icon">
-                            <i class="fa fa-search" aria-hidden="true"></i>
-                        </div>
-                    </a>
-                </li>
-                <!--  endblock -->
+    
+      <script src="../search/main.js"></script>
+    
 
-                <!-- block source -->
-                <li class="nav-item">
-                    
-                </li>
-                <!--  endblock -->
-            </ul>
-        </div>
-    </div>
-</nav>
-<!--  endblock -->
-            </header>
+    
 
-            <main><!-- block search -->
-<div class="collapse" id="collapseExample">
-    <div role="search" class="search-box">
-        <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
-            <input type="text" name="q" class="search-query"
-            placeholder="Search docs" title="Type search term here" />
-        </form>
-    </div>
-</div>
-<!-- endblock -->
+    <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
-                
-                        <!-- block content -->
-<section class="container post" id="component-content">
-    <article>
-        <header>
-            
-                <h1 class=" title" id="component-title">CLI Usage</h1>
-            
-        </header>
-        <p><h1 id="cli-usage">CLI Usage</h1>
+    
+  
+</head>
+<body>
+
+  <div class="document">
+    <div class="documentwrapper">
+      <div class="bodywrapper">
+        <div class="body" role="main">
+          
+            <h1 id="cli-usage">CLI Usage</h1>
 <h3 id="a-note-on-feature-genes">A note on feature genes</h3>
 <p>A specific feature set was used to originally train Ouroboros and create the VAE latent space. If your count matrix is missing any of these genes (maybe you used a different reference or filtered them out) Ouroboros will take the features that do exist in your count matrix and <strong>retrain</strong> the VAE, resulting in a slightly different latent space. This could result in lower accuracy than if the full feature set is used. </p>
 <p>I made functions (R and Python) to test if you're missing any genes before deploying Ouroboros - see wiki tutorials [add links] for more information. </p>
@@ -143,84 +57,175 @@
 | <code>--species</code>   | Species of origin for the dataset. Must be <code>human</code> or <code>mouse</code>.  Default is human |
 | <code>--outdir</code>    | Output directory where results (embeddings, figures, logs) will be saved. Default is '.'|</p>
 <h3 id="to-run-ouroboros-on-an-rseurat-object">To run Ouroboros on an R/Seurat object</h3>
-<p>Apologies, I'm mostly a python user so Ouroboros is largely tailored to those who use scanpy and h5ad objects. Given this, running Ouroboros for an R user requires a little bit of fussing, but is possible! Here are the instructions for doing so:</p>
-<p>It's important to note that Ouroboros only works on <strong>raw</strong> counts. If you are using R (and therefore probably Seurat?) you will need to save your counts as a csv, with genes as your column names and cell ids under the columns 'cell_id' like so: </p>
-<p>** MAKE SURE YOU SAVE YOUR RAW COUNTS, NOT YOUR NORMALIZED COUNTS!!!!**</p>
-<pre><code># Extract RAW counts matrix from Seurat object
-counts &lt;- GetAssayData(seurat_obj, slot = &quot;counts&quot;)
-
-# Transpose and convert to data frame
-df &lt;- as.data.frame(Matrix::t(counts))
-
-# Add cell IDs as a column named &quot;cell_id&quot;
-df$cell_id &lt;- rownames(df)
-
-# Move 'cell_id' to the first column
-df &lt;- df[, c(&quot;cell_id&quot;, setdiff(names(df), &quot;cell_id&quot;))]
-
-# Write to CSV
-write.csv(df, file = &quot;test_df.csv&quot;, row.names = FALSE)
-</code></pre>
-<p>Once your h5ad or csv is saved, you can call Ouroboros on the command line:</p>
-<pre><code class="language-bash">ouroboros \
-    --data /path/to/csv  \
-    --data_type csv \
-    --species human \
-    --outdir /path/to/output/directory
-</code></pre></p>
-    </article>
-</section>
-<!-- endblock -->
-                
-                
-            </main>
-
+<p>Ouroboros was written in python, so is tailored to those who use scanpy and h5ad objects. To run Ouroboros on Seurat objects you will have to export your raw counts and run the command line implementation of Ouroboros. See our Seurat (R) tutorial for more information. </p>
             
-                    <!-- block preview -->
-    <div class="preview row row-cols-md-3 text-center pt-md-3" id="component-preview">
-        <div class="col themed-grid-col">
-            <a rel="prev" href=".." class="nav-link">
-                <i class="fa fa-arrow-left"></i> Previous
-            </a>
+          
         </div>
-        <div class="col themed-grid-col"></div>
-        <div class="col themed-grid-col">
-            <a rel="next" href="../api/" class="nav-link">
-                Next <i class="fa fa-arrow-right"></i>
-            </a>
-        </div>
+      </div>
     </div>
-<!-- endblock -->
+    <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebarwrapper">
+        
+          
+            
+  <p class="logo">
+    <a href="..">
+      <img class="logo" src="../media/spinner.gif" title="Ouroboros">
+    </a>
+  </p>
+  
+    <h1 class="logo">Ouroboros</h1>
+  
+
+
+
+          
             
 
+
+
+
+
+<h3>Navigation</h3>
+
+<nav>
+  <ul>
+  
+    
+      <li>
+        <a href="">Home</a>
+      </li>
+      
+    
+  
+    
+      <li>
+        <a href="usage/">CLI Usage</a>
+      </li>
+      
+        
+  
+    <ul>
+    
+      <li><a href="#a-note-on-feature-genes">A note on feature genes</a></li>
+      <ul>
+    
+  </ul>
+    
+      <li><a href="#to-run-ouroboros-on-an-h5ad-scanpy-object">To run Ouroboros on an h5ad/ Scanpy object</a></li>
+      <ul>
+    
+  </ul>
+    
+      <li><a href="#to-run-ouroboros-on-an-rseurat-object">To run Ouroboros on an R/Seurat object</a></li>
+      <ul>
+    
+  </ul>
+    
+  </ul>
+  
+      
+    
+  
+    
+      <li>
+        <a href="api/">API Reference</a>
+      </li>
+      
+    
+  
+    
+      <li>
+        <a href="python_tutorial/">Scanpy (python) tutorial</a>
+      </li>
+      
+    
+  
+    
+      <li>
+        <a href="velocity_in_sphere_tutorial/">RNA velocity in the Ouroboros Sphere</a>
+      </li>
+      
+    
+  
+    
+      <li>
+        <a href="R_tutorial/">Seurat (R) tutorial</a>
+      </li>
+      
+    
+  
+  </ul>
+
+  
+</nav>
+          
             
-                    <!-- block footer -->
-<footer class="pt-4 my-md-5 pt-md-5 border-top" id="component-footer">
-    <div class="row">
-        <div class="col-12 col-md">
-                <!-- block copyright -->
 
-    <small class="d-block mb-3">
-        Made with
-        <a href="https://github.com/FernandoCelmer/mkdocs-simple-blog" target="_blank" rel="noopener">
-            Simple Blog for MkDocs
-        </a>
-    </small>
 
-<!-- endblock -->
-        </div>
+
+<h3>Table Of Contents</h3>
+
+<nav>
+  
+  
+    <ul>
+    
+      <li><a href="#a-note-on-feature-genes">A note on feature genes</a></li>
+      <ul>
+    
+  </ul>
+    
+      <li><a href="#to-run-ouroboros-on-an-h5ad-scanpy-object">To run Ouroboros on an h5ad/ Scanpy object</a></li>
+      <ul>
+    
+  </ul>
+    
+      <li><a href="#to-run-ouroboros-on-an-rseurat-object">To run Ouroboros on an R/Seurat object</a></li>
+      <ul>
+    
+  </ul>
+    
+  </ul>
+  
+
+  
+</nav>
+          
+            <div id="searchbox" style="display: none;" role="search">
+  <h3>Quick search</h3>
+  <form class="search" action="../search.html" method="get">
+    <input name="q" type="text">
+    <input value="Go" type="submit">
+  </form>
+  <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+  </p>
+</div>
+<script type="text/javascript">
+  document.getElementById("searchbox").style.display = "block";
+</script>
+          
+        
+      </div>
     </div>
-</footer>
-<!-- endblock -->
-            
-        </div>
+    <div class="clearer"></div>
+  </div>
 
-            <script>var base_url = '..';</script>
-            <script src="../assets/js/jquery-3.3.1.slim.min.js""></script>
-            <script src="../assets/js/bootstrap.bundle.min.js""></script>
-            <script src="../assets/js/main.min.js""></script>
-                <script src="../search/main.js" defer></script>
+  
+    <div class="footer">
+      
+      
+        
+        Powered by <a href="http://www.mkdocs.org">mkdocs 1.6.1</a>
+        &amp; <a href="https://github.com/iamale/mkdocs-alabaster">mkdocs-alabaster</a>
+      
+    </div>
+  
 
-    </body>
-
+  <!--
+  MkDocs version      : 1.6.1
+  Docs Build Date UTC : 2026-09-11 02:25:39.367606+00:00
+  -->
+</body>
 </html>
