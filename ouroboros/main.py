@@ -1,6 +1,7 @@
 import argparse
 import anndata as ad
 import pandas as pd
+import scipy.sparse as sp
 import logging
 logger = logging.getLogger(__name__)
 
@@ -169,8 +170,11 @@ def run_ouroboros(data, data_type, species = 'human', outdir = '.', seed = 0, re
 
     if data_type == 'h5ad':
         data = ad.read_h5ad(data)
-        if "raw_counts" in data.layers: 
+        if "raw_counts" in data.layers:
             data.X = data.layers['raw_counts'].copy()
+        # densify: downstream - some calls can't handle sparse X
+        if sp.issparse(data.X):
+            data.X = data.X.toarray()
         
     elif data_type == 'csv':
         data = pd.read_csv(data)
