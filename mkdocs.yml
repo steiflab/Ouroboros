@@ -2,11 +2,31 @@ site_name: Ouroboros
 nav:
   - Home: index.md
   - CLI Usage: usage.md
-  - API Reference (importable functions and descriptions): api.md
-  - Python tutorial: python_tutorial.ipynb
+  - API Reference: api.md
+  - Scanpy (python) tutorial: python_tutorial.ipynb
+  - RNA velocity tutorial: velocity_in_sphere_tutorial.ipynb
+  - Seurat (R) tutorial: R_tutorial.ipynb
+
 docs_dir: docs
 plugins:
   - search
   - mkdocs-jupyter
 theme:
-    name: simple-blog
+  name: alabaster
+
+extra:
+  logo: media/spinner.gif
+  logo_name: true
+  sidebars:
+    - about
+    - navigation
+    - toc
+    - search
+  homepage_sidebars:
+    - about
+    - navigation
+    - search
+  homepage_nav: false
+
+extra_css:
+  - css/extra_css.css

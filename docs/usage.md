@@ -40,37 +40,4 @@ Arguments:
 
 
 ### To run Ouroboros on an R/Seurat object
-Apologies, I'm mostly a python user so Ouroboros is largely tailored to those who use scanpy and h5ad objects. Given this, running Ouroboros for an R user requires a little bit of fussing, but is possible! Here are the instructions for doing so:
-
-It's important to note that Ouroboros only works on **raw** counts. If you are using R (and therefore probably Seurat?) you will need to save your counts as a csv, with genes as your column names and cell ids under the columns 'cell_id' like so: 
-
-** MAKE SURE YOU SAVE YOUR RAW COUNTS, NOT YOUR NORMALIZED COUNTS!!!!**
-```
-# Extract RAW counts matrix from Seurat object
-counts <- GetAssayData(seurat_obj, slot = "counts")
-
-# Transpose and convert to data frame
-df <- as.data.frame(Matrix::t(counts))
-
-# Add cell IDs as a column named "cell_id"
-df$cell_id <- rownames(df)
-
-# Move 'cell_id' to the first column
-df <- df[, c("cell_id", setdiff(names(df), "cell_id"))]
-
-# Write to CSV
-write.csv(df, file = "test_df.csv", row.names = FALSE)
-```
-
-Once your h5ad or csv is saved, you can call Ouroboros on the command line:
-
-
-```bash 
-ouroboros \
-    --data /path/to/csv  \
-    --data_type csv \
-    --species human \
-    --outdir /path/to/output/directory
-```
-
-
+Ouroboros was written in python, so is tailored to those who use scanpy and h5ad objects. To run Ouroboros on Seurat objects you will have to export your raw counts and run the command line implementation of Ouroboros. See our Seurat (R) tutorial for more information. 

@@ -217,6 +217,45 @@ Converts mouse gene symbols in `Anndata` or `pandas df` input to human orthologs
 
 ---
 
+## `plot_robinson_projection(z_df, colour_by, velocity_df=None, palette=None, ref_df=None, central_longitude=80, title="", alpha=0.7, scale=10, save_fig=None, rasterize=True, show=True)`
+
+**Description:**
+Projects 3D spherical coordinates onto a 2D Robinson map with flexible coloring by categorical or continuous metadata. Cartesian coordinates (`dim1`, `dim2`, `dim3`) are converted to longitude/latitude and drawn on a Robinson projection; coloring is auto-detected as continuous or categorical, NA values are shown in grey, and an optional reference set can be drawn as faint background points. Used for interpreting global cell state structure or transitions in a biologically interpretable planar projection. 
+
+**Example usage:**
+```python
+plot_robinson_projection(
+    z_df=embedding_df,
+    colour_by='cell_cycle_pseudotime',
+    velocity_df=velocity_df,
+    palette='rocket_r',
+    ref_df=reference_df,
+    title="Differentiation Trajectory",
+    scale=15,
+    save_fig="robinson.png"
+)
+```
+
+**Parameters:**
+| Parameter           | Type                      | Description                                                                                                                                             |
+| ------------------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `z_df`              | `DataFrame`               | DataFrame containing 3D spherical embedding coordinates (`dim1`, `dim2`, `dim3`) and associated metadata for coloring.                                  |
+| `colour_by`         | `str`                     | Column in `z_df` to color by. Automatically handled as categorical (e.g., `'KNN_phase'`) or continuous (e.g., `'cell_cycle_pseudotime'`).              |
+| `velocity_df`       | `DataFrame`, optional     | Optional RNA velocity DataFrame with `dim1`, `dim2` columns representing directional flow vectors, drawn as quiver arrows.                              |
+| `palette`           | `dict` or `str`, optional | Custom palette: a dict mapping labels to colors for categorical data, or a colormap name (e.g., `'mako'`, `'viridis'`) for continuous data. If `None`, a colormap is auto-selected (`rocket_r` for `cell_cycle_pseudotime`, `mako` for `dormancy_pseudotime`, else `viridis`; `tab20`/`phase_pal_transition` for categorical). |
+| `ref_df`            | `DataFrame`, optional     | Optional reference DataFrame with `dim1`, `dim2`, `dim3` and a `phase` column. Plotted as faint background points colored by phase.                    |
+| `central_longitude` | `int`, default `80`       | Longitude (in degrees) to center the Robinson projection.                                                                                              |
+| `title`             | `str`, optional           | Title of the plot.                                                                                                                                     |
+| `alpha`             | `float`, default `0.7`    | Transparency of the primary data points.                                                                                                               |
+| `scale`             | `float`, default `10`     | Scale of the velocity vector arrows (larger values produce shorter arrows).                                                                            |
+| `save_fig`          | `str`, optional           | File path to save the figure to (300 dpi, tight bounding box). If `None`, the figure is not saved.                                                     |
+| `rasterize`         | `bool`, default `True`    | Whether to rasterize the scatter and quiver layers, keeping file sizes small when plotting many points while leaving axes/text as vectors.             |
+| `show`              | `bool`, default `True`    | Whether to display the figure with `plt.show()`.                                                                                                       |
+
+
+---
+
+
 
 ## `plot_robinson_projection_with_velocity(z_df, colour_by, velocity_df=None, palette=None, ref_df=None, central_longitude=80, title="", alpha=0.7, scale=10)`
 

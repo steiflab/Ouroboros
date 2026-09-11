@@ -1483,7 +1483,7 @@ def plot_gene_sphere(
     show=False,
     outpath=None,
     title="",
-    cycle_pole=reference_CC_pole_point
+    cycle_pole=reference_CC_pole_point,
 ):
     """
     Plot gene expression projected on the Ouroboros VAE sphere. Gene_name can be a list of genes or a single gene.

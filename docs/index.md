@@ -1,9 +1,6 @@
 <div style="margin: 0; padding: 0;">
-  <video autoplay muted loop playsinline
-         style="width: 100vw; height: 40vh; object-fit: cover; display: block;">
-    <source src="media/banner.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
+  <img src="media/banner.png" alt="Ouroboros banner"
+       style="width: 100vw; height: 40vh; object-fit: cover; display: block;">
 </div>
 
 
@@ -29,69 +26,29 @@ It projects cells into a spherical latent space based on a learned reference emb
 
 ## Installation 
 
-**Dependencies:**
-- python=3.6
-- numpy>=1.16.4
-- scipy>=1.3.0
-- pandas>=0.21.0
-- anndata=0.7.5
-- matplotlib>=3.1.0
-- seaborn>=0.11.2
-- plotly>=5.24.1
-- tensorflow=1.14
-- tensorflow-probability=0.7.0
-- scPhere
-- scikit-learn>=0.24.2
+Ouroboros supports Python 3.9–3.10. Cartopy is an optional dependency required for some plotting functions. It is recommended to install via conda before installing Ouroboros.
 
-
-
-To install manually follow these commands: 
-*Note I prefer mamba to conda because it's far faster, but you can just replace any instance of 'mamba' with 'conda' if you wish*
+Installation:
 ```bash 
-conda create -n ouroboros_env python=3.6
-conda activate ouroboros_env
-
-mamba install "numpy>=1.16.4" "scipy>=1.3.0" "pandas>=0.21.0" "anndata=0.7.5" "matplotlib>=3.1.0" "seaborn>=0.11.2" "plotly>=5.24.1" "scikit-learn>=0.24.2" "scanpy" "cartopy"
-
-pip install tensorflow==1.14
-pip install -U tensorflow-probability==0.7.0
-
-pip install "setuptools_scm<6.4"
-
-pip install importlib_resources
-
-git clone https://github.com/klarman-cell-observatory/scPhere
-cd scPhere
-python setup.py install
-cd ../
-
-
-git clone https://github.com/haleymac/Ouroboros.git
-cd Ouroboros/
-pip install .
-
-pip install --upgrade nbformat
-
-# necessary for subsequent plotting only, not running Ouroboros main
-pip install -U kaleido
+conda create -n ouroboros_env -c conda-forge python=3.9 pip=24.3.1
+conda activate ouroboros_env 
+conda install -c conda-forge cartopy 
+pip install sc-ouroboros --no-cache-dir
 ```
 
-These commands have been included in install.sh as well, so to avoid calling them manually just run: 
+Or install directly from GitHub with:
+
 ```bash
-# Grab the installation script
-wget https://raw.githubusercontent.com/haleymac/Ouroboros/main/install.sh
-# execute it
-bash install.sh
+pip install git+https://github.com/steiflab/Ouroboros.git
 ```
-This will only work if you already have conda and mamba installed. Also note that 2 github repos (scPhere and Ouroboros) will be dumped in the working directory. 
 
-
+ScPhere is included as part of Ouroboros and has been updated for compatibility with TensorFlow 2. ScPhere was originally developed by Jiarui Ding and colleagues at the Klarman Cell Observatory.
 
 ---
 
 ## Quickstart 
 
-Ouroboros can be run on any h5ad object that has raw counts saved as adata.layers['raw_counts].
+Ouroboros can be run on any scanpy h5ad object that has raw counts saved as adata.layers['raw_counts].
 
 Alternatively it will also accept a csv file with genes as your column names and cell ids under the columns 'cell_id' - see our 'Ouroboros_in_R' tutorial or CLI usage for more information. 
 
@@ -100,11 +57,12 @@ Alternatively it will also accept a csv file with genes as your column names and
 ouroboros \
     --data /path/to/h5ad  \
     --data_type h5ad \
-    --species human \
+    --species human \ 
     --outdir /path/to/output/directory
 ```
 
 Arguments: 
+
 | Argument      | Description                                                                   |
 | ------------- | ----------------------------------------------------------------------------- |
 | `--data`      | **Required.** Path to your input data file. Must be a `.h5ad` or `.csv` file. |
@@ -152,7 +110,7 @@ Our training dataset includes 5698 cells and 226 genes. When training (or retrai
     - **CPU**: Intel(R) Xeon(R) E7-8867 v4 @ 2.40GHz
     - **RAM**: 1.5 TB
 
-The model is always retrained on the same number of cells, but will likely run faster if fewer features genes are included. Note this will likely make the model less accurate however. 
+The model is always retrained on the same number of cells, but will likely run faster if fewer features genes are included. Note this will likely make the model less accurate. 
 
 
 
