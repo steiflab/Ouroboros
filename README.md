@@ -5,7 +5,7 @@
 
 Ouroboros is designed to find cell cycle phase, cell cycle pseudotime and dormancy depth in scRNAseq datasets. It uses transfer learning within the latent space of a variational autoencoder to infer these features on new datasets. 
 
-For more information see the Wiki: *add wiki*
+For more information see the Wiki: [wiki](https://steiflab.github.io/Ouroboros/)
 
 ## Installation 
 
