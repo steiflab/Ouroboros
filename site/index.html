@@ -1,130 +1,41 @@
-<!doctype html>
-<html data-bs-theme="">
-    <head>
-                <title>Ouroboros</title>
 
-            <meta charset="utf-8">
-            <meta http-equiv="X-UA-Compatible" content="IE=edge">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!DOCTYPE html>
+<html>
+<head>
+  
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 
-            <meta name="description" content="None">
-            
-            
+    <title>Home &mdash; Ouroboros</title>
 
-            
-                <link  rel="icon" type="image/x-icon" href="assets/img/favicon.ico">
-            
-            <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Fira+Mono:400,700">
-            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="shortcut icon" href="./img/favicon.ico">
+    <link rel="stylesheet" href="./css/alabaster.css" type="text/css">
+    <link rel="stylesheet" href="./css/alabaster-overrides.css" type="text/css">
 
-            <link rel="stylesheet" href="assets/css/bootstrap.min.css">
-            <link rel="stylesheet" href="assets/css/root.min.css">
-            <link rel="stylesheet" href="assets/css/main.min.css">
-            <link rel="stylesheet" href="assets/css/media.min.css">
-            <link rel="stylesheet" href="assets/css/mkdocstrings.min.css">
-                <script src="search/main.js"></script>
-
-            
-                
-            
-    </head>
-
-    <body>
-        <div class="container py-3">
-            <header>
-                    <!-- block header -->
-<nav class="navbar navbar-expand-xl border-bottom">
-    <div class="container-fluid">
-        
-
-        
-            <span class=" fs-4 title-color site-name" id="component-site-name" style="text-transform: uppercase;">Ouroboros</span>
-        
-
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsMenu"
-            aria-controls="navbarsMenu" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <div class="collapse navbar-collapse flex-column ml-auto" id="navbarsMenu">
-            <ul class="navbar-nav">
-
-                <!-- block menu -->
-                <li class="nav-item">
-                    <!-- block menu -->
     
-        <li class="nav-item" id="component-menu">
-            <ul class="navbar-nav">
-                        <li class="nav-item">
-                            <a class=" active 
-                            nav-link text-gray text-decoration-none" href=".">[Home]</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="
-                            nav-link text-gray text-decoration-none" href="usage/">[CLI Usage]</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="
-                            nav-link text-gray text-decoration-none" href="api/">[API Reference (importable functions and descriptions)]</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="
-                            nav-link text-gray text-decoration-none" href="python_tutorial/">[Ouroboros with Scanpy]</a>
-                        </li>
-            </ul>
-        </li>
-<!-- endblock -->
-                </li>
-                <!-- endblock -->
+      <link href="css/extra_css.css" rel="stylesheet">
+    
 
-                <!-- block search -->
-                <li class="nav-item">
-                    <a class="collapsed" data-bs-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">
-                        <div class="md-search-icon">
-                            <i class="fa fa-search" aria-hidden="true"></i>
-                        </div>
-                    </a>
-                </li>
-                <!--  endblock -->
+    
+      <script src="search/main.js"></script>
+    
 
-                <!-- block source -->
-                <li class="nav-item">
-                    
-                </li>
-                <!--  endblock -->
-            </ul>
-        </div>
-    </div>
-</nav>
-<!--  endblock -->
-            </header>
+    
 
-            <main><!-- block search -->
-<div class="collapse" id="collapseExample">
-    <div role="search" class="search-box">
-        <form id="rtd-search-form" class="wy-form" action="./search.html" method="get">
-            <input type="text" name="q" class="search-query"
-            placeholder="Search docs" title="Type search term here" />
-        </form>
-    </div>
-</div>
-<!-- endblock -->
+    <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
 
-                
-                        <!-- block content -->
-<section class="container post" id="component-content">
-    <article>
-        <header>
-            
-                <h1 class=" title" id="component-title">Home</h1>
-            
-        </header>
-        <p><div style="margin: 0; padding: 0;">
-  <video autoplay muted loop playsinline
-         style="width: 100vw; height: 40vh; object-fit: cover; display: block;">
-    <source src="media/banner.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
+    
+  
+</head>
+<body>
+
+  <div class="document">
+    <div class="documentwrapper">
+      <div class="bodywrapper">
+        <div class="body" role="main">
+          
+            <div style="margin: 0; padding: 0;">
+  <img src="media/banner.png" alt="Ouroboros banner"
+       style="width: 100vw; height: 40vh; object-fit: cover; display: block;">
 </div>
 
 <h1 id="ouroboros">Ouroboros</h1>
@@ -138,72 +49,58 @@
 - note that any cells that fall in the 'cell cycling' range will be given a dormancy depth value of NA, and will be coloured grey </p>
 <hr />
 <h2 id="installation">Installation</h2>
-<p><strong>Dependencies:</strong>
-- python=3.6
-- numpy&gt;=1.16.4
-- scipy&gt;=1.3.0
-- pandas&gt;=0.21.0
-- anndata=0.7.5
-- matplotlib&gt;=3.1.0
-- seaborn&gt;=0.11.2
-- plotly&gt;=5.24.1
-- tensorflow=1.14
-- tensorflow-probability=0.7.0
-- scPhere
-- scikit-learn&gt;=0.24.2</p>
-<p>To install manually follow these commands: 
-<em>Note I prefer mamba to conda because it's far faster, but you can just replace any instance of 'mamba' with 'conda' if you wish</em></p>
-<pre><code class="language-bash">conda create -n ouroboros_env python=3.6
-conda activate ouroboros_env
-
-mamba install &quot;numpy&gt;=1.16.4&quot; &quot;scipy&gt;=1.3.0&quot; &quot;pandas&gt;=0.21.0&quot; &quot;anndata=0.7.5&quot; &quot;matplotlib&gt;=3.1.0&quot; &quot;seaborn&gt;=0.11.2&quot; &quot;plotly&gt;=5.24.1&quot; &quot;scikit-learn&gt;=0.24.2&quot; &quot;scanpy&quot; &quot;cartopy&quot;
-
-pip install tensorflow==1.14
-pip install -U tensorflow-probability==0.7.0
-
-pip install &quot;setuptools_scm&lt;6.4&quot;
-
-pip install importlib_resources
-
-git clone https://github.com/klarman-cell-observatory/scPhere
-cd scPhere
-python setup.py install
-cd ../
-
-
-git clone https://github.com/haleymac/Ouroboros.git
-cd Ouroboros/
-pip install .
-
-pip install --upgrade nbformat
-
-# necessary for subsequent plotting only, not running Ouroboros main
-pip install -U kaleido
+<p>Ouroboros supports Python 3.9–3.10. Cartopy is an optional dependency required for some plotting functions. It is recommended to install via conda before installing Ouroboros.</p>
+<p>Installation:</p>
+<pre><code class="language-bash">conda create -n ouroboros_env -c conda-forge python=3.9 pip=24.3.1
+conda activate ouroboros_env 
+conda install -c conda-forge cartopy 
+pip install sc-ouroboros --no-cache-dir
 </code></pre>
-<p>These commands have been included in install.sh as well, so to avoid calling them manually just run: </p>
-<pre><code class="language-bash"># Grab the installation script
-wget https://raw.githubusercontent.com/haleymac/Ouroboros/main/install.sh
-# execute it
-bash install.sh
+<p>Or install directly from GitHub with:</p>
+<pre><code class="language-bash">pip install git+https://github.com/steiflab/Ouroboros.git
 </code></pre>
-<p>This will only work if you already have conda and mamba installed. Also note that 2 github repos (scPhere and Ouroboros) will be dumped in the working directory. </p>
+<p>ScPhere is included as part of Ouroboros and has been updated for compatibility with TensorFlow 2. ScPhere was originally developed by Jiarui Ding and colleagues at the Klarman Cell Observatory.</p>
 <hr />
 <h2 id="quickstart">Quickstart</h2>
-<p>Ouroboros can be run on any h5ad object that has raw counts saved as adata.layers['raw_counts].</p>
+<p>Ouroboros can be run on any scanpy h5ad object that has raw counts saved as adata.layers['raw_counts].</p>
 <p>Alternatively it will also accept a csv file with genes as your column names and cell ids under the columns 'cell_id' - see our 'Ouroboros_in_R' tutorial or CLI usage for more information. </p>
 <pre><code class="language-bash">ouroboros \
     --data /path/to/h5ad  \
     --data_type h5ad \
-    --species human \
+    --species human \ 
     --outdir /path/to/output/directory
 </code></pre>
-<p>Arguments: 
-| Argument      | Description                                                                   |
-| ------------- | ----------------------------------------------------------------------------- |
-| <code>--data</code>      | <strong>Required.</strong> Path to your input data file. Must be a <code>.h5ad</code> or <code>.csv</code> file. |
-| <code>--data_type</code> | <strong>Required.</strong> Format of the input data. Must be <code>h5ad</code> or <code>csv</code>.              |
-| <code>--species</code>   | Species of origin for the dataset. Must be <code>human</code> or <code>mouse</code>.  Default is human |
-| <code>--outdir</code>    | Output directory where results (embeddings, figures, logs) will be saved. Default is '.'|</p>
+<p>Arguments: </p>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--data</code></td>
+<td><strong>Required.</strong> Path to your input data file. Must be a <code>.h5ad</code> or <code>.csv</code> file.</td>
+</tr>
+<tr>
+<td><code>--data_type</code></td>
+<td><strong>Required.</strong> Format of the input data. Must be <code>h5ad</code> or <code>csv</code>.</td>
+</tr>
+<tr>
+<td><code>--species</code></td>
+<td>Species of origin for the dataset. Must be <code>human</code> or <code>mouse</code>.  Default is human</td>
+</tr>
+<tr>
+<td><code>--outdir</code></td>
+<td>Output directory where results (embeddings, figures, logs) will be saved. Default is '.'</td>
+</tr>
+</tbody>
+</table>
+<h3 id="a-note-on-feature-genes">A note on feature genes</h3>
+<p>A specific feature set was used to originally train Ouroboros and create the VAE latent space. If your count matrix is missing any of these genes (maybe you used a different reference or filtered them out) Ouroboros will take the features that do exist in your count matrix and <strong>retrain</strong> the VAE, resulting in a slightly different latent space. This could result in lower accuracy than if the full feature set is used. </p>
+<p>I made functions (R and Python) to test if you're missing any genes before deploying Ouroboros - see wiki tutorials [add links] for more information. </p>
+<p>Note also that feature genes are named by their HUGO gene names( ex. CCNE1, CCNE2), and not by their ensembl IDs (ENS...) so ensure your adata.var_names or R gene names are in this format before running Ouroboros. </p>
 <h2 id="plotting-ouroboros-output">Plotting Ouroboros output</h2>
 <p>We have included several python functions to help you explore the Ouroboros output sphere. See our tutorials and API usage for more information. </p>
 <h2 id="performance">Performance</h2>
@@ -239,60 +136,163 @@ bash install.sh
 </ul>
 </li>
 </ul>
-<p>The model is always retrained on the same number of cells, but will likely run faster if fewer features genes are included. Note this will likely make the model less accurate however. </p></p>
-    </article>
-</section>
-<!-- endblock -->
-                
-                
-            </main>
-
+<p>The model is always retrained on the same number of cells, but will likely run faster if fewer features genes are included. Note this will likely make the model less accurate. </p>
             
-                    <!-- block preview -->
-    <div class="preview row row-cols-md-3 text-center pt-md-3" id="component-preview">
-        <div class="col themed-grid-col">
-            <a rel="prev" class="nav-link disabled">
-                <i class="fa fa-arrow-left"></i> Previous
-            </a>
+          
         </div>
-        <div class="col themed-grid-col"></div>
-        <div class="col themed-grid-col">
-            <a rel="next" href="usage/" class="nav-link">
-                Next <i class="fa fa-arrow-right"></i>
-            </a>
-        </div>
+      </div>
     </div>
-<!-- endblock -->
+    <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebarwrapper">
+        
+          
+            
+  <p class="logo">
+    <a href=".">
+      <img class="logo" src="./media/spinner.gif" title="Ouroboros">
+    </a>
+  </p>
+  
+    <h1 class="logo">Ouroboros</h1>
+  
+
+
+
+          
             
 
-            
-                    <!-- block footer -->
-<footer class="pt-4 my-md-5 pt-md-5 border-top" id="component-footer">
-    <div class="row">
-        <div class="col-12 col-md">
-                <!-- block copyright -->
 
-    <small class="d-block mb-3">
-        Made with
-        <a href="https://github.com/FernandoCelmer/mkdocs-simple-blog" target="_blank" rel="noopener">
-            Simple Blog for MkDocs
-        </a>
-    </small>
 
-<!-- endblock -->
-        </div>
+
+
+<h3>Navigation</h3>
+
+<nav>
+  <ul>
+  
+    
+      <li>
+        <a href="">Home</a>
+      </li>
+      
+        
+  
+    <ul>
+    
+      <li><a href="#installation">Installation</a></li>
+      <ul>
+    
+  </ul>
+    
+      <li><a href="#quickstart">Quickstart</a></li>
+      <ul>
+    
+      <li><a href="#a-note-on-feature-genes">A note on feature genes</a></li>
+      <ul>
+    
+  </ul>
+    
+  </ul>
+    
+      <li><a href="#plotting-ouroboros-output">Plotting Ouroboros output</a></li>
+      <ul>
+    
+  </ul>
+    
+      <li><a href="#performance">Performance</a></li>
+      <ul>
+    
+      <li><a href="#embedding-cells-in-latent-space-without-retraining">Embedding cells in latent space without retraining:</a></li>
+      <ul>
+    
+  </ul>
+    
+      <li><a href="#when-retraining-the-model">When retraining the model:</a></li>
+      <ul>
+    
+  </ul>
+    
+  </ul>
+    
+  </ul>
+  
+      
+    
+  
+    
+      <li>
+        <a href="usage/">CLI Usage</a>
+      </li>
+      
+    
+  
+    
+      <li>
+        <a href="api/">API Reference</a>
+      </li>
+      
+    
+  
+    
+      <li>
+        <a href="python_tutorial/">Scanpy (python) tutorial</a>
+      </li>
+      
+    
+  
+    
+      <li>
+        <a href="velocity_in_sphere_tutorial/">RNA velocity in the Ouroboros Sphere</a>
+      </li>
+      
+    
+  
+    
+      <li>
+        <a href="R_tutorial/">Seurat (R) tutorial</a>
+      </li>
+      
+    
+  
+  </ul>
+
+  
+</nav>
+          
+            <div id="searchbox" style="display: none;" role="search">
+  <h3>Quick search</h3>
+  <form class="search" action="./search.html" method="get">
+    <input name="q" type="text">
+    <input value="Go" type="submit">
+  </form>
+  <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+  </p>
+</div>
+<script type="text/javascript">
+  document.getElementById("searchbox").style.display = "block";
+</script>
+          
+        
+      </div>
     </div>
-</footer>
-<!-- endblock -->
-            
-        </div>
+    <div class="clearer"></div>
+  </div>
 
-            <script>var base_url = '.';</script>
-            <script src="assets/js/jquery-3.3.1.slim.min.js""></script>
-            <script src="assets/js/bootstrap.bundle.min.js""></script>
-            <script src="assets/js/main.min.js""></script>
-                <script src="search/main.js" defer></script>
+  
+    <div class="footer">
+      
+      
+        
+        Powered by <a href="http://www.mkdocs.org">mkdocs 1.6.1</a>
+        &amp; <a href="https://github.com/iamale/mkdocs-alabaster">mkdocs-alabaster</a>
+      
+    </div>
+  
 
-    </body>
-
+  <!--
+  MkDocs version      : 1.6.1
+  Docs Build Date UTC : 2026-09-11 02:25:39.106931+00:00
+  -->
+</body>
 </html>

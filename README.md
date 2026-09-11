@@ -1,5 +1,5 @@
 <p align="center" style="margin-bottom: 0;">
-  <img src="docs/media/sphere_snake.png" alt="Ouroboros logo" width="120">
+  <img src="docs/media/spinner.gif" alt="Ouroboros" width="120">
 </p>
 <h1 align="center" style="margin-top: 0;">Ouroboros</h1>
 
@@ -27,9 +27,10 @@ pip install git+https://github.com/steiflab/Ouroboros.git
 [ScPhere](https://github.com/klarman-cell-observatory/scPhere) is included as part of Ouroboros and has been updated for compatibility with TensorFlow 2. ScPhere was originally developed by Jiarui Ding and colleagues at the Klarman Cell Observatory.
 
 ## Running Ouroboros 
-For a full tutorial see the Wiki: *add wiki*
+For a full tutorial see the Wiki: [wiki](https://steiflab.github.io/Ouroboros/)
 
-Ouroboros is a command line tool designed to take either a saved .h5ad object or if you are an R user a saved csv with a cell/gene count matrix. 
+There are seperate tutorials for python (scanpy) and R (seurat) users, and an additonal tutorial to embed RNA velocity vectors into the sphere. 
+
 
 
 ### To run Ouroboros on an h5ad/ Scanpy object
@@ -67,41 +68,11 @@ Arguments:
 
 
 
-### To run Ouroboros on an R/Seurat object
-Apologies, I'm mostly a python user so Ouroboros is largely tailered to those who use scanpy and h5ad objects. Given this, running Ouroboros for an R user requires a little bit of fussing, but is possible! Here are the instructions for doing so:
-
-It's important to note that Ouroboros only works on **raw** counts. If you are using R (and therefore probably Seurat?) you will need to save your counts as a csv, with genes as your column names and cell ids under the columns 'cell_id' like so: 
-
-** MAKE SURE YOU SAVE YOUR RAW COUNTS, NOT YOUR NORMALIZED COUNTS!!!!**
-```
-# Extract RAW counts matrix from Seurat object
-counts <- GetAssayData(seurat_obj, slot = "counts")
-
-# Transpose and convert to data frame
-df <- as.data.frame(Matrix::t(counts))
-
-# Add cell IDs as a column named "cell_id"
-df$cell_id <- rownames(df)
-
-# Move 'cell_id' to the first column
-df <- df[, c("cell_id", setdiff(names(df), "cell_id"))]
-
-# Write to CSV
-write.csv(df, file = "test_df.csv", row.names = FALSE)
-```
-
-Once your h5ad or csv is saved, you can call Ouroboros on the command line:
-
-
-
-
-
-
 ## Plotting Ouroboros output
 
 We have included several python functions to help you explore the Ouroboros output sphere. 
 
-See Wiki tutorials for more information [*add link*]
+See Wiki tutorials for more information [\[*add link*\]](https://steiflab.github.io/Ouroboros/)
 
 
 ## Acknowledgements
