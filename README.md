@@ -72,7 +72,7 @@ Arguments:
 
 We have included several python functions to help you explore the Ouroboros output sphere. 
 
-See Wiki tutorials for more information [\[*add link*\]](https://steiflab.github.io/Ouroboros/)
+See Wiki tutorials for more information
 
 
 ## Acknowledgements
