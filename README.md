@@ -9,7 +9,7 @@ For more information see the Wiki: [wiki](https://steiflab.github.io/Ouroboros/)
 
 ## Installation 
 
-Ouroboros supports Python **3.9–3.10**. Cartopy is an optional dependeicty required for some plotting functions. It is recommended to install via conda before installing Ouroboros. 
+Ouroboros supports Python **3.9–3.10**. Cartopy is an optional dependency required for some plotting functions. It is recommended to install via conda before installing Ouroboros. 
 
 Installation: 
 ```
