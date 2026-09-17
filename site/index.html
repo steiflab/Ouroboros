@@ -1,0 +1,298 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+    <title>Home &mdash; Ouroboros</title>
+
+    <link rel="shortcut icon" href="./img/favicon.ico">
+    <link rel="stylesheet" href="./css/alabaster.css" type="text/css">
+    <link rel="stylesheet" href="./css/alabaster-overrides.css" type="text/css">
+
+    
+      <link href="css/extra_css.css" rel="stylesheet">
+    
+
+    
+      <script src="search/main.js"></script>
+    
+
+    
+
+    <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+    
+  
+</head>
+<body>
+
+  <div class="document">
+    <div class="documentwrapper">
+      <div class="bodywrapper">
+        <div class="body" role="main">
+          
+            <div style="margin: 0; padding: 0;">
+  <img src="media/banner.png" alt="Ouroboros banner"
+       style="width: 100vw; height: 40vh; object-fit: cover; display: block;">
+</div>
+
+<h1 id="ouroboros">Ouroboros</h1>
+<p><strong>Ouroboros</strong> is a toolkit for investigating cell cycling and non-cycling dynamics in single-cell RNA-seq data.  </p>
+<p>It projects cells into a spherical latent space based on a learned reference embeddings, enabling interpretable visualization of cell cycle and dormancy states. Output includes:</p>
+<p><strong>ouroboros_embeddings_pseudotimes.csv:</strong> Dataframe with cell id as index, containing discrete KNN phases, cell cycle pseudotime and dormancy depth values for each cell in your dataset. </p>
+<p><strong>ouroboros_knn_sphere.html:</strong> 3D visualization of your dataset embedded in VAE latent space, coloured by KNN phases </p>
+<p><strong>ouroboros_cell_cycle_pseudotime.html:</strong> 3D visualization of your dataset embedded in VAE latent space, coloured by cell cycle pseudotimes
+- note that any cells that fall in the 'dormancy' range will be given a cell cycle pseudotime value of NA, and will be coloured grey </p>
+<p><strong>ouroboros_dormancy_depth.html:</strong> 3D visualization of your dataset embedded in VAE latent space, coloured by dormancy depth
+- note that any cells that fall in the 'cell cycling' range will be given a dormancy depth value of NA, and will be coloured grey </p>
+<hr />
+<h2 id="installation">Installation</h2>
+<p>Ouroboros supports Python 3.9–3.10. Cartopy is an optional dependency required for some plotting functions. It is recommended to install via conda before installing Ouroboros.</p>
+<p>Installation:</p>
+<pre><code class="language-bash">conda create -n ouroboros_env -c conda-forge python=3.9 pip=24.3.1
+conda activate ouroboros_env 
+conda install -c conda-forge cartopy 
+pip install sc-ouroboros --no-cache-dir
+</code></pre>
+<p>Or install directly from GitHub with:</p>
+<pre><code class="language-bash">pip install git+https://github.com/steiflab/Ouroboros.git
+</code></pre>
+<p>ScPhere is included as part of Ouroboros and has been updated for compatibility with TensorFlow 2. ScPhere was originally developed by Jiarui Ding and colleagues at the Klarman Cell Observatory.</p>
+<hr />
+<h2 id="quickstart">Quickstart</h2>
+<p>Ouroboros can be run on any scanpy h5ad object that has raw counts saved as adata.layers['raw_counts].</p>
+<p>Alternatively it will also accept a csv file with genes as your column names and cell ids under the columns 'cell_id' - see our 'Ouroboros_in_R' tutorial or CLI usage for more information. </p>
+<pre><code class="language-bash">ouroboros \
+    --data /path/to/h5ad  \
+    --data_type h5ad \
+    --species human \ 
+    --outdir /path/to/output/directory
+</code></pre>
+<p>Arguments: </p>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--data</code></td>
+<td><strong>Required.</strong> Path to your input data file. Must be a <code>.h5ad</code> or <code>.csv</code> file.</td>
+</tr>
+<tr>
+<td><code>--data_type</code></td>
+<td><strong>Required.</strong> Format of the input data. Must be <code>h5ad</code> or <code>csv</code>.</td>
+</tr>
+<tr>
+<td><code>--species</code></td>
+<td>Species of origin for the dataset. Must be <code>human</code> or <code>mouse</code>.  Default is human</td>
+</tr>
+<tr>
+<td><code>--outdir</code></td>
+<td>Output directory where results (embeddings, figures, logs) will be saved. Default is '.'</td>
+</tr>
+</tbody>
+</table>
+<h3 id="a-note-on-feature-genes">A note on feature genes</h3>
+<p>A specific feature set was used to originally train Ouroboros and create the VAE latent space. If your count matrix is missing any of these genes (maybe you used a different reference or filtered them out) Ouroboros will take the features that do exist in your count matrix and <strong>retrain</strong> the VAE, resulting in a slightly different latent space. This could result in lower accuracy than if the full feature set is used. </p>
+<p>I made functions (R and Python) to test if you're missing any genes before deploying Ouroboros - see wiki tutorials [add links] for more information. </p>
+<p>Note also that feature genes are named by their HUGO gene names( ex. CCNE1, CCNE2), and not by their ensembl IDs (ENS...) so ensure your adata.var_names or R gene names are in this format before running Ouroboros. </p>
+<h2 id="plotting-ouroboros-output">Plotting Ouroboros output</h2>
+<p>We have included several python functions to help you explore the Ouroboros output sphere. See our tutorials and API usage for more information. </p>
+<h2 id="performance">Performance</h2>
+<h3 id="embedding-cells-in-latent-space-without-retraining">Embedding cells in latent space without retraining:</h3>
+<ul>
+<li>Run time: ~1 minute 55 seconds (CPU)</li>
+<li>CPU utilization: ~48%</li>
+<li>Memory usage: ~3.16 GB RAM</li>
+<li>Disk I/O:<ul>
+<li>Read: ~4.0 GB</li>
+<li>Written: ~60 MB</li>
+</ul>
+</li>
+<li>Context switches:<ul>
+<li>Voluntary: 53,484</li>
+<li>Involuntary: 123,998</li>
+</ul>
+</li>
+<li>Hardware used:<ul>
+<li>CPU: Intel(R) Xeon(R) E7-8867 v4 @ 2.40GHz</li>
+<li>RAM: 1.5 TB</li>
+</ul>
+</li>
+</ul>
+<h3 id="when-retraining-the-model">When retraining the model:</h3>
+<p>Our training dataset includes 5698 cells and 226 genes. When training (or retraining with missing genes):</p>
+<ul>
+<li>Training time: ~2 minutes (CPU)</li>
+<li>Memory usage: ~821.64 MB RAM</li>
+<li>Hardware used: <ul>
+<li><strong>CPU</strong>: Intel(R) Xeon(R) E7-8867 v4 @ 2.40GHz</li>
+<li><strong>RAM</strong>: 1.5 TB</li>
+</ul>
+</li>
+</ul>
+<p>The model is always retrained on the same number of cells, but will likely run faster if fewer features genes are included. Note this will likely make the model less accurate. </p>
+            
+          
+        </div>
+      </div>
+    </div>
+    <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+      <div class="sphinxsidebarwrapper">
+        
+          
+            
+  <p class="logo">
+    <a href=".">
+      <img class="logo" src="./media/spinner.gif" title="Ouroboros">
+    </a>
+  </p>
+  
+    <h1 class="logo">Ouroboros</h1>
+  
+
+
+
+          
+            
+
+
+
+
+
+<h3>Navigation</h3>
+
+<nav>
+  <ul>
+  
+    
+      <li>
+        <a href="">Home</a>
+      </li>
+      
+        
+  
+    <ul>
+    
+      <li><a href="#installation">Installation</a></li>
+      <ul>
+    
+  </ul>
+    
+      <li><a href="#quickstart">Quickstart</a></li>
+      <ul>
+    
+      <li><a href="#a-note-on-feature-genes">A note on feature genes</a></li>
+      <ul>
+    
+  </ul>
+    
+  </ul>
+    
+      <li><a href="#plotting-ouroboros-output">Plotting Ouroboros output</a></li>
+      <ul>
+    
+  </ul>
+    
+      <li><a href="#performance">Performance</a></li>
+      <ul>
+    
+      <li><a href="#embedding-cells-in-latent-space-without-retraining">Embedding cells in latent space without retraining:</a></li>
+      <ul>
+    
+  </ul>
+    
+      <li><a href="#when-retraining-the-model">When retraining the model:</a></li>
+      <ul>
+    
+  </ul>
+    
+  </ul>
+    
+  </ul>
+  
+      
+    
+  
+    
+      <li>
+        <a href="usage/">CLI Usage</a>
+      </li>
+      
+    
+  
+    
+      <li>
+        <a href="api/">API Reference</a>
+      </li>
+      
+    
+  
+    
+      <li>
+        <a href="python_tutorial/">Scanpy (python) tutorial</a>
+      </li>
+      
+    
+  
+    
+      <li>
+        <a href="velocity_in_sphere_tutorial/">RNA velocity in the Ouroboros Sphere</a>
+      </li>
+      
+    
+  
+    
+      <li>
+        <a href="R_tutorial/">Seurat (R) tutorial</a>
+      </li>
+      
+    
+  
+  </ul>
+
+  
+</nav>
+          
+            <div id="searchbox" style="display: none;" role="search">
+  <h3>Quick search</h3>
+  <form class="search" action="./search.html" method="get">
+    <input name="q" type="text">
+    <input value="Go" type="submit">
+  </form>
+  <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+  </p>
+</div>
+<script type="text/javascript">
+  document.getElementById("searchbox").style.display = "block";
+</script>
+          
+        
+      </div>
+    </div>
+    <div class="clearer"></div>
+  </div>
+
+  
+    <div class="footer">
+      
+      
+        
+        Powered by <a href="http://www.mkdocs.org">mkdocs 1.6.1</a>
+        &amp; <a href="https://github.com/iamale/mkdocs-alabaster">mkdocs-alabaster</a>
+      
+    </div>
+  
+
+  <!--
+  MkDocs version      : 1.6.1
+  Docs Build Date UTC : 2026-09-11 02:25:39.106931+00:00
+  -->
+</body>
+</html>

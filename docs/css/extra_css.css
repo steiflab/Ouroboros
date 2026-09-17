@@ -1,0 +1,8 @@
+/* Let wide tables scroll horizontally instead of being clipped */
+div.body table,
+article table,
+.rst-content table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+}
