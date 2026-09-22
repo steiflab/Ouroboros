@@ -106,7 +106,7 @@ progress_frames = [
 ]
 
 def show_progress(stage, missing_gene=0):
-    warning_message = "\nWARNING: {missing_gene}/226 training genes are missing from the training set. The model is retrained with {missing_gene} only, considering including them for higher accuracy"
+    warning_message = f"\nWARNING: {missing_gene}/226 training genes are missing from the training set. \nThe model is retrained with {missing_gene} only, considering including them for higher accuracy"
 
     try:
         get_ipython  # Will raise NameError if not in IPython/Jupyter
