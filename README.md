@@ -64,9 +64,22 @@ Arguments:
 
 \* If any gene is missing from training feature set from the input data, the model must be retrained. To ensure robust performance, Ouroboros will retrain the VAE {repeat} times and select the model that correlates with the consensus. However, increasing the repeat parameter will significantly extend runtime.
 
+### Ouroboros Output
 
+The main output from Ouroboros is `ouroboros_embedding_pseudotime.csv`, where each row represents a cell embedded in the spherical latent space. The columns are described below:
 
+| Column                  | Description                                                                                                                                                                                    |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dim1`, `dim2`, `dim3`  | Three-dimensional coordinates of each cell in the spherical latent space. These coordinates are used by the `plot_sphere` and `plot_robinson_plot` functions.                                  |
+| `KNN_phase`             | Cell-cycle phase assigned using K-nearest neighbors (KNN) based on the training dataset: G1, S, G2M, G1-G0 transition, or G0.                                                                  |
+| `south`                 | Indicates whether a cell is located in the southern hemisphere. `True` indicates a dormant cell with a `dormancy_pseudotime`; `False` indicates a cycling cell with a `cell_cycle_pseudotime`. |
+| `cell_cycle_pseudotime` | Pseudotime for cycling cells, calculated from the angular position in the northern hemisphere. Values range from 0 to 1.                                                                       |
+| `dormancy_pseudotime`   | Pseudotime for dormant cells, calculated from the distance toward the southern pole. Values range from -1 to 0.                                                                                |
+| `pseudotime_phase`      | Phase/state annotation based on pseudotime thresholds: G1 (0–0.4), S (0.4–0.75), G2M (0.75–1), Light dormancy (-0.4–0), Mid dormancy (-0.6–-0.4), and Deep dormancy (-1–-0.6).                 |
 
+If the input matrix is missing one or more genes required by the training dataset, Ouroboros will retrain the model using the available training genes. Retraining may reduce model accuracy. When retraining occurs, `retrained_reference_embedding.csv` is generated, containing the three-dimensional latent-space coordinates of the retrained reference cells and their ground-truth phase labels. A `qc.csv` file is also generated containing quality-control metrics for the retrained model, including the number of missing training genes, KL divergence, log-likelihood, and SHAP score loss attributable to missing genes.
+
+Ouroboros also generates two interactive spherical plots: `ouroboros_cell_cycle_pseudotime.html`, which displays cells coloured by cell-cycle pseudotime, and `ouroboros_dormancy_pseudotime.html`, which displays cells coloured by dormancy pseudotime. The distribution of pseudotime values is additionally provided as `pseudotime_histogram.png`. 
 
 ## Plotting Ouroboros output
 
