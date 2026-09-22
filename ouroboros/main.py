@@ -106,7 +106,7 @@ progress_frames = [
 ]
 
 def show_progress(stage, missing_gene=0):
-    warning_message = f"\nWARNING: {missing_gene}/226 training genes are missing from the training set. \nThe model is retrained with {missing_gene} only, considering including them for higher accuracy"
+    warning_message = f"\nWARNING: {len(missing_gene)}/226 genes are missing from the training set. \nThe model is retrained without {missing_gene}, considering including them for higher accuracy"
 
     try:
         get_ipython  # Will raise NameError if not in IPython/Jupyter
@@ -260,7 +260,7 @@ def run_ouroboros(data, data_type, species = 'human', outdir = '.', seed = 0, re
 
     z_df = add_annotation(z_df)
     z_df.to_csv(f'{outdir}/ouroboros_embeddings_pseudotimes.csv')
-    
+
     try:
         plot_sphere(z_df, colour_by = 'cell_cycle_pseudotime', palette = None, ref = ref_embed, velocity = None, marker_size = 2, cycle_pole = [0,0,1], savefig = f'{outdir}/ouroboros_cell_cycle_pseudotime.html', show = False)
     except ValueError as e:
