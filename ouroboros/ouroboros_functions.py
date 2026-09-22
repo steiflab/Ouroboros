@@ -2077,3 +2077,16 @@ def plot_consensus(depth_matrix, selected_seed, outdir):
     plt.savefig(f"{outdir}/consensus_seed.png")
     plt.close()
 
+def add_annotation(z_df):
+    pseudotime = np.where(z_df['south'], z_df['dormancy_pseudotime'], z_df['cell_cycle_pseudotime'])
+    bins = [-1, -0.6, -0.4, 0, 0.4, 0.75, 1]
+    labels = ['Deep', 'Mid', 'Light', 'G1', 'S', 'G2M']
+
+    z_df['pseudotime_phase'] = pd.cut(
+        pseudotime,
+        bins=bins,
+        labels=labels,
+        right=False
+    )
+    return z_df
+    
