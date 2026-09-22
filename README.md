@@ -79,7 +79,7 @@ The main output from Ouroboros is `ouroboros_embedding_pseudotime.csv`, where ea
 
 If the input matrix is missing one or more genes required by the training dataset, Ouroboros will retrain the model using the available training genes. Retraining may reduce model accuracy. When retraining occurs, `retrained_reference_embedding.csv` is generated, containing the three-dimensional latent-space coordinates of the retrained reference cells and their ground-truth phase labels. A `qc.csv` file is also generated containing quality-control metrics for the retrained model, including the number of missing training genes, KL divergence, log-likelihood, and SHAP score loss attributable to missing genes.
 
-Ouroboros also generates two interactive spherical plots: `ouroboros_cell_cycle_pseudotime.html`, which displays cells coloured by cell-cycle pseudotime, and `ouroboros_dormancy_pseudotime.html`, which displays cells coloured by dormancy pseudotime. The distribution of pseudotime values is additionally provided as `pseudotime_histogram.png`. 
+Ouroboros also generates three interactive spherical plots: `ouroboros_cell_cycle_pseudotime.html`, which displays cells coloured by cell-cycle pseudotime, `ouroboros_dormancy_pseudotime.html`, which displays cells coloured by dormancy pseudotime and `ouroboros_KNN_phase.html`, which displays cells coloured by discrete KNN_phase. The distribution of pseudotime values is additionally provided as `pseudotime_histogram.png`. 
 
 ## Plotting Ouroboros output
 
