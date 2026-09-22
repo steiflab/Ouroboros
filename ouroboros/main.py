@@ -254,6 +254,10 @@ def run_ouroboros(data, data_type, species = 'human', outdir = '.', seed = 0, re
         plot_sphere(z_df, colour_by = 'dormancy_pseudotime', palette = None, ref = ref_embed, velocity = None, marker_size = 2, cycle_pole = [0,0,1], savefig = f'{outdir}/ouroboros_dormancy_pseudotime.html', show = False)
     except ValueError as e:
         logger.info(f"Caught error in dormancy_pseudotime plot: {e}")
+    try:
+        plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = ref_embed, velocity = None, marker_size = 2, cycle_pole = [0,0,1], savefig = f'{outdir}/ouroboros_KNN_phase.html', show = False)
+    except ValueError as e:
+        logger.info(f"Caught error in KNN_phase plot: {e}")
 
     show_progress(3)
     return z_df

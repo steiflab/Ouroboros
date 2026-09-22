@@ -1366,6 +1366,12 @@ def normalize_colormap(cmap_name='mako', vmin=-1, vmax=0, n_colors=256):
 
 
 def plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, velocity = None, marker_size = 2, cycle_pole = [0,0,1], savefig = None, show = False, camera_position = None, snap_png = None):
+    if isinstance(ref, str):
+        if ref == 'default':
+            ref = pd.read_csv(DATA_DIR / "rotated_reference_embeddings_for_plotting.csv")
+        else:
+            raise ValueError(f"ref must be None, 'default', or a DataFrame; got '{ref}'") 
+
     fig_data = []
 
     if {'dim1', 'dim2', 'dim3'} - set(z_df.columns):
