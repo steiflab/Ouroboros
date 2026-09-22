@@ -105,17 +105,29 @@ progress_frames = [
 ⠀⠀⠀Sphere visualization complete⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"""
 ]
 
-def show_progress(stage):
+def show_progress(stage, missing_gene=0):
+    warning_message = "\nWARNING: {missing_gene}/226 training genes are missing from the training set. The model is retrained with {missing_gene} only, considering including them for higher accuracy"
+    
     try:
         get_ipython  # Will raise NameError if not in IPython/Jupyter
         import sys
         from IPython.display import clear_output, display
         clear_output(wait=True)
-        print(progress_frames[stage])
+        if stage == 3 and missing_gene != 0:
+            message = progress_frames[stage]
+            message += warning_message
+            print(message)
+        else:
+            print(progress_frames[stage])
     except (NameError, ImportError):
         # CLI fallback
         print("\033c", end="")  # Terminal clear
-        print(progress_frames[stage])
+        if stage == 3 and missing_gene != 0:
+            message = progress_frames[stage]
+            message += warning_message
+            print(message)
+        else:
+            print(progress_frames[stage])
 
 
 
@@ -246,7 +258,7 @@ def run_ouroboros(data, data_type, species = 'human', outdir = '.', seed = 0, re
     except ValueError as e:
         logger.info(f"Caught error in dormancy_pseudotime plot: {e}")
 
-    show_progress(3)
+    show_progress(3, missing)
     return z_df
     
 
