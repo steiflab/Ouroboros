@@ -2089,4 +2089,72 @@ def add_annotation(z_df):
         right=False
     )
     return z_df
+
+
+def plot_pseudotime(z_df, condition=None, palette=None, save_fig=None):
+    import matplotlib.patches as patches
+    import seaborn as sns
+
+    curr = z_df.copy()
+
+    if "pseudotime" not in curr.columns:
+        curr['pseudotime'] = np.where(curr['south'], curr['dormancy_pseudotime'], curr['cell_cycle_pseudotime'])
+
+    # Create the figure and axis
+    fig, ax = plt.subplots()
+
+    # Plot directly on the correct axis
+    hist = sns.histplot(
+        data=curr,
+        x='pseudotime',
+        hue=condition,
+        palette=palette,
+        stat='percent',
+        bins=100,
+        common_norm=False,
+        ax=ax 
+    )
+
+    # Axes and labels
+    ax.set_xlabel('')
+    ax.set_ylabel('Percent')
+
+    # Remove the default box (spines)
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+
+    # Draw axes at (0, 0)
+    ax.axhline(0, color='black', linewidth=1)
+    ax.axvline(0, color='black', linewidth=1)
+
+    # Labels under x-axis
+    ax.text(-0.5, -0.4, 'Dormancy pseudotime (Φ)', ha='center', clip_on=False)
+    ax.text(0.5, -0.4, 'Cell cycle pseudotime (θ)', ha='center', clip_on=False)
+
+    # Define the colored boxes for G1, S, G2M phases
+    phase_colors = {'G1': '#1f77b4', 'S': '#ff7f0e', 'G2M': '#2ca02c', 'Light': 'lightgrey', 'Mid': 'darkgrey', 'Deep':'black'}
+    phase_regions = {'G1': (0, 0.4), 'S': (0.4, 0.75), 'G2M': (0.75, 1), 'Light':(-0.4, 0), 'Mid':(-0.6, -0.4), 'Deep': (-1, -0.6)}
+
+
+    # Get current y-limits (after plot)
+    ymax = ax.get_ylim()[1]
+
+    for phase, (start, end) in phase_regions.items():
+        ax.add_patch(patches.Rectangle(
+            (start, ymax * 1.02),  # Position at top
+            end - start,           # Width
+            ymax * 0.02,           # Height
+            color=phase_colors[phase],
+            clip_on=False
+        ))
+        ax.text((start + end) / 2, ymax * 1.04, phase, 
+                ha='center', va='bottom', fontsize=10, fontweight='bold')
+
+    xticks = np.arange(-1.0, 1.01, 0.25)
+    ax.set_xticks(xticks)
+    plt.tight_layout()
     
+    if save_fig is not None: 
+        plt.savefig(save_fig, dpi=300, bbox_inches='tight')
+    
+    plt.show()

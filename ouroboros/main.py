@@ -259,6 +259,11 @@ def run_ouroboros(data, data_type, species = 'human', outdir = '.', seed = 0, re
     except ValueError as e:
         logger.info(f"Caught error in dormancy_pseudotime plot: {e}")
 
+    try:
+        plot_pseudotime(z_df, savefig = f'{outdir}/pseudotime_histogram.png')
+    except ValueError as e:
+        logger.info(f"Caught error in pseudotime histogram plot: {e}")
+
     show_progress(3, missing)
     return z_df
     
