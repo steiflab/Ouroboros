@@ -201,8 +201,6 @@ def ouroboros_embed(matrix, data, data_type, outdir = '.'):
     pseud = dormancy_depth(z_mean_df, ref_embed, retrained = False)
     z_mean_df = z_mean_df.merge(pseud, how = 'left', left_index = True, right_index = True)
     
-    
-    plot_sphere(z_mean_df, colour_by = 'KNN_phase', ref = ref_embed, marker_size = 2, cycle_pole = reference_CC_pole_point, savefig = f'{outdir}/ouroboros_KNN_sphere.html')
     return z_mean_df
 
 
@@ -1263,18 +1261,29 @@ def project_above_sphere(x, y, z, radius, offset):
     return projected_points[:, 0], projected_points[:, 1], projected_points[:, 2]
 
 
-def make_pole_trace(pole, name, color, width, radius, extension=1.3):
-    point = np.array(pole)
-    point_norm = point / np.linalg.norm(point) * radius
-    opp = -point_norm
-    return go.Scatter3d(
-        x=[point_norm[0]*extension, opp[0]*extension],
-        y=[point_norm[1]*extension, opp[1]*extension],
-        z=[point_norm[2]*extension, opp[2]*extension],
-        mode='lines',
-        line=dict(color=color, width=width),
-        name=name
-    )
+
+def make_pole_trace(pole, name, radius, width=25, extension=1.3,
+                    north_color='#8c2d2d', south_color='#2d4a8c'):
+    point = np.array(pole, dtype=float)
+    north = point / np.linalg.norm(point) * radius * extension
+    south = -north
+
+    return [
+        go.Scatter3d(
+            x=[0, north[0]], y=[0, north[1]], z=[0, north[2]],
+            mode='lines',
+            line=dict(color=north_color, width=width),
+            name=f'{name} (N)',
+            legendgroup=name,
+        ),
+        go.Scatter3d(
+            x=[0, south[0]], y=[0, south[1]], z=[0, south[2]],
+            mode='lines',
+            line=dict(color=south_color, width=width),
+            name=f'{name} (S)',
+            legendgroup=name,
+        ),
+    ]
 
 
 def make_reference_traces(ref, radius, offset, marker_size=5, alpha=0.07):
@@ -1354,7 +1363,13 @@ def normalize_colormap(cmap_name='mako', vmin=-1, vmax=0, n_colors=256):
 
 
 
-def plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, velocity = None, marker_size = 2, cycle_pole = reference_CC_pole_point, savefig = None, show = False, camera_position = None, snap_png = None):
+def plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, velocity = None, marker_size = 2, cycle_pole = [0,0,1], savefig = None, show = False, camera_position = None, snap_png = None):
+    if isinstance(ref, str):
+        if ref == 'default':
+            ref = pd.read_csv(DATA_DIR / "rotated_reference_embeddings_for_plotting.csv")
+        else:
+            raise ValueError(f"ref must be None, 'default', or a DataFrame; got '{ref}'") 
+
     fig_data = []
 
     if {'dim1', 'dim2', 'dim3'} - set(z_df.columns):
@@ -1378,7 +1393,7 @@ def plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, veloc
     sphere = make_sphere_surface(radius)
     fig_data.append(sphere)
   
-    fig_data.append(make_pole_trace(cycle_pole, 'Cell cycle pole', color='grey', width=25, radius = radius, extension=1.3))
+    fig_data += make_pole_trace(cycle_pole, 'Cell cycle pole', radius=radius, width=25, extension=1.3)
 
     if ref is not None:
         ref_traces = make_reference_traces(ref, radius, offset, marker_size=5, alpha=0.07)
@@ -1452,13 +1467,20 @@ def plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, veloc
                         side="top",
                         font=dict(size=22)
                     ),
-                    len=0.4,
+                    len=0.35,
                     thickness=20,
                     x=0.9,
-                    y=0.65,
-                    yanchor="middle"
+                    xanchor="left",
+                    y=0.95,
+                    yanchor="top",      # colourbar spans ~0.95 → 0.60
                 )
-            )
+            ),
+            legend=dict(
+                x=0.9,
+                xanchor="left",
+                y=0.45,
+                yanchor="top",          # legend hangs down from 0.45
+            ),
         )
 
     if camera_position:
@@ -1472,115 +1494,86 @@ def plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, veloc
     return fig
     
 
-
-def plot_gene_sphere(
-    z_df,
-    adata,
-    gene_name,
-    layer=None,
-    ref=None,
-    velocity=None,
-    show=False,
-    outpath=None,
-    title="",
-    cycle_pole=reference_CC_pole_point,
-):
-    """
-    Plot gene expression projected on the Ouroboros VAE sphere. Gene_name can be a list of genes or a single gene.
-    """
+def plot_gene_sphere(z_df, adata, gene_name, layer=None, ref=None, velocity=None,
+                     show=False, outpath=None, title="", cycle_pole=[0, 0, 1]):
+    """Plot mean expression of one or more genes on the Ouroboros sphere."""
     if isinstance(gene_name, str):
         gene_name = [gene_name]
+    included_genes = [g for g in gene_name if g in adata.var_names]
+    if not included_genes:
+        raise ValueError("None of the genes in gene_name are in the AnnData object.")
 
-    included_genes = [gene for gene in gene_name if gene in adata.var_names]
+    if isinstance(ref, str):
+        if ref == 'default':
+            ref = pd.read_csv(DATA_DIR / "rotated_reference_embeddings_for_plotting.csv")
+        else:
+            raise ValueError("ref must be None, 'default', or a DataFrame")
 
-    if len(included_genes) == 0:
-        raise ValueError(f"None of the genes in gene_name is in the AnnData object.")    
+    # Mean expression per cell, without modifying adata.X
+    expr = adata[:, included_genes].layers[layer] if layer else adata[:, included_genes].X
+    mean_expr = np.asarray(expr.mean(axis=1)).ravel()
+    mean_expr = pd.Series(mean_expr, index=adata.obs_names)
 
-    if layer:
-        adata.X = adata.layers[layer].copy()
+    # Match cells by name, not by row order
+    shared = z_df.index.intersection(adata.obs_names)
+    if len(shared) == 0:
+        raise ValueError("No cell names shared between z_df.index and adata.obs_names.")
+    if len(shared) < len(z_df):
+        print(f"Note: {len(z_df) - len(shared)} of {len(z_df)} cells in z_df are not in adata; drawn in grey.")
+    z_df = z_df.copy()                                   # don't modify the caller's z_df
+    z_df["gene_expression"] = mean_expr.reindex(z_df.index)
 
-    expr = adata[:, included_genes].X
-    gene_expression = np.array(expr.mean(axis=1)).flatten() if issparse(expr) else expr.mean(axis=1)
-    z_df["gene_expression"] = gene_expression
-
-    # Geometry
     coords = z_df[['dim1', 'dim2', 'dim3']].values
     radius = np.mean(np.linalg.norm(coords, axis=1)) - 0.01
     offset = 0.01 * radius
 
-    fig_data = []
+    fig_data = [make_sphere_surface(radius)]
+    fig_data += make_pole_trace(cycle_pole, 'Cell cycle pole', radius=radius, width=25, extension=1.3)
 
-    # Sphere surface
-    fig_data.append(make_sphere_surface(radius))
-
-    # Pole
-    fig_data.append(make_pole_trace(cycle_pole, 'Poles', color='grey', width=5, radius=radius, extension=1.3))
-
-    # Reference traces
     if ref is not None and not ref.empty:
         fig_data += make_reference_traces(ref, radius, offset, marker_size=5, alpha=0.05)
 
-    # Gene expression points
-    x, y, z = z_df['dim1'].values, z_df['dim2'].values, z_df['dim3'].values
-    x, y, z = project_above_sphere(x, y, z, radius, offset)
-    gene_scatter = go.Scatter3d(
-        x=x, y=y, z=z, mode='markers',
+    x, y, z = project_above_sphere(z_df['dim1'].values, z_df['dim2'].values, z_df['dim3'].values, radius, offset)
+    has = z_df["gene_expression"].notna().values
+
+    if (~has).any():
+        fig_data.append(go.Scatter3d(
+            x=x[~has], y=y[~has], z=z[~has], mode='markers',
+            marker=dict(size=2, color='lightgrey'),
+            name='No expression data', showlegend=True))
+
+    label = ", ".join(included_genes)
+    fig_data.append(go.Scatter3d(
+        x=x[has], y=y[has], z=z[has], mode='markers',
         marker=dict(
             size=2,
-            color=z_df["gene_expression"],
+            color=z_df.loc[has, "gene_expression"],
             colorscale="Viridis",
-            colorbar=dict(
-                title=title,
-                len=0.5,
-                thickness=20,
-                x=1.5,
-            ),
-            opacity=1
+            colorbar=dict(title=dict(text=title or label, side="top", font=dict(size=22)),
+                          len=0.35, thickness=20, x=0.9, xanchor="left", y=0.95, yanchor="top"),
         ),
-        name=f"{gene_name}",
-        showlegend=False
-    )
-    fig_data.append(gene_scatter)
+        name=label, showlegend=False))
 
-    # Velocity
     if velocity is not None and not velocity.empty:
         arrows, cone = make_velocity_vectors(z_df, velocity)
         fig_data += arrows + [cone]
 
-    # Assemble figure
     fig = go.Figure(data=fig_data)
+    hidden = dict(showgrid=False, zeroline=False, showticklabels=False, visible=False)
     fig.update_layout(
         title=title,
-        scene=dict(
-            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False, visible=False),
-            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False, visible=False),
-            zaxis=dict(showgrid=False, zeroline=False, showticklabels=False, visible=False)
-        ),
+        margin=dict(l=5, r=5, t=30 if title else 5, b=5),
+        scene=dict(xaxis=hidden, yaxis=hidden, zaxis=hidden),
         showlegend=True,
-        legend=dict(
-            x=0.9, 
-            y=0.3, 
-            font=dict(size=14),
-            itemsizing='constant',  
-        ),
-        coloraxis=dict(
-                colorbar=dict(
-                    title=dict(
-                        side="top",
-                        font=dict(size=22)
-                    ),
-                    len=0.4,
-                    thickness=20,
-                    x=0.9,
-                    y=0.65,
-                    yanchor="middle"
-                ))
-            )   
+        legend=dict(x=0.9, xanchor="left", y=0.45, yanchor="top",
+                    font=dict(size=14), itemsizing='constant'),
+    )
 
     if outpath:
         fig.write_html(outpath)
     if show:
         fig.show()
+    return fig
 
 
 
