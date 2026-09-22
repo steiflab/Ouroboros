@@ -1263,18 +1263,29 @@ def project_above_sphere(x, y, z, radius, offset):
     return projected_points[:, 0], projected_points[:, 1], projected_points[:, 2]
 
 
-def make_pole_trace(pole, name, color, width, radius, extension=1.3):
-    point = np.array(pole)
-    point_norm = point / np.linalg.norm(point) * radius
-    opp = -point_norm
-    return go.Scatter3d(
-        x=[point_norm[0]*extension, opp[0]*extension],
-        y=[point_norm[1]*extension, opp[1]*extension],
-        z=[point_norm[2]*extension, opp[2]*extension],
-        mode='lines',
-        line=dict(color=color, width=width),
-        name=name
-    )
+
+def make_pole_trace(pole, name, radius, width=25, extension=1.3,
+                    north_color='#8c2d2d', south_color='#2d4a8c'):
+    point = np.array(pole, dtype=float)
+    north = point / np.linalg.norm(point) * radius * extension
+    south = -north
+
+    return [
+        go.Scatter3d(
+            x=[0, north[0]], y=[0, north[1]], z=[0, north[2]],
+            mode='lines',
+            line=dict(color=north_color, width=width),
+            name=f'{name} (N)',
+            legendgroup=name,
+        ),
+        go.Scatter3d(
+            x=[0, south[0]], y=[0, south[1]], z=[0, south[2]],
+            mode='lines',
+            line=dict(color=south_color, width=width),
+            name=f'{name} (S)',
+            legendgroup=name,
+        ),
+    ]
 
 
 def make_reference_traces(ref, radius, offset, marker_size=5, alpha=0.07):
@@ -1354,7 +1365,7 @@ def normalize_colormap(cmap_name='mako', vmin=-1, vmax=0, n_colors=256):
 
 
 
-def plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, velocity = None, marker_size = 2, cycle_pole = reference_CC_pole_point, savefig = None, show = False, camera_position = None, snap_png = None):
+def plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, velocity = None, marker_size = 2, cycle_pole = [0,0,1], savefig = None, show = False, camera_position = None, snap_png = None):
     fig_data = []
 
     if {'dim1', 'dim2', 'dim3'} - set(z_df.columns):
@@ -1378,7 +1389,7 @@ def plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, veloc
     sphere = make_sphere_surface(radius)
     fig_data.append(sphere)
   
-    fig_data.append(make_pole_trace(cycle_pole, 'Cell cycle pole', color='grey', width=25, radius = radius, extension=1.3))
+    fig_data += make_pole_trace(cycle_pole, 'Cell cycle pole', radius=radius, width=25, extension=1.3)
 
     if ref is not None:
         ref_traces = make_reference_traces(ref, radius, offset, marker_size=5, alpha=0.07)
@@ -1452,13 +1463,20 @@ def plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, veloc
                         side="top",
                         font=dict(size=22)
                     ),
-                    len=0.4,
+                    len=0.35,
                     thickness=20,
                     x=0.9,
-                    y=0.65,
-                    yanchor="middle"
+                    xanchor="left",
+                    y=0.95,
+                    yanchor="top",      # colourbar spans ~0.95 → 0.60
                 )
-            )
+            ),
+            legend=dict(
+                x=0.9,
+                xanchor="left",
+                y=0.45,
+                yanchor="top",          # legend hangs down from 0.45
+            ),
         )
 
     if camera_position:
@@ -1472,6 +1490,8 @@ def plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, veloc
     return fig
     
 
+    
+
 
 def plot_gene_sphere(
     z_df,
@@ -1483,7 +1503,7 @@ def plot_gene_sphere(
     show=False,
     outpath=None,
     title="",
-    cycle_pole=reference_CC_pole_point,
+    cycle_pole=[0,0,1],
 ):
     """
     Plot gene expression projected on the Ouroboros VAE sphere. Gene_name can be a list of genes or a single gene.
@@ -1514,7 +1534,7 @@ def plot_gene_sphere(
     fig_data.append(make_sphere_surface(radius))
 
     # Pole
-    fig_data.append(make_pole_trace(cycle_pole, 'Poles', color='grey', width=5, radius=radius, extension=1.3))
+    fig_data += make_pole_trace(cycle_pole, 'Cell cycle pole', radius=radius, width=25, extension=1.3)
 
     # Reference traces
     if ref is not None and not ref.empty:

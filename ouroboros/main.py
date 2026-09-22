@@ -210,7 +210,6 @@ def run_ouroboros(data, data_type, species = 'human', outdir = '.', seed = 0, re
             curr_outdir = outdir + "/retrain/" + str(i)
             os.makedirs(curr_outdir, exist_ok=True)
             model, ref_embed, in_order_feature_set, trainer_model = ouroboros_retrain(data, curr_seed)
-            ref_embed.to_csv(f'{curr_outdir}/retrained_reference_embeddings.csv')
             model.save_sess(f'{curr_outdir}/model')
 
             show_progress(1)
@@ -222,6 +221,11 @@ def run_ouroboros(data, data_type, species = 'human', outdir = '.', seed = 0, re
             pseud, ref_pseud = dormancy_depth(z_df, ref_embed, retrained = True)
             z_df = z_df.merge(pseud, how = 'left', left_index = True, right_index = True)
             z_df = qc_and_threshold(model, trainer_model, z_df, in_order_feature_set, ref_embed, curr_outdir, seed)
+            # rotate so N pole is [0,0,1] for nice plotting
+            N_pole = find_cycle_pole(ref_embed)
+            ref_embed = rotate_north(ref_embed, reference_CC_pole_point = N_pole)
+            ref_embed.to_csv(f'{curr_outdir}/retrained_reference_embeddings.csv')
+            z_df = rotate_north(z_df, reference_CC_pole_point = N_pole)
             z_df.to_csv(f'{curr_outdir}/ouroboros_embeddings_pseudotimes.csv')
 
         z_df, ref_embed = select_seed(repeat, outdir)
@@ -235,14 +239,19 @@ def run_ouroboros(data, data_type, species = 'human', outdir = '.', seed = 0, re
         ref_embed = pd.read_csv(DATA_DIR / 'reference_embeddings.csv')
         # set cell id to be index
         ref_embed = ref_embed.set_index('cell_id')
+        # Rotate so north is always [0,0,1]
+        N_pole = find_cycle_pole(ref_embed)
+        z_df = rotate_north(z_df, reference_CC_pole_point = N_pole)
+        z_df.to_csv(f'{outdir}/ouroboros_embeddings_pseudotimes.csv')
+        ref_embed = rotate_north(ref_embed, reference_CC_pole_point = N_pole)
 
-    z_df.to_csv(f'{outdir}/ouroboros_embeddings_pseudotimes.csv')
+
     try:
-        plot_sphere(z_df, colour_by = 'cell_cycle_pseudotime', palette = None, ref = ref_embed, velocity = None, marker_size = 2, cycle_pole = reference_CC_pole_point, savefig = f'{outdir}/ouroboros_cell_cycle_pseudotime.html', show = False)
+        plot_sphere(z_df, colour_by = 'cell_cycle_pseudotime', palette = None, ref = ref_embed, velocity = None, marker_size = 2, cycle_pole = [0,0,1], savefig = f'{outdir}/ouroboros_cell_cycle_pseudotime.html', show = False)
     except ValueError as e:
         logger.info(f"Caught error in cell_cycle_pseudotime plot: {e}")
     try:
-        plot_sphere(z_df, colour_by = 'dormancy_pseudotime', palette = None, ref = ref_embed, velocity = None, marker_size = 2, cycle_pole = reference_CC_pole_point, savefig = f'{outdir}/ouroboros_dormancy_pseudotime.html', show = False)
+        plot_sphere(z_df, colour_by = 'dormancy_pseudotime', palette = None, ref = ref_embed, velocity = None, marker_size = 2, cycle_pole = [0,0,1], savefig = f'{outdir}/ouroboros_dormancy_pseudotime.html', show = False)
     except ValueError as e:
         logger.info(f"Caught error in dormancy_pseudotime plot: {e}")
 
