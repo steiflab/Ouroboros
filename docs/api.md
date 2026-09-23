@@ -232,6 +232,31 @@ plot_robinson_projection(
 
 ---
 
+## `plot_pseudotime(z_df, condition=None, palette=None, save_fig=None)`
+
+**Description:**
+
+Plots the distribution of cells along a pseudotime. Dormant cells are represented using `dormancy_pseudotime` on the negative side of the axis, while cycling cells use `cell_cycle_pseudotime` on the positive side. Cell distributions can optionally be separated by a categorical condition. The plot includes labeled regions for Light, Mid, and Deep dormancy and G1, S, and G2M cell-cycle phases.
+
+**Example usage:**
+
+```python
+plot_pseudotime(
+    z_df=embedding_df,
+    condition='condition',
+    palette=None,
+    save_fig='pseudotime_distribution.png'
+)
+```
+
+**Parameters:**
+
+| Parameter | Type | Description |
+| ------------------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `z_df` | `DataFrame` | DataFrame containing `south`, `dormancy_pseudotime`, and `cell_cycle_pseudotime` columns and associated metadata for coloring. |
+| `condition` | `str`, optional | Column in `z_df` used to separate histogram distributions by condition. If `None`, all cells are plotted as a single distribution. |
+| `palette` | `dict` or `str`, optional | Color palette passed to Seaborn for the `condition` categories. Can be a dictionary mapping condition labels to colors or a Seaborn palette name. |
+| `save_fig` | `str`, optional | File path to save the figure to (300 dpi, tight bounding box). If `None`, the figure is not saved. |
 
 📘 For full tutorials, see the [Python Tutorial](python_tutorial.ipynb).
 
