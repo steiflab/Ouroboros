@@ -38,37 +38,10 @@ Runs the full Ouroboros pipeline on either `.h5ad` or `.csv` input and outputs l
 
 **Description:** Reads in all Ouroboros feature genes. No input necessary. Returns a list of genes.  
 
----
-
-## `read_in_refembed()`
-
-**Description:** Reads in the reference dataset VAE latent space embedding dataframe. Only meaningful if VAE has not been retrained. Returns a pandas dataframe.  
 
 ---
 
-## `find_cycle_pole(z_df, ref_embed)`
-
-**Description:** If you retrained the VAE because you had missing genes, your cycle_pole will be in a different spot - run find_cycle_pole() to find it's new coordinates. 
-
-**Example usage:**
-```python
-find_cycle_pole(    
-    z_df: pd.DataFrame,
-    ref_embed: pd.DataFrame = None,
-)
-```
-
-**Parameters:**
-| Parameter     | Type            | Description                                                                                                                                                         |
-| ------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `z_df`        | `DataFrame`     | The test cell dataframe with 3D spherical coordinates (`dim1`, `dim2`, `dim3`) and metadata columns such as phase labels or pseudotime.                             |
-| `ref_embed`         | `DataFrame`     | Reference dataset embeddings, with columns `dim1`, `dim2`, `dim3`, and `phase`.                                                                            |
-
-
-
----
-
-## `plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, velocity = None, marker_size = 2, cycle_pole = [0.86202236, 0.24824865, 0.44191636], savefig = None, show = False)`
+## `plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, velocity = None, marker_size = 2, cycle_pole = [0, 0, 1], savefig = None, show = False)`
 
 **Description:**  
 Generates an interactive 3D spherical projection of the Ouroboros latent space.
@@ -82,25 +55,23 @@ plot_sphere(
     ref: pd.DataFrame = None,
     velocity: pd.DataFrame = None,
     marker_size: int = 2,
-    cycle_pole: list[float] = reference_CC_pole_point,
+    cycle_pole: list[float] = [0,0,1],
     savefig: str = None,
     show: bool = False
 )
 ```
 
 **Parameters:**
-
-| Parameter     | Type            | Description                                                                                                                                                         |
-| ------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `z_df`        | `DataFrame`     | The main cell dataframe with 3D spherical coordinates (`dim1`, `dim2`, `dim3`) and metadata columns such as phase labels or pseudotime.                             |
-| `colour_by`   | `str`           | Column in `z_df` to color points by (e.g. `'KNN_phase'`, `'cell_cycle_pseudotime'`, `'dormancy_depth'`).                                                            |
-| `palette`     | `dict` or `str` | Optional color map: dictionary for categorical data (e.g {`'G1'`: `'blue'`, `'G2M'`: `'green'`}), or colormap name (e.g. `'mako'`, `'rocket_r'`) for continuous data. If `None`, an appropriate default is used. |
-| `ref`         | `DataFrame`     | Optional reference dataset to overlay, with columns `dim1`, `dim2`, `dim3`, and `phase`.                                                                            |
-| `velocity`    | `DataFrame`     | Optional velocity vectors with columns `dim1`, `dim2`, `dim3`.                                                                                                      |
-| `marker_size` | `int`           | Size of scatter points.                                                                                                                                             |
-| `cycle_pole`  | `list[float]`   | A 3D point marking the known cell cycle pole for axis. If you did not retrain model, the reference is correct and you do not need to supply it. If you did retrain the model, you can either provide 'None' and not plot it, or use find_cycle_pole to identify it                                                                                                  |
-| `savefig`     | `str`           | If provided, saves the plot as an HTML file to this path.                                                                                                           |
-| `show`        | `bool`          | Whether to display the figure in a browser (via `plotly`).                                                                                                          |
+| Parameter     | Type                 | Description |
+| ------------- | -------------------- | ----------- |
+| `z_df`        | `DataFrame`          | Cell dataframe with 3D spherical coordinates (`dim1`, `dim2`, `dim3`) and metadata columns such as phase labels or pseudotime. |
+| `colour_by`   | `str`                | Column in `z_df` to colour points by (e.g. `'KNN_phase'`, `'cell_cycle_pseudotime'`, `'dormancy_depth'`). |
+| `palette`     | `dict` or `str`      | Optional colour map: a dictionary for categorical data (e.g. `{'G1': 'blue', 'G2M': 'green'}`), or a colormap name (e.g. `'mako'`, `'rocket_r'`) for continuous data. If `None`, a sensible default is used. |
+| `ref`         | `DataFrame` or `str` | Optional reference cells to overlay as faint points. Use `'default'` to show the training embeddings from the paper (only valid if you did **not** retrain the model). If you retrained, pass your own reference DataFrame with columns `dim1`, `dim2`, `dim3` and `phase`. Use `None` to show no reference points. |
+| `velocity`    | `DataFrame`          | Optional velocity vectors with columns `dim1`, `dim2`, `dim3`. |
+| `marker_size` | `int`                | Size of scatter points. |
+| `savefig`     | `str`                | If provided, saves the plot as an HTML file at this path. |
+| `show`        | `bool`               | Whether to display the figure. |
 
 ---
 ## `def plot_gene_sphere(z_df, adata, gene_name, layer=None, ref=None, velocity=None, show=False, outpath=None, cycle_pole=reference_CC_pole_point)`
@@ -134,38 +105,11 @@ plot_gene_sphere(
 | `adata`      | `AnnData`               | The original single-cell data object containing expression values.                            |
 | `gene_name`  | `str`                   | Gene to plot. Must exist in `adata.var_names`.                                                |
 | `layer`      | `str`, optional         | Name of the `.layers` slot in `adata` to use (e.g. `"log_counts"`). Defaults to `.X`.         |
-| `ref`        | `DataFrame`, optional   | Optional reference cells with `dim1`, `dim2`, `dim3`, and metadata like phase.                |
+| `ref`        | `DataFrame`, optional   | Optional reference cells to overlay as faint points. Use `'default'` to show the training embeddings from the paper (only valid if you did **not** retrain the model). If you retrained, pass your own reference DataFrame with columns `dim1`, `dim2`, `dim3` and `phase`. Use `None` to show no reference points. |
 | `velocity`   | `DataFrame`, optional   | Optional velocity vectors (same shape as `z_df`) with `dim1`, `dim2`, `dim3`.  See plot_velocity for more information.               |
 | `show`       | `bool`, default `False` | Whether to display the plot interactively in a Jupyter notebook.                                                    |
 | `outpath`    | `str`, optional         | If provided, saves the interactive Plotly figure as HTML.                                     |
 | `cycle_pole` | `list[float]`           |  A 3D point marking the known cell cycle pole for axis. If you did not retrain model, the reference is correct and you do not need to supply it. If you did retrain the model, you can either provide 'None' and not plot it, or use find_cycle_pole to identify                                    |
-
----
-## `rotate_north(z_df, reference_CC_pole_point = [0.86202236, 0.24824865, 0.44191636])`
-
-**Description:** Rotate all points in the sphere such that the north point of the cycle pole becomes true north at [0,0,1]
-
-**Example usage:**
-```python
-rotate_north(
-    z_df: pd.DataFrame,
-    reference_CC_pole_point: list[float] = [0.86202236, 0.24824865, 0.44191636]
-) 
-```
-
-**Parameters::**
-
-| Parameter                 | Type                    | Description                                                                                        |
-| ------------------------- | ----------------------- | -------------------------------------------------------------------------------------------------- |
-| `z_df`                    | `DataFrame`             | Input dataframe containing spherical coordinates (`dim1`, `dim2`, `dim3`) for each cell.           |
-| `reference_CC_pole_point` | `list[float]`, optional | 3D vector indicating the "pole" direction to rotate. Default is the original Ouroboros cycle pole. |
-
-
-This function returns: 
-
-| Type        | Description                                                                                         |
-| ----------- | --------------------------------------------------------------------------------------------------- |
-| `DataFrame` | A copy of `z_df` with rotated `dim1`, `dim2`, `dim3` values so that the pole points to `[0, 0, 0]`. |
 
 ---
 
@@ -200,7 +144,7 @@ sphere_snapshot(
 | `colour_by`   | `str`                     | Column in `z_df` to color points by (e.g., `'KNN_phase'`, `'cell_cycle_pseudotime'`).                                                     |
 | `radius`      | `float`, optional         | Distance from the sphere center to the virtual camera. Controls zoom level.                                                               |
 | `palette`     | `dict` or `str`, optional | Color palette. Use a dictionary for categorical values or a colormap name (e.g., `'mako'`) for continuous values.                         |
-| `ref_embed`   | `DataFrame`, optional     | Optional reference dataset with `dim1`, `dim2`, `dim3`, and metadata columns (e.g., `phase`). Used for transparent background points.     |
+| `ref`        | `DataFrame`, optional   | Optional reference cells to overlay as faint points. Use `'default'` to show the training embeddings from the paper (only valid if you did **not** retrain the model). If you retrained, pass your own reference DataFrame with columns `dim1`, `dim2`, `dim3` and `phase`. Use `None` to show no reference points. |
 | `vel_df`      | `DataFrame`, optional     | Optional velocity vectors with columns `dim1`, `dim2`, `dim3`. Drawn as arrows and cones.                                                 |
 | `save_as_png` | `str`, optional           | Path to save the image as a PNG. If `None`, the image is not saved.                                                                       |
 | `showlegend`  | `bool`, default `False`   | Whether to display the legend in the plot.                                                                                                |
@@ -209,15 +153,48 @@ sphere_snapshot(
 
 
 ---
+## `convert_to_human_genes()`
 
-## `convert_to_human_genes(data)`
+Converts mouse gene symbols to their human orthologs (HGNC symbols). Ouroboros runs this automatically when `species='mouse'`. It's documented here in case you need it elsewhere, for example to compare mouse and human datasets.
 
-**Description:**  
-Converts mouse gene symbols in `Anndata` or `pandas df` input to human orthologs (HUGO format). Used internally in Ouroboros but included here in case you need it for other applications. Returns either an h5ad or df depending on input. 
+```python
+convert_to_human_genes(data: ad.AnnData | pd.DataFrame) -> ad.AnnData | pd.DataFrame
+```
 
+| Parameter | Type                       | Description |
+| --------- | -------------------------- | ----------- |
+| `data`    | `AnnData` or `DataFrame`   | Mouse expression data. For `AnnData`, gene symbols must be in `var_names`. For a `DataFrame`, cells are rows and gene symbols are columns. |
+
+**Returns:** the same type as the input (`AnnData` or `DataFrame`), with human gene symbols as the gene names.
+
+**What it does:**
+
+1. **Keeps only mouse genes with a known human ortholog.** Genes without an ortholog are dropped.
+2. **Renames each mouse gene to its human ortholog.**
+3. **Sums duplicates.** If several mouse genes map to the same human gene (e.g. mouse paralogs), their counts are added together into a single human gene.
+
+**Notes:**
+
+- **Use raw counts.** Duplicate genes are combined by summing, which is appropriate for counts but not for log-normalised or scaled values. Normalise *after* converting.
+- **Gene symbols must match exactly**, including case (e.g. `Top2a`, not `TOP2A` or an Ensembl ID).
+- **For `AnnData` input, only `X` and `obs` are kept.** Gene metadata (`var` columns), `layers`, `obsm` (e.g. UMAP), `varm` and `uns` are not carried over. The returned matrix is dense.
+- Raises a `ValueError` if none of the input genes match a known mouse gene.
+
+**Example:**
+
+```python
+import scanpy as sc
+import ouroboros as obo
+
+adata_mouse = sc.read_h5ad("mouse_counts.h5ad")
+adata_human = obo.convert_to_human_genes(adata_mouse)
+
+print(adata_mouse.n_vars, "→", adata_human.n_vars, "genes")
+adata_human.var_names[:5]
+```
 ---
 
-## `plot_robinson_projection(z_df, colour_by, velocity_df=None, palette=None, ref_df=None, central_longitude=80, title="", alpha=0.7, scale=10, save_fig=None, rasterize=True, show=True)`
+## `plot_robinson_projection(z_df, colour_by, velocity_df=None, palette=None, ref=None, central_longitude=80, title="", alpha=0.7, scale=10, save_fig=None, rasterize=True, show=True)`
 
 **Description:**
 Projects 3D spherical coordinates onto a 2D Robinson map with flexible coloring by categorical or continuous metadata. Cartesian coordinates (`dim1`, `dim2`, `dim3`) are converted to longitude/latitude and drawn on a Robinson projection; coloring is auto-detected as continuous or categorical, NA values are shown in grey, and an optional reference set can be drawn as faint background points. Used for interpreting global cell state structure or transitions in a biologically interpretable planar projection. 
@@ -229,7 +206,7 @@ plot_robinson_projection(
     colour_by='cell_cycle_pseudotime',
     velocity_df=velocity_df,
     palette='rocket_r',
-    ref_df=reference_df,
+    ref=reference_df,
     title="Differentiation Trajectory",
     scale=15,
     save_fig="robinson.png"
@@ -243,7 +220,7 @@ plot_robinson_projection(
 | `colour_by`         | `str`                     | Column in `z_df` to color by. Automatically handled as categorical (e.g., `'KNN_phase'`) or continuous (e.g., `'cell_cycle_pseudotime'`).              |
 | `velocity_df`       | `DataFrame`, optional     | Optional RNA velocity DataFrame with `dim1`, `dim2` columns representing directional flow vectors, drawn as quiver arrows.                              |
 | `palette`           | `dict` or `str`, optional | Custom palette: a dict mapping labels to colors for categorical data, or a colormap name (e.g., `'mako'`, `'viridis'`) for continuous data. If `None`, a colormap is auto-selected (`rocket_r` for `cell_cycle_pseudotime`, `mako` for `dormancy_pseudotime`, else `viridis`; `tab20`/`phase_pal_transition` for categorical). |
-| `ref_df`            | `DataFrame`, optional     | Optional reference DataFrame with `dim1`, `dim2`, `dim3` and a `phase` column. Plotted as faint background points colored by phase.                    |
+| `ref`        | `DataFrame`, optional   | Optional reference cells to overlay as faint points. Use `'default'` to show the training embeddings from the paper (only valid if you did **not** retrain the model). If you retrained, pass your own reference DataFrame with columns `dim1`, `dim2`, `dim3` and `phase`. Use `None` to show no reference points. |
 | `central_longitude` | `int`, default `80`       | Longitude (in degrees) to center the Robinson projection.                                                                                              |
 | `title`             | `str`, optional           | Title of the plot.                                                                                                                                     |
 | `alpha`             | `float`, default `0.7`    | Transparency of the primary data points.                                                                                                               |
@@ -254,40 +231,6 @@ plot_robinson_projection(
 
 
 ---
-
-
-
-## `plot_robinson_projection_with_velocity(z_df, colour_by, velocity_df=None, palette=None, ref_df=None, central_longitude=80, title="", alpha=0.7, scale=10)`
-
-**Description:**
-Projects 3D spherical coordinates onto a 2D Robinson map with optional RNA velocity overlays and flexible coloring by categorical or continuous metadata. NA values are shown in grey. Used for interpreting global cell state structure or transitions in a biologically interpretable planar projection.
-
-**Example usage:**
-```python
-plot_robinson_projection_with_velocity(
-    z_df=embedding_df,
-    colour_by='cell_cycle_pseudotime',
-    velocity_df=velocity_df,
-    palette='rocket_r',
-    ref_df=reference_df,
-    title="Differentiation Trajectory",
-    scale=15
-)
-``
-`
-**Parameters:**
-| Parameter           | Type                      | Description                                                                                                                          |
-| ------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `z_df`              | `DataFrame`               | DataFrame containing 3D spherical embedding coordinates (`dim1`, `dim2`, `dim3`) and associated metadata for coloring.               |
-| `colour_by`         | `str`                     | Column in `z_df` to color by. Supports both categorical (e.g., `'KNN_phase'`) and continuous (e.g., `'cell_cycle_pseudotime'`) data. |
-| `velocity_df`       | `DataFrame`, optional     | Optional RNA velocity DataFrame with `dim1`, `dim2` columns representing directional flow vectors in spherical projection.           |
-| `palette`           | `dict` or `str`, optional | Custom palette. Dictionary for categorical data, or colormap name (e.g., `'mako'`, `'viridis'`) for continuous variables.            |
-| `ref_df`            | `DataFrame`, optional     | Optional reference DataFrame with `dim1`, `dim2`, `dim3` and `putative_phase_transition` columns. Plots as faint background points.  |
-| `central_longitude` | `int`, default `80`       | Longitude (in degrees) to center the Robinson projection.                                                                            |
-| `title`             | `str`, optional           | Title of the plot.                                                                                                                   |
-| `alpha`             | `float`, default `0.7`    | Transparency of the primary data points.                                                                                             |
-| `scale`             | `float`, default `10`     | Scale of the velocity vector arrows.                                                                                                 |
-
 
 
 📘 For full tutorials, see the [Python Tutorial](python_tutorial.ipynb).

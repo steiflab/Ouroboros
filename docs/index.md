@@ -106,9 +106,6 @@ Our training dataset includes 5698 cells and 226 genes. When training (or retrai
 
 - Training time: ~2 minutes (CPU)
 - Memory usage: ~821.64 MB RAM
-- Hardware used: 
-    - **CPU**: Intel(R) Xeon(R) E7-8867 v4 @ 2.40GHz
-    - **RAM**: 1.5 TB
 
 The model is always retrained on the same number of cells, but will likely run faster if fewer features genes are included. Note this will likely make the model less accurate. 
 
