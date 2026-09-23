@@ -41,12 +41,12 @@
 <h1 id="ouroboros">Ouroboros</h1>
 <p><strong>Ouroboros</strong> is a toolkit for investigating cell cycling and non-cycling dynamics in single-cell RNA-seq data.  </p>
 <p>It projects cells into a spherical latent space based on a learned reference embeddings, enabling interpretable visualization of cell cycle and dormancy states. Output includes:</p>
-<p><strong>ouroboros_embeddings_pseudotimes.csv:</strong> Dataframe with cell id as index, containing discrete KNN phases, cell cycle pseudotime and dormancy depth values for each cell in your dataset. </p>
+<p><strong>ouroboros_embeddings_pseudotimes.csv:</strong> Dataframe with cell id as index, containing discrete KNN phases, cell cycle pseudotime and dormancy pseudotime values for each cell in your dataset. </p>
 <p><strong>ouroboros_knn_sphere.html:</strong> 3D visualization of your dataset embedded in VAE latent space, coloured by KNN phases </p>
 <p><strong>ouroboros_cell_cycle_pseudotime.html:</strong> 3D visualization of your dataset embedded in VAE latent space, coloured by cell cycle pseudotimes
 - note that any cells that fall in the 'dormancy' range will be given a cell cycle pseudotime value of NA, and will be coloured grey </p>
-<p><strong>ouroboros_dormancy_depth.html:</strong> 3D visualization of your dataset embedded in VAE latent space, coloured by dormancy depth
-- note that any cells that fall in the 'cell cycling' range will be given a dormancy depth value of NA, and will be coloured grey </p>
+<p><strong>ouroboros_dormancy_pseudotime.html:</strong> 3D visualization of your dataset embedded in VAE latent space, coloured by dormancy pseudotime
+- note that any cells that fall in the 'cell cycling' range will be given a dormancy pseudotime value of NA, and will be coloured grey </p>
 <hr />
 <h2 id="installation">Installation</h2>
 <p>Ouroboros supports Python 3.9–3.10. Cartopy is an optional dependency required for some plotting functions. It is recommended to install via conda before installing Ouroboros.</p>
@@ -130,11 +130,6 @@ pip install sc-ouroboros --no-cache-dir
 <ul>
 <li>Training time: ~2 minutes (CPU)</li>
 <li>Memory usage: ~821.64 MB RAM</li>
-<li>Hardware used: <ul>
-<li><strong>CPU</strong>: Intel(R) Xeon(R) E7-8867 v4 @ 2.40GHz</li>
-<li><strong>RAM</strong>: 1.5 TB</li>
-</ul>
-</li>
 </ul>
 <p>The model is always retrained on the same number of cells, but will likely run faster if fewer features genes are included. Note this will likely make the model less accurate. </p>
             
@@ -292,7 +287,7 @@ pip install sc-ouroboros --no-cache-dir
 
   <!--
   MkDocs version      : 1.6.1
-  Docs Build Date UTC : 2026-09-11 02:25:39.106931+00:00
+  Docs Build Date UTC : 2026-09-23 03:38:16.239550+00:00
   -->
 </body>
 </html>

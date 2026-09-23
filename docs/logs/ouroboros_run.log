@@ -1,0 +1,45 @@
+2026-09-22 20:40:50,721 - INFO - All training genes present, embedding your cells in VAE latent space...
+2026-09-22 20:40:51,139 - WARNING - From /projects/pangen/analysis/hmac/applications/miniconda3/envs/ouroboros_env/lib/python3.9/site-packages/keras/layers/normalization/batch_normalization.py:561: _colocate_with (from tensorflow.python.framework.ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Colocations handled automatically by placer.
+2026-09-22 20:40:54,007 - WARNING - From /projects/pangen/analysis/hmac/applications/miniconda3/envs/ouroboros_env/lib/python3.9/site-packages/ouroboros/scphere/ops/ive.py:18: py_func (from tensorflow.python.ops.script_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+tf.py_func is deprecated in TF V2. Instead, there are two
+    options available in V2.
+    - tf.py_function takes a python function which manipulates tf eager
+    tensors instead of numpy arrays. It's easy to convert a tf eager tensor to
+    an ndarray (just call tensor.numpy()) but having access to eager tensors
+    means `tf.py_function`s can use accelerators such as GPUs as well as
+    being differentiable using a gradient tape.
+    - tf.numpy_function maintains the semantics of the deprecated tf.py_func
+    (it is not differentiable, and manipulates numpy arrays). It drops the
+    stateful argument making all functions stateful.
+    
+2026-09-22 20:40:54,223 - INFO - Restoring parameters from /projects/pangen/analysis/hmac/applications/miniconda3/envs/ouroboros_env/lib/python3.9/site-packages/ouroboros/data/model/model
+2026-09-22 20:41:45,180 - INFO - Chromium init'ed with kwargs {}
+2026-09-22 20:41:45,182 - INFO - Found chromium path: /home/hmacdonald/.local/share/choreographer/deps/chrome-linux64/chrome
+2026-09-22 20:41:45,183 - INFO - Temp directory created: /tmp/tmpo732x0g0.
+2026-09-22 20:41:45,184 - INFO - Opening browser.
+2026-09-22 20:41:45,199 - INFO - Temp directory created: /tmp/tmpuyyc8e1a.
+2026-09-22 20:41:45,200 - INFO - Temporary directory at: /tmp/tmpuyyc8e1a
+2026-09-22 20:41:46,435 - INFO - Conforming 1 to file:///tmp/tmpo732x0g0/index.html
+2026-09-22 20:41:49,779 - INFO - Getting tab from queue (has 1)
+2026-09-22 20:41:49,780 - INFO - Got 7926
+2026-09-22 20:41:56,638 - INFO - Reloading tab 7926 before return.
+2026-09-22 20:41:57,188 - INFO - Putting tab 7926 back (queue size: 0).
+2026-09-22 20:41:57,189 - INFO - Waiting for all cleanups to finish.
+2026-09-22 20:41:57,189 - INFO - Exiting Kaleido.
+2026-09-22 20:41:57,190 - INFO - TemporaryDirectory.cleanup() worked.
+2026-09-22 20:41:57,191 - INFO - shutil.rmtree worked.
+2026-09-22 20:41:57,191 - INFO - Closing browser.
+2026-09-22 20:41:57,194 - INFO - TemporaryDirectory.cleanup() worked.
+2026-09-22 20:41:57,194 - INFO - shutil.rmtree worked.
+2026-09-22 20:41:57,194 - INFO - Closing browser.
+2026-09-22 20:41:57,194 - INFO - Cancelling tasks.
+2026-09-22 20:41:57,194 - INFO - Exiting Kaleido/Choreo.
+2026-09-22 20:41:57,522 - INFO - TemporaryDirectory.cleanup() worked.
+2026-09-22 20:41:57,523 - INFO - shutil.rmtree worked.
+2026-09-22 20:41:57,523 - INFO - Cancelling tasks.
+2026-09-22 20:41:57,523 - INFO - Exiting Kaleido/Choreo.
+2026-09-22 20:41:57,842 - INFO - TemporaryDirectory.cleanup() worked.
+2026-09-22 20:41:57,843 - INFO - shutil.rmtree worked.
