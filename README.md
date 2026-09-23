@@ -16,7 +16,7 @@ Installation:
 conda create -n ouroboros_env -c conda-forge python=3.9 pip=24.3.1
 conda activate ouroboros_env 
 conda install -c conda-forge cartopy 
-pip install sc-ouroboros --no-cache-dir
+pip install ouroboros --no-cache-dir
 ```
 
 Install directly from GitHub with:
