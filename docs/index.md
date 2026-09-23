@@ -11,15 +11,15 @@
 
 It projects cells into a spherical latent space based on a learned reference embeddings, enabling interpretable visualization of cell cycle and dormancy states. Output includes:
 
-**ouroboros_embeddings_pseudotimes.csv:** Dataframe with cell id as index, containing discrete KNN phases, cell cycle pseudotime and dormancy depth values for each cell in your dataset. 
+**ouroboros_embeddings_pseudotimes.csv:** Dataframe with cell id as index, containing discrete KNN phases, cell cycle pseudotime and dormancy pseudotime values for each cell in your dataset. 
 
 **ouroboros_knn_sphere.html:** 3D visualization of your dataset embedded in VAE latent space, coloured by KNN phases 
 
 **ouroboros_cell_cycle_pseudotime.html:** 3D visualization of your dataset embedded in VAE latent space, coloured by cell cycle pseudotimes
 - note that any cells that fall in the 'dormancy' range will be given a cell cycle pseudotime value of NA, and will be coloured grey 
 
-**ouroboros_dormancy_depth.html:** 3D visualization of your dataset embedded in VAE latent space, coloured by dormancy depth
-- note that any cells that fall in the 'cell cycling' range will be given a dormancy depth value of NA, and will be coloured grey 
+**ouroboros_dormancy_pseudotime.html:** 3D visualization of your dataset embedded in VAE latent space, coloured by dormancy pseudotime
+- note that any cells that fall in the 'cell cycling' range will be given a dormancy pseudotime value of NA, and will be coloured grey 
 
 
 ---
