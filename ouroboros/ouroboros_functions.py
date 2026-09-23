@@ -1788,15 +1788,15 @@ def plot_robinson_projection(
             transform=ccrs.PlateCarree(), rasterized=rasterize 
         )
 
-    if ref_df is not None:
-        xr, yr, zr = ref_df['dim1'].values, ref_df['dim2'].values, ref_df['dim3'].values
+    if ref is not None:
+        xr, yr, zr = ref['dim1'].values, ref['dim2'].values, ref['dim3'].values
         rr = np.sqrt(xr**2 + yr**2 + zr**2)
         lon_r = np.degrees(np.arctan2(yr, xr))
         lat_r = np.degrees(np.arcsin(zr / rr))
-        ref_labels = ref_df['phase'].unique()
+        ref_labels = ref['phase'].unique()
         
         for label in ref_labels:
-            idx = ref_df['phase'] == label
+            idx = ref['phase'] == label
             color = phase_pal_transition[label] if label in phase_pal_transition else 'grey'
             ax.scatter(
                 lon_r[idx], lat_r[idx],
