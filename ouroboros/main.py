@@ -106,14 +106,13 @@ progress_frames = [
 ]
 
 def show_progress(stage, missing_gene=0):
-    warning_message = f"\nWARNING: {len(missing_gene)}/226 genes are missing from the training set. \nThe model is retrained without {missing_gene}, considering including them for higher accuracy"
-
     try:
         get_ipython  # Will raise NameError if not in IPython/Jupyter
         import sys
         from IPython.display import clear_output, display
         clear_output(wait=True)
         if stage == 3 and missing_gene != 0:
+            warning_message = f"\nWARNING: {len(missing_gene)}/226 genes are missing from the training set. \nThe model is retrained without {missing_gene}, considering including them for higher accuracy"
             message = progress_frames[stage]
             message += warning_message
             print(message)
@@ -123,13 +122,12 @@ def show_progress(stage, missing_gene=0):
         # CLI fallback
         print("\033c", end="")  # Terminal clear
         if stage == 3 and missing_gene != 0:
+            warning_message = f"\nWARNING: {len(missing_gene)}/226 genes are missing from the training set. \nThe model is retrained without {missing_gene}, considering including them for higher accuracy"
             message = progress_frames[stage]
             message += warning_message
             print(message)
         else:
             print(progress_frames[stage])
-
-
 
  
 def run_ouroboros(data, data_type, species = 'human', outdir = '.', seed = 0, repeat = 1):
