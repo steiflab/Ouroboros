@@ -1678,7 +1678,7 @@ def plot_robinson_projection(
     colour_by, 
     velocity_df=None, 
     palette=None, 
-    ref_df=None,
+    ref=None,
     central_longitude=80, 
     title="", 
     alpha=0.7,
@@ -1697,6 +1697,13 @@ def plot_robinson_projection(
             "Or with pip (requires system dependencies to be installed first):\n"
             "  pip install cartopy"
         )
+    
+    if isinstance(ref, str):
+        if ref == 'default':
+            ref = pd.read_csv(DATA_DIR / "rotated_reference_embeddings_for_plotting.csv")
+        else:
+            raise ValueError(f"ref must be None, 'default', or a DataFrame; got '{ref}'") 
+        
     x, y, z = z_df['dim1'].values, z_df['dim2'].values, z_df['dim3'].values
     r = np.sqrt(x**2 + y**2 + z**2)
     lon = np.degrees(np.arctan2(y, x))
