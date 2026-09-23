@@ -26,6 +26,12 @@ pip install git+https://github.com/steiflab/Ouroboros.git
 
 [ScPhere](https://github.com/klarman-cell-observatory/scPhere) is included as part of Ouroboros and has been updated for compatibility with TensorFlow 2. ScPhere was originally developed by Jiarui Ding and colleagues at the Klarman Cell Observatory.
 
+Running Ouroboros within a scanpy workflow isn't strictly necessary, but if you want to work within a scanpy workflow as outlined in the tutorial, install scanpy into the environment like so:
+```bash
+conda activate ouroboros_env
+mamba install -c conda-forge "scanpy>=1.9.3,<1.11"
+```
+
 ## Running Ouroboros 
 For a full tutorial see the Wiki: [wiki](https://steiflab.github.io/Ouroboros/)
 
