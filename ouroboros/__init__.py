@@ -16,7 +16,8 @@ from .ouroboros_functions import (
     sphere_snapshot,
     rotate_north,
     convert_to_human_genes,
-    plot_robinson_projection
+    plot_robinson_projection,  
+    plot_pseudotime
 )
 
-__version__ = "0.1.0"
+__version__ = "1.0.1"
