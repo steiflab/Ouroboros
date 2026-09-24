@@ -1983,7 +1983,7 @@ def set_seed(seed=0):
     tf.random.set_seed(seed)
 
 
-def select_seed(repeat, outdir):
+def select_seed(repeat, outdir, debug=False):
     all_z_df = []
     for i in range(repeat):
         z_df = pd.read_csv(outdir + "/retrain/" + str(i) + "/ouroboros_embeddings_pseudotimes.csv", index_col=0)
@@ -2013,7 +2013,8 @@ def select_seed(repeat, outdir):
     selected_seed = max(seed_r, key=seed_r.get)
     selected_seed_corr = max(seed_r.values())
     
-    plot_consensus(depth_matrix, selected_seed, outdir)
+    if debug:
+        plot_consensus(depth_matrix, selected_seed, outdir)
 
     selected_seed_path = outdir + "/retrain/" + str(selected_seed) 
     z_df = pd.read_csv(selected_seed_path + "/ouroboros_embeddings_pseudotimes.csv", index_col=0)
