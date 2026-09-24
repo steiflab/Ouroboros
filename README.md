@@ -15,11 +15,16 @@ Installation:
 ```
 conda create -n ouroboros_env -c conda-forge python=3.9 pip=24.3.1
 conda activate ouroboros_env 
-conda install -c conda-forge cartopy 
-pip install ouroboros --no-cache-dir
+conda install -c conda-forge cartopy -y
+pip install ouroboros
 ```
 
-Install directly from GitHub with:
+Alternatively, you can install directly from conda:
+```bash 
+conda install steiflab::ouroboros
+```
+
+Install directly from GitHub (not recommended):
 ```bash 
 pip install git+https://github.com/steiflab/Ouroboros.git
 ```
