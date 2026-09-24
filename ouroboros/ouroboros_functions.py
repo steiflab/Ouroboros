@@ -2128,8 +2128,19 @@ def plot_pseudotime(z_df, condition=None, palette=None, save_fig=None):
     ax.axvline(0, color='black', linewidth=1)
 
     # Labels under x-axis
-    ax.text(-0.5, -0.4, 'Dormancy pseudotime (Φ)', ha='center', clip_on=False)
-    ax.text(0.5, -0.4, 'Cell cycle pseudotime (θ)', ha='center', clip_on=False)
+    ax.text(
+        0.25, -0.08, 'Dormancy pseudotime (Φ)',
+        transform=ax.transAxes,
+        ha='center', va='top',
+        clip_on=False
+    )
+
+    ax.text(
+        0.75, -0.08, 'Cell cycle pseudotime (θ)',
+        transform=ax.transAxes,
+        ha='center', va='top',
+        clip_on=False
+    )
 
     # Define the colored boxes for G1, S, G2M phases
     phase_colors = {'G1': '#1f77b4', 'S': '#ff7f0e', 'G2M': '#2ca02c', 'Light': 'lightgrey', 'Mid': 'darkgrey', 'Deep':'black'}
