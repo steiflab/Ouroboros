@@ -1,13 +1,15 @@
 [project]
-name = "sc-ouroboros"
-version = "1.0.5"
+name = "ouroboros"
+version = "1.0.1"
 description = "A toolkit for investigating cell cycling dynamics in scRNA-seq"
 readme = "README.md"
 requires-python = ">=3.9,<3.11"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [
-  {name = "Haley MacDonald", email = "hmacdonald@bcgsc.ca"}
+  {name = "Haley MacDonald", email = "hmacdonald@bcgsc.ca"},
+  {name = "Glenn Chang", email = "glchang@bccrc.ca"},
+  {name = "Adi Steif", email = "asteif@bccrc.ca"}
 ]
 
 dependencies = [
@@ -29,11 +31,14 @@ dependencies = [
 
 
 [project.urls]
-Homepage = "https://github.com/haleymac/Ouroboros"
+Homepage = "https://github.com/steiflab/Ouroboros"
 
 [build-system]
 requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["ouroboros*"]
 
 [project.scripts]
 ouroboros = "ouroboros.main:main"
