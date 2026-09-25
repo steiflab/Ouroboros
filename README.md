@@ -46,11 +46,15 @@ There are seperate tutorials for python (scanpy) and R (seurat) users, and an ad
 
 ### To run Ouroboros on an h5ad/ Scanpy object
 
-It's important to note that Ouroboros only works on **raw** counts, so make sure your raw counts are saved under adata.layers['raw_counts'] where Ouroboros can find them, and then save your scanpy object as an h5ad:
+Ouroboros requires **raw count data**. Before running Ouroboros, make sure your raw counts are stored in adata.layers["raw_counts"], and save your Scanpy object as an .h5ad file.
+
+Gene names must be in **HUGO gene symbol** format rather than Ensembl IDs.
 
 ```python 
-anndata.write_h5ad(adata.h5ad)
+anndata.write_h5ad('adata.h5ad')
 ```
+
+For .csv input, gene names should be provided as column names (in HUGO gene symbol format), and cell IDs should be provided as row names.
 
 Then you can run Ouroboros on the command line like so: 
 ```bash 
