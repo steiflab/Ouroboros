@@ -1,5 +1,5 @@
 {% set name = "ouroboros" %}
-{% set version = "1.0.1" %}
+{% set version = "1.0.3" %}
 
 package:
   name: {{ name }}
@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://pypi.io/packages/source/o/ouroboros/ouroboros-{{ version }}.tar.gz
-  sha256: 8bcc260e62f4c3c4664218472abfee765186d2053cadf000c20d43803b97665a
+  sha256: 1b2d990a1d620bb881a631b9e24038acf6a13e4ebce25f2358b51db4e4fe26ac
 
 requirements:
   host:
