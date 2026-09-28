@@ -3,7 +3,7 @@
 </p>
 <h1 align="center" style="margin-top: 0;">Ouroboros</h1>
 
-Ouroboros is designed to find cell cycle phase, cell cycle pseudotime and dormancy depth in scRNAseq datasets. It uses transfer learning within the latent space of a variational autoencoder to infer these features on new datasets. 
+Ouroboros is a variational autoencoder that infers cell cycle phase, cell cycle pseudotime and dormancy pseudotime from scRNA-seq datasets. New cells are mapped onto a common pre-trained embedding, enabling comparative quantitative analyses along dormancy pseudotime between samples and experimental conditions.
 
 For more information see the Wiki: [wiki](https://steiflab.github.io/Ouroboros/)
 
