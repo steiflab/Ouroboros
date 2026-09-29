@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://pypi.io/packages/source/o/ouroboros/ouroboros-{{ version }}.tar.gz
-  sha256: 1b2d990a1d620bb881a631b9e24038acf6a13e4ebce25f2358b51db4e4fe26ac
+  sha256: 9bb06c33814a0ea637326929123f50c65b85af38887089df925837442b29e009
 
 requirements:
   host:
