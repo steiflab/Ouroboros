@@ -105,13 +105,13 @@ progress_frames = [
 ⠀⠀⠀Sphere visualization complete⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"""
 ]
 
-def show_progress(stage, missing_gene=0):
+def show_progress(stage, missing_gene=[]):
     try:
         get_ipython  # Will raise NameError if not in IPython/Jupyter
         import sys
         from IPython.display import clear_output, display
         clear_output(wait=True)
-        if stage == 3 and missing_gene != 0:
+        if stage == 3 and len(missing_gene) != 0:
             warning_message = f"\nWARNING: {len(missing_gene)}/226 genes are missing from the training set. \nThe model is retrained without {missing_gene}, considering including them for higher accuracy"
             message = progress_frames[stage]
             message += warning_message
@@ -121,7 +121,7 @@ def show_progress(stage, missing_gene=0):
     except (NameError, ImportError):
         # CLI fallback
         print("\033c", end="")  # Terminal clear
-        if stage == 3 and missing_gene != 0:
+        if stage == 3 and len(missing_gene) != 0:
             warning_message = f"\nWARNING: {len(missing_gene)}/226 genes are missing from the training set. \nThe model is retrained without {missing_gene}, considering including them for higher accuracy"
             message = progress_frames[stage]
             message += warning_message
