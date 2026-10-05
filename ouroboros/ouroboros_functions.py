@@ -288,11 +288,30 @@ def embed_in_retrained_sphere(adata, model, in_order_feature_set):
     bdata = adata.copy()
 
     if isinstance(bdata, pd.DataFrame):
+        # Collapse duplicate genes by summing raw counts
+        if bdata.columns.has_duplicates:
+            bdata = bdata.T.groupby(level=0).sum().T
+
         bdata = bdata[in_order_feature_set]
         matrix = bdata.copy()
         gene_list = list(matrix.columns)
         cell_list = list(matrix.index)
+
     elif isinstance(bdata, ad.AnnData):
+        # Collapse duplicate genes by summing raw counts
+        if bdata.var_names.has_duplicates:
+            X = pd.DataFrame(
+                bdata.X.toarray() if scipy.sparse.issparse(bdata.X) else bdata.X,
+                index=bdata.obs_names,
+                columns=bdata.var_names
+            )
+            X = X.T.groupby(level=0).sum().T
+
+            bdata = ad.AnnData(
+                X=X,
+                obs=bdata.obs.copy()
+            )
+
         bdata = bdata[:, bdata.var_names.isin(in_order_feature_set)].copy()
         matrix = bdata.X.copy()
         gene_list = bdata.var_names
@@ -300,7 +319,6 @@ def embed_in_retrained_sphere(adata, model, in_order_feature_set):
 
     else:
         raise TypeError("Expect test_adata to be a pandas DataFrame or an AnnData object.")
-
     
     if scipy.sparse.issparse(matrix):
         matrix = matrix.toarray()
