@@ -185,6 +185,7 @@ def run_ouroboros(data, data_type, species = 'human', outdir = '.', seed = 0, re
         # densify: downstream - some calls can't handle sparse X
         if sp.issparse(data.X):
             data.X = data.X.toarray()
+        X = data.X
         
     elif data_type == 'csv':
         data = pd.read_csv(data)
@@ -192,9 +193,18 @@ def run_ouroboros(data, data_type, species = 'human', outdir = '.', seed = 0, re
             data = data.set_index('cell_id')
         elif "Unnamed: 0" in data.columns:
             data = data.set_index('Unnamed: 0')
+        X = data.values
+
     else: 
         raise TypeError("Unsupported data type. Expected --h5ad or --csv for data_type.")
 
+    # Check for raw counts   
+    if not (np.all(np.isfinite(X)) & np.all(X >= 0) & np.all(X == np.floor(X))):
+        raise ValueError(
+            "Expression matrix contains non-integer values or negative values. "
+            "Please check if matrix is raw counts and not normalized or log-transformed"
+        )
+    
     show_progress(0)
         
     if species == 'mouse':
