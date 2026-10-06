@@ -1,7 +1,7 @@
 [project]
 name = "ouroboros"
 version = "1.0.3"
-description = "A toolkit for investigating cell cycling dynamics in scRNA-seq"
+description = "A toolkit for investigating cell cycling and dormancy dynamics in scRNA-seq"
 readme = "README.md"
 requires-python = ">=3.9,<3.11"
 license = "MIT"
