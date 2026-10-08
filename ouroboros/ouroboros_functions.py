@@ -1370,11 +1370,15 @@ def seaborn_to_plotly(palette_name, n_colors=256):
 
 def normalize_colormap(cmap_name='mako', vmin=-1, vmax=0, n_colors=256):
     from matplotlib.colors import Normalize
-    from matplotlib.cm import get_cmap
+    import seaborn as sns
+
     norm = Normalize(vmin=vmin, vmax=vmax)
-    cmap = get_cmap(cmap_name)
-    colors = [cmap(norm(np.linspace(vmin, vmax, n_colors)[i]))[:3] for i in range(n_colors)]
-    return [[i / (n_colors - 1), f"rgb({r*255:.0f},{g*255:.0f},{b*255:.0f})"] for i, (r, g, b) in enumerate(colors)]
+    cmap = sns.color_palette(cmap_name, as_cmap=True)
+
+    values = np.linspace(vmin, vmax, n_colors)
+    colors = [cmap(norm(v))[:3] for v in values]
+
+    return [[i / (n_colors - 1),f"rgb({r*255:.0f},{g*255:.0f},{b*255:.0f})"] for i, (r, g, b) in enumerate(colors)]
 
 
 
