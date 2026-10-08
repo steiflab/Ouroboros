@@ -76,6 +76,7 @@ Arguments:
 | `--outdir`    | Output directory where results (embeddings, figures, logs) will be saved. Default is '.'|
 | `--seed`      | Seed used for Ouroborous for data reproducibility. Default is 0 |
 | `--repeat`*    | Number of times to retrain model (only if input data is missing any training genes). Default is 1.|
+| `--force`    | Ignore input validation checks (raw counts and missing genes) and continue (not recommended) |
 
 \* If any gene is missing from training feature set from the input data, the model must be retrained. To ensure robust performance, Ouroboros will retrain the VAE {repeat} times and select the model that correlates with the consensus. However, increasing the repeat parameter will significantly extend runtime.
 
