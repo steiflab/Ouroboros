@@ -1,41 +1,9 @@
 
-import logging
-logger = logging.getLogger(__name__)
-
-import os
-# Create output directory if it doesn't exist
-os.makedirs("logs", exist_ok=True)
-
-logging.basicConfig(
-    filename="logs/ouroboros_run.log",
-    filemode="w",
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
-
-logger = logging.getLogger()
-
-
 import warnings
+import os 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # 0 = all logs, 1 = info, 2 = warning, 3 = error
-
-
-# def trace_http_requests():
-#     import http.client
-
-#     original_request = http.client.HTTPConnection.request
-
-#     def wrapped_request(self, method, url, body=None, headers={}, *, encode_chunked=False):
-#         print(f"[TRACE] HTTP request: {method} {self.host}{url}")
-#         return original_request(self, method, url, body, headers, encode_chunked=encode_chunked)
-
-#     http.client.HTTPConnection.request = wrapped_request
-
-# trace_http_requests()
-
-
 
 progress_frames = [
     """⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -313,6 +281,17 @@ def run_ouroboros(data, data_type, species = 'human', outdir = '.', seed = 0, re
 
 def main():
     import argparse
+    import logging
+    import os
+
+    os.makedirs("logs", exist_ok=True)
+
+    logging.basicConfig(
+        filename="logs/ouroboros_run.log",
+        filemode="w",
+        level=logging.INFO,
+        format="%(asctime)s - %(levelname)s - %(message)s"
+    )
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", required=True)
