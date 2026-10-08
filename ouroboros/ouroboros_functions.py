@@ -1,33 +1,12 @@
 import numpy as np
-from matplotlib import pyplot as plt
-from .scphere.model.vae import SCPHERE
-from .scphere.util.trainer import Trainer
+import matplotlib.pyplot as plt
 import pandas as pd
 import anndata as ad
 import plotly.graph_objects as go
-import plotly.express as px
-import scipy
+
 from pathlib import Path
-from sklearn.neighbors import KNeighborsClassifier
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
-from sklearn.decomposition import PCA
-
-import tensorflow as tf
-import random
-
-import anndata as ad
-from matplotlib import cm
-from matplotlib.colors import Normalize
-from matplotlib.cm import get_cmap
-from plotly.io import write_image
-import seaborn as sns
-from scipy.sparse import issparse
-from scipy.spatial.transform import Rotation as R
-from scipy import stats
-import shutil
-import matplotlib.patches as patches
-import requests
 
 
 reference_CC_pole_point = [0.86202236, 0.24824865, 0.44191636]
@@ -42,6 +21,8 @@ phase_pal_transition = {
 
 def convert_to_human_genes(data):
     """Convert mouse gene names in an anndata object to their human orthologs (if existing)"""
+    from scipy.sparse import issparse 
+
     orth = pd.read_csv(DATA_DIR / "all_genes_mouse_orthologs.csv")
     
     if isinstance(data, ad.AnnData):
@@ -54,7 +35,7 @@ def convert_to_human_genes(data):
         adata.var_names = adata.var['human_genes']
         # Need to sum human genes that are accounted for by more than one mouse gene (i.e., they have duplicates)
         # Check if the matrix is sparse and convert it if necessary
-        if scipy.sparse.issparse(adata.X):
+        if issparse(adata.X):
             dense_matrix = adata.X.toarray()
         else:
             dense_matrix = adata.X
@@ -139,18 +120,18 @@ def read_in_features():
 
 
 def ouroboros_preprocess(data, data_type):
-        # Load SHAP feature set
+    from scipy.sparse import issparse
+    # Load SHAP feature set
     feature_set = pd.read_csv(DATA_DIR / "SHAP_feature_set.csv").feature_set.tolist()
     gene_order = pd.read_csv(DATA_DIR / "gene_order.csv")
     gene_order = gene_order['gene_order'].tolist()
     
     if data_type == 'h5ad':
-        bdata = data.copy()
-        bdata = bdata[:, bdata.var_names.isin(feature_set)].copy()
+        bdata = data[:, data.var_names.isin(feature_set)].copy()
 
         matrix = bdata.X.copy()
     
-        if scipy.sparse.issparse(matrix):
+        if issparse(matrix):
             matrix = matrix.toarray()
 
         # Load gene order and reorder matrix
@@ -161,14 +142,17 @@ def ouroboros_preprocess(data, data_type):
     elif data_type == 'csv':
         df = data
         # Subset to features and order properly
-        df = df.loc[:, df.columns.isin(feature_set)]
+        df = data.loc[:, data.columns.isin(feature_set)]
         df_ordered = df.loc[:, gene_order]
         matrix = df_ordered.values
 
     return matrix
 
 
+
 def ouroboros_embed(matrix, data, data_type, outdir = '.'):
+    from tensorflow.compat.v1 import reset_default_graph
+    from .scphere.model.vae import SCPHERE
     # Initialize SCPHERE model with same training parameters
     model = SCPHERE(
         n_gene=matrix.shape[1],
@@ -178,7 +162,7 @@ def ouroboros_embed(matrix, data, data_type, outdir = '.'):
         latent_dist='vmf',
         observation_dist='nb'
     )
-    tf.compat.v1.reset_default_graph()
+    reset_default_graph()
     model.load_sess(str(DATA_DIR / "model" / "model"))
     new_batch = np.full(matrix.shape[0], 2)
 
@@ -206,6 +190,7 @@ def ouroboros_embed(matrix, data, data_type, outdir = '.'):
 
 
 def KNN_predict(ref_embed, z_df):
+    from sklearn.neighbors import KNeighborsClassifier
     # Step 1: Prepare data
     X_train_knn = ref_embed[["dim1", "dim2", "dim3"]].values
     y_train_knn = ref_embed["phase"].values
@@ -228,6 +213,9 @@ def KNN_predict(ref_embed, z_df):
 
 def ouroboros_retrain(test_adata, seed):
     """Useful if some training genes are missing in embedding dataset and you want to embed them in the riba-mahd embedding"""
+    from tensorflow.compat.v1 import reset_default_graph
+    from .scphere.model.vae import SCPHERE
+    from .scphere.util.trainer import Trainer
     #Read in training data
     matrix = pd.read_csv(DATA_DIR / 'train_matrix.csv')
     train_meta = pd.read_csv(DATA_DIR / 'train_meta.csv')
@@ -262,11 +250,11 @@ def ouroboros_retrain(test_adata, seed):
     batch = train_meta['library'].map(map_dict).values
 
     set_seed(seed)
-    tf.compat.v1.reset_default_graph()
+    reset_default_graph()
     #Initilize model
     model = SCPHERE(n_gene=matrix.shape[1], n_batch=2, batch_invariant=False,
                 z_dim=2, latent_dist='vmf',
-                observation_dist='nb', seed=0)
+                observation_dist='nb', seed=seed)
     trainer = Trainer(model=model, x=matrix, batch_id=batch, max_epoch=250,
                   mb_size=128, learning_rate=0.001)
     
@@ -285,55 +273,59 @@ def ouroboros_retrain(test_adata, seed):
 
 
 def embed_in_retrained_sphere(adata, model, in_order_feature_set):
-    bdata = adata.copy()
+    from scipy.sparse import issparse
 
-    if isinstance(bdata, pd.DataFrame):
+    if isinstance(adata, pd.DataFrame):
         # Collapse duplicate genes by summing raw counts
-        if bdata.columns.has_duplicates:
-            bdata = bdata.T.groupby(level=0).sum().T
+        if adata.columns.has_duplicates:
+            adata = adata.T.groupby(level=0).sum().T
 
-        bdata = bdata[in_order_feature_set]
-        matrix = bdata.copy()
-        gene_list = list(matrix.columns)
-        cell_list = list(matrix.index)
+        # Select genes directly in the required order
+        matrix = adata.loc[:, in_order_feature_set].to_numpy()
+        cell_list = adata.index
 
-    elif isinstance(bdata, ad.AnnData):
-        # Collapse duplicate genes by summing raw counts
-        if bdata.var_names.has_duplicates:
+    elif isinstance(adata, ad.AnnData):
+        # Duplicate gene names require aggregation
+        if adata.var_names.has_duplicates:
             X = pd.DataFrame(
-                bdata.X.toarray() if scipy.sparse.issparse(bdata.X) else bdata.X,
-                index=bdata.obs_names,
-                columns=bdata.var_names
+                adata.X.toarray() if issparse(adata.X) else adata.X,
+                index=adata.obs_names,
+                columns=adata.var_names
             )
             X = X.T.groupby(level=0).sum().T
 
-            bdata = ad.AnnData(
-                X=X,
-                obs=bdata.obs.copy()
-            )
+            # Select and order directly from the aggregated DataFrame
+            matrix = X.loc[:, in_order_feature_set].to_numpy()
+            cell_list = adata.obs_names
 
-        bdata = bdata[:, bdata.var_names.isin(in_order_feature_set)].copy()
-        matrix = bdata.X.copy()
-        gene_list = bdata.var_names
-        cell_list = bdata.obs_names
+        else:
+            # Fast path: subset AnnData directly while still sparse
+            bdata = adata[:, in_order_feature_set]
+            matrix = bdata.X
+
+            if issparse(matrix):
+                matrix = matrix.toarray()
+            else:
+                matrix = np.asarray(matrix)
+
+            cell_list = adata.obs_names
 
     else:
-        raise TypeError("Expect test_adata to be a pandas DataFrame or an AnnData object.")
-    
-    if scipy.sparse.issparse(matrix):
-        matrix = matrix.toarray()
-
-    # Need to make sure the new matrix has genes in the right order as the training matrix was 
-    new_data_df = pd.DataFrame(matrix, columns=gene_list)
-    aligned_new_data = new_data_df.loc[:, in_order_feature_set].values
-    matrix = aligned_new_data.copy()
+        raise TypeError(
+            "Expect adata to be a pandas DataFrame or an AnnData object."
+        )
 
     new_batch = np.full(matrix.shape[0], 2)
 
-
     # Project the new data into the latent space
-    z_mean = model.encode(matrix, new_batch)    
-    z_mean_df = pd.DataFrame(z_mean, index=cell_list, columns=["dim1", "dim2", 'dim3'])
+    z_mean = model.encode(matrix, new_batch)
+
+    z_mean_df = pd.DataFrame(
+        z_mean,
+        index=cell_list,
+        columns=["dim1", "dim2", "dim3"]
+    )
+
     return z_mean_df
     
 
@@ -341,6 +333,7 @@ def embed_in_retrained_sphere(adata, model, in_order_feature_set):
 def fit_great_circle(points):
     """ Fit a great circle around the sphere capturing variation along a set of points
     points = set of points"""
+    from sklearn.decomposition import PCA
     # Perform PCA to find the plane
     pca = PCA(n_components=3)
     pca.fit(points)
@@ -862,6 +855,7 @@ def fit_g0_great_circle(points, pcs=(1, 2)):
     normal_vector: ndarray
         Normal vector to the fitted plane.
     """
+    from sklearn.decomposition import PCA
     # Perform PCA to find the plane
     pca = PCA(n_components=3)
     pca.fit(points)
@@ -1369,19 +1363,24 @@ def make_velocity_vectors(z_df, velocity):
 
 
 def seaborn_to_plotly(palette_name, n_colors=256):
-    cmap = cm.get_cmap(palette_name)  # use matplotlib for everything
+    from matplotlib.cm import get_cmap
+    cmap = get_cmap(palette_name)  # use matplotlib for everything
     colors = [cmap(i / (n_colors - 1))[:3] for i in range(n_colors)]
     return [[i / (n_colors - 1), f"rgb({r*255:.0f},{g*255:.0f},{b*255:.0f})"] for i, (r, g, b) in enumerate(colors)]
 
 def normalize_colormap(cmap_name='mako', vmin=-1, vmax=0, n_colors=256):
+    from matplotlib.colors import Normalize
+    from matplotlib.cm import get_cmap
     norm = Normalize(vmin=vmin, vmax=vmax)
-    cmap = cm.get_cmap(cmap_name)
+    cmap = get_cmap(cmap_name)
     colors = [cmap(norm(np.linspace(vmin, vmax, n_colors)[i]))[:3] for i in range(n_colors)]
     return [[i / (n_colors - 1), f"rgb({r*255:.0f},{g*255:.0f},{b*255:.0f})"] for i, (r, g, b) in enumerate(colors)]
 
 
 
 def plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, velocity = None, marker_size = 2, cycle_pole = [0,0,1], savefig = None, show = False, camera_position = None, snap_png = None):
+    from matplotlib.cm import get_cmap
+    
     if isinstance(ref, str):
         if ref == 'default':
             ref = pd.read_csv(DATA_DIR / "rotated_reference_embeddings_for_plotting.csv")
@@ -1504,6 +1503,7 @@ def plot_sphere(z_df, colour_by = 'KNN_phase', palette = None, ref = None, veloc
     if camera_position:
         fig.update_layout(scene_camera=camera_position)
     if snap_png:
+        from plotly.io import write_image
         write_image(fig, snap_png, format="png", width=800, height=800, scale = 2)
     if savefig is not None: 
         fig.write_html(savefig)
@@ -1598,6 +1598,7 @@ def plot_gene_sphere(z_df, adata, gene_name, layer=None, ref=None, velocity=None
 def rotate_north(z_df, reference_CC_pole_point = [0.86202236, 0.24824865, 0.44191636]):
     """Rotate the cell cycle pole to be north pole
     Note: will replace dim1, dim2, dim3 in z_df"""
+    from scipy.spatial.transform import Rotation as R
     new_df = z_df.copy()
     # Reference point
     reference_CC_pole_point = np.array(reference_CC_pole_point)
@@ -1715,7 +1716,8 @@ def plot_robinson_projection(
             "Or with pip (requires system dependencies to be installed first):\n"
             "  pip install cartopy"
         )
-    
+    from matplotlib.cm import get_cmap
+
     if isinstance(ref, str):
         if ref == 'default':
             ref = pd.read_csv(DATA_DIR / "rotated_reference_embeddings_for_plotting.csv")
@@ -1835,6 +1837,7 @@ def get_wetchner_adata():
     """
     Depreciated: Previously used Wetchner dataset to QC retrained model
     """
+    import requests
     adata_file = DATA_DIR / "wetchner.h5ad"
     if not adata_file.exists():
         url = "https://zenodo.org/record/16818988/files/wetchner.h5ad?download=1"
@@ -1996,12 +1999,16 @@ def quality_control(trainer, new_feature_set, seed, outdir):
     return qc_df
 
 def set_seed(seed=0):
+    from tensorflow.random import set_seed
+    import random
     random.seed(seed)
     np.random.seed(seed)
-    tf.random.set_seed(seed)
+    set_seed(seed)
 
 
 def select_seed(repeat, outdir, debug=False):
+    from scipy import stats
+    from shutil import copy
     all_z_df = []
     for i in range(repeat):
         z_df = pd.read_csv(outdir + "/retrain/" + str(i) + "/ouroboros_embeddings_pseudotimes.csv", index_col=0)
@@ -2042,12 +2049,14 @@ def select_seed(repeat, outdir, debug=False):
     for file in ['ouroboros_embeddings_pseudotimes.csv', "qc.csv", "retrained_reference_embeddings.csv", "model.meta", "model.index", "model.data-00000-of-00001", "checkpoint"]:
         source_path = selected_seed_path + "/" + file
         destination_path = outdir + "/" + file
-        shutil.copy(source_path, destination_path)
+        copy(source_path, destination_path)
     
     return z_df, ref_embed
     
 
 def plot_consensus(depth_matrix, selected_seed, outdir):
+    import matplotlib.patches as patches
+    from seaborn import kdeplot
     depth_matrix_long = depth_matrix.melt(var_name='seed', value_name='pseudotime')
 
     fig, ax = plt.subplots(figsize=(10, 4))
@@ -2057,11 +2066,11 @@ def plot_consensus(depth_matrix, selected_seed, outdir):
 
         if seed != selected_seed:
         # Create histogram plot
-            hist = sns.kdeplot(
+            hist = kdeplot(
                 data=curr, x='pseudotime',alpha = 0.1, linewidth=1
             )
         else:
-            hist = sns.kdeplot(
+            hist = kdeplot(
                 data=curr, x='pseudotime', alpha = 1, linewidth=2.5, linestyle='--'
             )
 
@@ -2112,7 +2121,7 @@ def add_annotation(z_df):
 
 def plot_pseudotime(z_df, condition=None, palette=None, save_fig=None):
     import matplotlib.patches as patches
-    import seaborn as sns
+    from seaborn import histplot
 
     curr = z_df.copy()
 
@@ -2123,7 +2132,7 @@ def plot_pseudotime(z_df, condition=None, palette=None, save_fig=None):
     fig, ax = plt.subplots()
 
     # Plot directly on the correct axis
-    hist = sns.histplot(
+    hist = histplot(
         data=curr,
         x='pseudotime',
         hue=condition,
