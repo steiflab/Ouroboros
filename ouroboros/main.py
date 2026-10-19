@@ -152,6 +152,18 @@ def run_ouroboros(data, data_type, species = 'human', outdir = '.', seed = 0, re
     from scipy.sparse import issparse
     import numpy as np
     from . import ouroboros_functions as obof
+    import logging
+
+    os.makedirs("logs", exist_ok=True)
+
+    logging.basicConfig(
+        filename="logs/ouroboros_run.log",
+        filemode="w",
+        level=logging.INFO,
+        format="%(asctime)s - %(levelname)s - %(message)s"
+    )
+
+    logger = logging.getLogger()
     
     if data_type == 'h5ad':
         import anndata as ad
@@ -281,17 +293,6 @@ def run_ouroboros(data, data_type, species = 'human', outdir = '.', seed = 0, re
 
 def main():
     import argparse
-    import logging
-    import os
-
-    os.makedirs("logs", exist_ok=True)
-
-    logging.basicConfig(
-        filename="logs/ouroboros_run.log",
-        filemode="w",
-        level=logging.INFO,
-        format="%(asctime)s - %(levelname)s - %(message)s"
-    )
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", required=True)
